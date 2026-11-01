@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>萬能百貨大富翁：紅藍小店長採購 PK 賽（10000以內的數）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #FFFDF7;
+      --red-team: #EF4444;
+      --blue-team: #3B82F6;
+      --gold-accent: #F59E0B;
+      --ink-dark: #1E293B;
+    }
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #FEF3C7;
+      background-image: radial-gradient(#FDE68A 2px, transparent 2px);
+      background-size: 24px 24px;
+      color: var(--ink-dark);
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .storybook-card {
+      background: #FFFFFF;
+      border: 4px solid #1E293B;
+      box-shadow: 6px 6px 0px #1E293B;
+      border-radius: 1.25rem;
+    }
+    .storybook-btn {
+      border: 3px solid #1E293B;
+      box-shadow: 4px 4px 0px #1E293B;
+      transition: all 0.12s ease;
+    }
+    .storybook-btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #1E293B;
+    }
+    .storybook-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #1E293B;
+    }
+    /* 20-Tile Board Perimeter Grid (6 cols x 6 rows = 20 perimeter cells) */
+    .monopoly-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .board-center {
+      grid-column: 2 / 6;
+      grid-row: 2 / 6;
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 4px dashed #D97706;
+      border-radius: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+      position: relative;
+    }
+    .tile-cell {
+      border: 3px solid #1E293B;
+      border-radius: 0.65rem;
+      background: #FFFFFF;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .tile-cell.active-tile {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 4px #F59E0B, 4px 4px 0 #1E293B;
+      z-index: 20;
+    }
+    .tile-owner-red {
+      background: #FEE2E2 !important;
+      border-color: #DC2626 !important;
+    }
+    .tile-owner-blue {
+      background: #DBEAFE !important;
+      border-color: #2563EB !important;
+    }
+    @keyframes bounce-token {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .token-anim {
+      animation: bounce-token 1s infinite ease-in-out;
+    }
+    @keyframes dice-spin {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .rolling {
+      animation: dice-spin 0.35s infinite linear;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-4">
+
+  <!-- TOP HUD BAR -->
+  <header class="storybook-card px-4 py-2.5 mb-3 flex flex-wrap items-center justify-between gap-2 bg-white">
+    <!-- Red Team Score -->
+    <div id="hud-red" class="flex items-center gap-3 px-3 py-1.5 rounded-xl border-3 border-red-600 bg-red-50 transition-all">
+      <img src="https://api.dicebear.com/9.x/adventurer/svg?seed=RedManager&backgroundColor=fecaca" alt="紅隊" class="w-11 h-11 rounded-full border-2 border-red-600 bg-white" onerror="this.style.display='none'" />
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="px-2 py-0.5 text-xs font-black bg-red-600 text-white rounded-full">🔴 紅隊採購團</span>
+          <span id="red-combo" class="text-xs font-black text-red-600 hidden">🔥x0</span>
+        </div>
+        <div class="text-xl md:text-2xl font-black text-red-700">$<span id="red-score">2000</span> <span class="text-xs font-bold text-slate-600">元 (<span id="red-tiles">0</span>櫃)</span></div>
+      </div>
+    </div>
+
+    <!-- Center Turn & Controls -->
+    <div class="flex flex-col items-center">
+      <div class="flex items-center gap-2">
+        <span class="text-sm md:text-base font-black px-3 py-1 rounded-full bg-amber-100 border-2 border-amber-500 text-amber-900">
+          🛍️ 萬能百貨大富翁・關卡進度：<span id="progress-text">1 / 20</span>
+        </span>
+        <span id="turn-badge" class="text-sm md:text-base font-black px-3 py-1 rounded-full bg-red-600 text-white shadow">
+          輪到：🔴 紅隊回合
+        </span>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+        <button onclick="togglePlayMode()" id="mode-btn" class="storybook-btn px-2.5 py-1 text-xs font-black bg-purple-100 hover:bg-purple-200 rounded-lg">
+          🔄 模式：輪流擲骰制
+        </button>
+        <button onclick="openLuckyPicker()" class="storybook-btn px-2.5 py-1 text-xs font-black bg-emerald-100 hover:bg-emerald-200 rounded-lg">
+          🎯 抽座號答題
+        </button>
+        <button onclick="toggleTimer()" id="timer-toggle-btn" class="storybook-btn px-2.5 py-1 text-xs font-black bg-sky-100 hover:bg-sky-200 rounded-lg">
+          ⏱️ 倒數：開啟(30s)
+        </button>
+        <button onclick="speakCurrentQuestion()" class="storybook-btn px-2.5 py-1 text-xs font-black bg-amber-100 hover:bg-amber-200 rounded-lg" title="語音報讀題目">
+          🔊 報讀題目
+        </button>
+        <button onclick="toggleMute()" id="mute-btn" class="storybook-btn px-2.5 py-1 text-xs font-black bg-slate-100 hover:bg-slate-200 rounded-lg">
+          🔔 音效：開
+        </button>
+        <button onclick="openApiModal()" class="storybook-btn px-2.5 py-1 text-xs font-black bg-indigo-100 hover:bg-indigo-200 rounded-lg">
+          🤖 AI設定
+        </button>
+        <button onclick="showDiagnosticReport()" class="storybook-btn px-2.5 py-1 text-xs font-black bg-rose-100 hover:bg-rose-200 rounded-lg">
+          📊 結算成績
+        </button>
+      </div>
+    </div>
+
+    <!-- Blue Team Score -->
+    <div id="hud-blue" class="flex items-center gap-3 px-3 py-1.5 rounded-xl border-3 border-blue-600 bg-blue-50 transition-all">
+      <div class="text-right">
+        <div class="flex items-center justify-end gap-1.5">
+          <span id="blue-combo" class="text-xs font-black text-blue-600 hidden">🔥x0</span>
+          <span class="px-2 py-0.5 text-xs font-black bg-blue-600 text-white rounded-full">🔵 藍隊採購團</span>
+        </div>
+        <div class="text-xl md:text-2xl font-black text-blue-700">$<span id="blue-score">2000</span> <span class="text-xs font-bold text-slate-600">元 (<span id="blue-tiles">0</span>櫃)</span></div>
+      </div>
+      <img src="https://api.dicebear.com/9.x/adventurer/svg?seed=BlueManager&backgroundColor=bfdbfe" alt="藍隊" class="w-11 h-11 rounded-full border-2 border-blue-600 bg-white" onerror="this.style.display='none'" />
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE: LEFT BOARD (44%) + RIGHT MISSION PANEL (56%) -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+    
+    <!-- LEFT: 20-TILE DEPARTMENT STORE MONOPOLY BOARD -->
+    <section class="lg:col-span-5 storybook-card p-3 flex flex-col justify-between bg-amber-50/70">
+      <div class="flex items-center justify-between mb-1 px-1">
+        <span class="text-xs font-black text-amber-900">🗺️ 萬能百貨 20 大專櫃地圖（點擊格子可直接跳關）</span>
+        <span class="text-xs font-bold text-slate-600">📦1F積木 🚂2F列車 💰3F收銀 🔍4F偵探</span>
+      </div>
+
+      <div id="board-grid" class="monopoly-grid">
+        <!-- JS Dynamically Generates 20 Perimeter Tiles + Center Hub -->
+      </div>
+
+      <!-- Floor Legend & Quick Jump -->
+      <div class="mt-2 flex items-center justify-between text-xs font-bold bg-white px-3 py-1.5 rounded-xl border-2 border-slate-800">
+        <span>🔴 紅隊位置：第 <b id="red-pos-txt">1</b> 櫃</span>
+        <button onclick="switchTeamTurn()" class="underline text-indigo-700 hover:text-indigo-900 font-black">⇄ 手動切換紅/藍隊</button>
+        <span>🔵 藍隊位置：第 <b id="blue-pos-txt">1</b> 櫃</span>
+      </div>
+    </section>
+
+    <!-- RIGHT: QUESTION STAGE, INTERACTIVE MANIPULATIVES & SCAFFOLDING -->
+    <section class="lg:col-span-7 storybook-card p-4 flex flex-col justify-between bg-white relative overflow-hidden">
+      
+      <!-- Top Bar of Question Card -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b-2 border-slate-200">
+        <div class="flex items-center gap-2">
+          <span id="q-floor-badge" class="px-3 py-1 rounded-lg text-xs md:text-sm font-black bg-amber-500 text-white border-2 border-slate-900">
+            1F 積木玩具倉
+          </span>
+          <span id="q-node-badge" class="px-2.5 py-1 rounded-lg text-xs font-black bg-slate-100 text-slate-800 border border-slate-400">
+            Node 01：四位數合成與讀法
+          </span>
+          <span id="q-reward-badge" class="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-500">
+            💰 專櫃獎金 +$1000
+          </span>
+        </div>
+
+        <!-- Countdown Timer Pill -->
+        <div class="flex items-center gap-2">
+          <div id="timer-box" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-amber-300 font-black text-sm">
+            <span>⏳</span>
+            <span id="timer-sec">30</span>s
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Manipulative & External Concept Asset Dual-Track Stage -->
+      <div class="my-2.5 grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-amber-50/80 p-3 rounded-2xl border-3 border-slate-800">
+        <!-- Left: Dynamic Interactive Math Manipulative SVG (Blocks / Money / Place Value / Smudged Receipt) -->
+        <div class="md:col-span-8 flex flex-col items-center justify-center min-h-[155px] bg-white rounded-xl border-2 border-amber-300 p-2 relative" id="svg-manipulative-stage">
+          <!-- Rendered by JS renderManipulative(q) -->
+        </div>
+
+        <!-- Right: Smart External Asset Card (Wikimedia / Pollinations + SVG Fallback) -->
+        <div class="md:col-span-4 flex flex-col items-center justify-center bg-white rounded-xl border-2 border-slate-300 p-2 h-full">
+          <img id="concept-img" src="" alt="專櫃商品圖" class="w-full h-28 object-contain rounded-lg" />
+          <span id="concept-caption" class="text-xs font-black text-slate-600 mt-1 text-center">百貨專櫃實景</span>
+        </div>
+      </div>
+
+      <!-- Question Stem -->
+      <div class="my-2 bg-slate-50 p-3.5 rounded-2xl border-3 border-slate-800">
+        <p id="q-stem" class="text-lg md:text-xl font-black leading-relaxed text-slate-900">
+          題目載入中...
+        </p>
+      </div>
+
+      <!-- Buzz-in Banner (Only visible in PK Buzz Mode) -->
+      <div id="buzz-panel" class="hidden my-2 p-3 rounded-2xl bg-gradient-to-r from-red-100 via-amber-50 to-blue-100 border-3 border-slate-900 flex items-center justify-around">
+        <button onclick="buzzIn('red')" class="storybook-btn px-6 py-2.5 bg-red-600 text-white font-black text-lg rounded-xl">
+          🔴 紅隊搶答！
+        </button>
+        <span class="font-black text-sm text-slate-800">⚡ 雙隊看題搶答！誰先按誰作答！</span>
+        <button onclick="buzzIn('blue')" class="storybook-btn px-6 py-2.5 bg-blue-600 text-white font-black text-lg rounded-xl">
+          🔵 藍隊搶答！
+        </button>
+      </div>
+
+      <!-- 2x2 Options Grid -->
+      <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 my-2">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Progressive 3-Tier Scaffolding & AI Tutor Drawer -->
+      <div id="scaffold-drawer" class="mt-2 rounded-2xl border-3 border-amber-500 bg-amber-50 p-3 hidden">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span id="scaffold-badge" class="px-2.5 py-0.5 text-xs font-black rounded-full bg-amber-500 text-white">
+                💡 小店長提示卡 (Hint 1)
+              </span>
+              <span id="steal-turn-notice" class="text-xs font-black text-rose-600"></span>
+            </div>
+            <p id="scaffold-text" class="text-sm md:text-base font-bold text-slate-800 leading-snug"></p>
+          </div>
+          <div class="flex flex-col gap-1.5 shrink-0">
+            <button onclick="askGeminiTutor()" id="ai-hint-btn" class="storybook-btn px-3 py-1.5 text-xs font-black bg-indigo-600 text-white rounded-xl">
+              🤖 呼叫 AI 店長顧問
+            </button>
+            <button onclick="nextQuestion()" id="next-q-btn" class="storybook-btn px-3 py-1.5 text-xs font-black bg-emerald-500 text-white rounded-xl hidden">
+              下一專櫃 ➔
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Quick Action Footer -->
+      <div class="mt-2 pt-2 border-t-2 border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
+        <div>
+          💡 提示：可點擊左側中央「🎲 擲骰前進」或直接點選下方按鈕切換題目
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="showHintManually()" class="storybook-btn px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg font-black">
+            🔍 看位值表提示
+          </button>
+          <button onclick="prevQuestion()" class="storybook-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-black">
+            ◀ 上一題
+          </button>
+          <button onclick="nextQuestion()" class="storybook-btn px-3 py-1 bg-emerald-400 hover:bg-emerald-500 text-slate-900 rounded-lg font-black">
+            下一題 ▶
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL 1: LUCKY SEAT PICKER (課堂抽籤器) -->
+  <div id="picker-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="storybook-card bg-white max-w-md w-full p-6 text-center">
+      <h3 class="text-2xl font-black mb-2">🎯 萬能百貨幸運小店長抽籤機</h3>
+      <p class="text-sm font-bold text-slate-600 mb-4">對應課本右側座號欄（1～35 號），隨機抽出一位代表上台作答！</p>
+      <div class="flex items-center justify-center gap-2 mb-4">
+        <label class="text-sm font-black">全班人數上限：</label>
+        <input id="max-seat-input" type="number" value="30" min="5" max="45" class="w-20 px-2 py-1 border-2 border-slate-800 rounded-lg font-black text-center" />
+        <span class="text-sm font-black">號</span>
+      </div>
+      <div id="picked-number-display" class="text-6xl font-black py-6 my-3 rounded-2xl bg-amber-100 border-4 border-slate-900 text-amber-900">
+        ? 號
+      </div>
+      <div class="flex justify-center gap-3 mt-4">
+        <button onclick="spinSeatNumber()" class="storybook-btn px-6 py-2.5 bg-emerald-500 text-white font-black rounded-xl text-lg">
+          🎰 開始抽籤
+        </button>
+        <button onclick="closeLuckyPicker()" class="storybook-btn px-5 py-2.5 bg-slate-200 font-black rounded-xl text-lg">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: DIAGNOSTIC REPORT & MASTERY RETRY & AI ENDLESS WAVE -->
+  <div id="report-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="storybook-card bg-white max-w-4xl w-full p-6 my-8 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b-4 border-slate-900 pb-3 mb-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-black">🏆 萬能百貨小店長・營業結算與知識診斷報告</h2>
+          <p class="text-sm font-bold text-slate-600">國小三年級數學第一單元《10000 以內的數》精熟度雷達分析</p>
+        </div>
+        <button onclick="closeDiagnosticReport()" class="storybook-btn px-4 py-1.5 bg-slate-200 font-black rounded-xl">✕ 繼續遊戲</button>
+      </div>
+
+      <!-- Winner Banner -->
+      <div id="winner-banner" class="p-4 rounded-2xl border-3 border-slate-900 bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200 mb-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div id="winner-title" class="text-2xl font-black text-slate-900">🎉 紅藍雙隊戰況統計</div>
+          <div id="winner-subtitle" class="text-sm font-bold text-slate-700 mt-1"></div>
+        </div>
+        <div class="flex gap-2">
+          <button id="retry-wrong-btn" onclick="startMasteryRetry()" class="storybook-btn px-4 py-2 bg-rose-500 text-white font-black rounded-xl hidden">
+            🔁 錯題復活重練 (<span id="wrong-count-num">0</span>題)
+          </button>
+          <button onclick="generateAiBonusQuestions()" id="ai-bonus-btn" class="storybook-btn px-4 py-2 bg-indigo-600 text-white font-black rounded-xl">
+            ✨ AI 生成 3 題延長加碼賽
+          </button>
+        </div>
+      </div>
+
+      <!-- 6 Knowledge Nodes Mastery Breakdown -->
+      <h4 class="font-black text-lg mb-2">📊 六大核心知識節點精熟度分析：</h4>
+      <div id="node-breakdown-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- AI Diagnostic Summary Box -->
+      <div class="p-4 rounded-2xl border-3 border-indigo-600 bg-indigo-50 mb-4">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-black text-indigo-900">🤖 AI 總店長教學診斷與複習建議：</span>
+          <button onclick="requestAiDiagnosticSummary()" class="storybook-btn px-3 py-1 text-xs font-black bg-indigo-600 text-white rounded-lg">
+            ⚡ 生成 AI 診斷評語
+          </button>
+        </div>
+        <p id="ai-diagnostic-text" class="text-sm font-bold text-slate-800 leading-relaxed">
+          點擊右上角「生成 AI 診斷評語」或根據上方各節點精熟度，針對跨千進退位或髒發票推論題進行補強！
+        </p>
+      </div>
+
+      <!-- Export Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t-2 border-slate-200">
+        <div class="flex gap-2">
+          <button onclick="copyCertificateText()" class="storybook-btn px-4 py-2 bg-amber-400 font-black rounded-xl text-sm">
+            📋 一鍵複製成績報告
+          </button>
+          <button onclick="downloadCsvReport()" class="storybook-btn px-4 py-2 bg-emerald-500 text-white font-black rounded-xl text-sm">
+            📥 下載 CSV 學習歷程檔
+          </button>
+        </div>
+        <button onclick="resetFullGame()" class="storybook-btn px-4 py-2 bg-slate-800 text-white font-black rounded-xl text-sm">
+          🔄 重新開始新賽局
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: GEMINI API KEY SETTING -->
+  <div id="api-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="storybook-card bg-white max-w-md w-full p-6">
+      <h3 class="text-xl font-black mb-2">🤖 Gemini AI 店長顧問設定</h3>
+      <p class="text-xs font-bold text-slate-600 mb-3">
+        在 Gemini Canvas 環境中會自動連線；若您下載為獨立 HTML 檔案於校內電腦使用，可選填您的 Gemini API Key 以啟用「即時蘇格拉底提示」與「AI 動態加碼出題」（未填寫時系統會自動使用內建完整三階鷹架保底，100% 正常運作）。
+      </p>
+      <input id="api-key-input" type="password" placeholder="貼上 Gemini API Key (選填)" class="w-full px-3 py-2 border-3 border-slate-800 rounded-xl font-bold mb-4" />
+      <div class="flex justify-end gap-2">
+        <button onclick="saveApiKey()" class="storybook-btn px-4 py-2 bg-indigo-600 text-white font-black rounded-xl">儲存設定</button>
+        <button onclick="closeApiModal()" class="storybook-btn px-4 py-2 bg-slate-200 font-black rounded-xl">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. 結構化 20 題完整題庫 (精準對齊教材 1-1, 1-2, 1-3 與統整園地)
+     * 配題：Node 01 (2題)、Node 02 (4題)、Node 03 (4題)、Node 04 (3題)、Node 05 (3題)、Node 06 (4題)
+     *************************************************************************/
+    const QUESTIONS_DB = [
+      // === Node 01 (2題): 積木合成與四位數說讀寫做 ===
+      {
+        id: 1,
+        tileName: "積木進貨倉",
+        floor: "📦 1F 積木倉庫",
+        nodeId: "Node 01",
+        nodeName: "四位數合成與讀法",
+        reward: 1000,
+        question: "【玩具倉清點】倉庫進了「4 個千塊積木」和「33 個一塊積木」，合起來是多少？專櫃廣播要怎麼讀才正確？",
+        options: [
+          "4033，讀作「四千零三十三」",
+          "4033，讀作「四千三十三」",
+          "433，讀作「四百三十三」",
+          "4330，讀作「四千三百三十」"
+        ],
+        correctIndex: 0,
+        hints: [
+          "先看千位是 4，十位是 3，個位是 3，請問中間的「百位」有積木嗎？",
+          "百位是 0 個，要補 0 記作 4033；而且中間有 0 一定要讀出「零」喔！",
+          "教材解析：4000 和 33 合起來是 4033（4個千、0個百、3個十、3個一），讀作「四千零三十三」。"
+        ],
+        visualType: "blocks",
+        visualData: { thousands: 4, hundreds: 0, tens: 3, ones: 3, label: "4個1000 + 33個1" },
+        wikiKeyword: "Wooden toy blocks",
+        aiPrompt: "colorful wooden base ten math blocks in a toy store"
+      },
+      {
+        id: 2,
+        tileName: "樂高標籤機",
+        floor: "📦 1F 積木倉庫",
+        nodeId: "Node 01",
+        nodeName: "四位數合成與讀法",
+        reward: 1000,
+        question: "【特價標籤機】小店長聽到對講機報價：「這組樂高城堡賣『八千零六』元！」請問價錢標籤要印哪個數字？它的百位和十位數字分別是多少？",
+        options: [
+          "記作 8006（百位是 0、十位是 0）",
+          "記作 806（只有三位數）",
+          "記作 8060（百位是 0、十位是 6）",
+          "記作 8600（百位是 6、十位是 0）"
+        ],
+        correctIndex: 0,
+        hints: [
+          "「八千」代表這是一個四位數（千、百、十、個），先填入千位 8 和個位 6。",
+          "中間沒唸到幾百、也沒唸到幾十，代表百位和十位都是 0，兩個 0 都要寫出來占位，但讀的時候只讀一個零！",
+          "教材解析：「八千零六」是 8 個千、0 個百、0 個十和 6 個一，記作 8006。"
+        ],
+        visualType: "placeValue",
+        visualData: { k: "8", h: "?", t: "?", o: "6", title: "讀作：「八千零六」" },
+        wikiKeyword: "Lego castle",
+        aiPrompt: "toy castle with price tag in department store"
+      },
+
+      // === Node 02 (4題): 累一、累十、累百與跨千進退位序列 ===
+      {
+        id: 3,
+        tileName: "十號月台",
+        floor: "🚂 2F 貨運列車",
+        nodeId: "Node 02",
+        nodeName: "累一累十累百跨千序列",
+        reward: 1200,
+        question: "【車廂編號鎖】百貨運貨小火車的車廂編號依序是：3970 ➔ 3980 ➔ 3990 ➔（ ？）➔（ ？）➔ 4020，請問中間兩節車廂是幾號？",
+        options: [
+          "4000 號、4010 號",
+          "3900 號、3910 號",
+          "4000 號、4100 號",
+          "3991 號、3992 號"
+        ],
+        correctIndex: 0,
+        hints: [
+          "先觀察 3970 ➔ 3980 ➔ 3990，哪一個位值在改變？每次增加多少？（每次 +10）",
+          "3990 再加 10，十位的 9 加 1 滿十進百（9個百+1個百又滿十進千），所以會跨過四千變成 4000！",
+          "教材解析：這是往右每次累十（+10）的序列，3990 + 10 = 4000，4000 + 10 = 4010。"
+        ],
+        visualType: "trainSequence",
+        visualData: { seq: ["3970", "3980", "3990", "？", "？", "4020"], rule: "每次 +10" },
+        wikiKeyword: "Toy train",
+        aiPrompt: "cute colorful cargo train with numbers on carriages"
+      },
+      {
+        id: 4,
+        tileName: "倒數抽獎機",
+        floor: "🚂 2F 貨運列車",
+        nodeId: "Node 02",
+        nodeName: "累一累十累百跨千序列",
+        reward: 1200,
+        question: "【週年慶倒數】抽獎號碼牌正在往左每次減 1 倒數：5003 ➔ 5002 ➔ 5001 ➔ 5000 ➔（ ？）➔（ ？），請問接下來兩張是幾號？",
+        options: [
+          "4999 號、4998 號",
+          "4009 號、4008 號",
+          "4900 號、4800 號",
+          "5999 號、5998 號"
+        ],
+        correctIndex: 0,
+        hints: [
+          "從 5003 到 5000 是每次「少 1」。想一想，整千的 5000 拿走 1 個一，還滿五千嗎？",
+          "不到五千了！千位會退位變成 4，而百位、十位、個位都會變成最大的 9（也就是 4999）！",
+          "教材解析：5000 少 1 是 4999，4999 再少 1 是 4998。"
+        ],
+        visualType: "trainSequence",
+        visualData: { seq: ["5003", "5002", "5001", "5000", "？", "？"], rule: "每次 -1" },
+        wikiKeyword: "Lottery machine",
+        aiPrompt: "golden lottery ticket machine in shopping mall"
+      },
+      {
+        id: 5,
+        tileName: "百元加速軌",
+        floor: "🚂 2F 貨運列車",
+        nodeId: "Node 02",
+        nodeName: "累一累十累百跨千序列",
+        reward: 1200,
+        question: "【電梯調度員】貨運積分從 6857 開始，往右每次「增加 100」（6857 ➔ 6957 ➔ ？），請問 6957 再多 100 會變成多少？如果往左比 6857「少 100」又是多少？",
+        options: [
+          "往右是 7057，往左是 6757",
+          "往右是 6057，往左是 6757",
+          "往右是 7957，往左是 5857",
+          "往右是 6967，往左是 6847"
+        ],
+        correctIndex: 0,
+        hints: [
+          "增加 100 或減少 100，要先觀察「百位數字」！十位和個位的 57 都不會變喔！",
+          "6957 的百位是 9，再加 1 個百是 10 個百，進位到千位（6+1=7，百位變0），所以是 7057！",
+          "教材解析：6957 多 100 會跨千變成 7057；6857 少 100 則是百位 8 減 1 變成 6757。"
+        ],
+        visualType: "trainSequence",
+        visualData: { seq: ["？(-100)", "6857", "6957", "？(+100)"], rule: "左 -100 / 右 +100" },
+        wikiKeyword: "Elevator",
+        aiPrompt: "futuristic department store glass elevator"
+      },
+      {
+        id: 6,
+        tileName: "會員點數站",
+        floor: "🚂 2F 貨運列車",
+        nodeId: "Node 02",
+        nodeName: "累一累十累百跨千序列",
+        reward: 1200,
+        question: "【會員點數折抵】媽媽的百貨卡裡有「4215」點，兌換贈品後變成「比 4215 少 10」點，請問是多少點？如果接著再少 10 點（跨百退位）會剩多少點？",
+        options: [
+          "先變 4205 點，再少 10 變 4195 點",
+          "先變 4205 點，再少 10 變 4295 點",
+          "先變 4115 點，再少 10 變 4015 點",
+          "先變 4214 點，再少 10 變 4204 點"
+        ],
+        correctIndex: 0,
+        hints: [
+          "4215 少 10，十位的 1 減 1 變成 0，所以第一步是 4205 點。",
+          "接著 4205 再少 10，十位是 0 不夠減，要跟百位的 2 借 1 個百（百位剩 1，十位變 9），變成 4195！",
+          "教材解析：4215 少 10 是 4205；4205 再少 10 需退百位，變成 4195。"
+        ],
+        visualType: "placeValue",
+        visualData: { k: "4", h: "2", t: "1", o: "5", title: "4215 連續兩次「少 10」" },
+        wikiKeyword: "Loyalty card",
+        aiPrompt: "golden VIP membership card at store counter"
+      },
+
+      // === Node 03 (4題): 錢幣點數與一階單位化聚換算 ===
+      {
+        id: 7,
+        tileName: "皇家兌幣機",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 03",
+        nodeName: "錢幣點數與單位化聚",
+        reward: 1500,
+        question: "【百元換鈔機】收銀員小店長拿「3 張 1000 元鈔票」去換成 100 元，可以換幾張？另外把「40 個 10 元硬幣」換成 100 元鈔票，可以換幾張？",
+        options: [
+          "30 張 100 元、4 張 100 元",
+          "3 張 100 元、40 張 100 元",
+          "300 張 100 元、4 張 100 元",
+          "30 張 100 元、40 張 100 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "1 張 1000 元可以換 10 張 100 元；那 3 張 1000 元就是 3 個 10 張！",
+          "10 個 10 元硬幣合起來是 100 元（1張），所以 40 個 10 元可以換成 4 張 100 元鈔票！",
+          "教材解析：3 張 1000 元 = 30 張 100 元；40 個 10 元 = 4 張 100 元。"
+        ],
+        visualType: "money",
+        visualData: { k1: 3, h5: 0, h1: 0, t10: 40, o1: 0, note: "單位換算：3張千元 & 40個十元" },
+        wikiKeyword: "Piggy bank",
+        aiPrompt: "coin exchange machine with banknotes and gold coins"
+      },
+      {
+        id: 8,
+        tileName: "董事長紅包",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 03",
+        nodeName: "錢幣點數與單位化聚",
+        reward: 1500,
+        question: "【神秘紅包袋】優良專櫃獎金袋裡裝著「2 個千、15 個百和 4 個一」，請問合起來總共是多少元？",
+        options: [
+          "3504 元",
+          "2154 元",
+          "2504 元",
+          "3540 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "小心陷阱！「15 個百」已經超過 10 個百囉，不能直接寫成 2154！",
+          "15 個百可以換成「1 個千和 5 個百」，把這個 1 個千加給原本的 2 個千（2+1=3個千），十位沒有要補 0！",
+          "教材解析：2個千(2000) + 15個百(1500) + 4個一(4) = 3504 元。"
+        ],
+        visualType: "placeValue",
+        visualData: { k: "2", h: "15個百!", t: "0", o: "4", title: "化聚挑戰：滿十百進一千" },
+        wikiKeyword: "Red envelope",
+        aiPrompt: "red envelope with gold coins and bills prize"
+      },
+      {
+        id: 9,
+        tileName: "金豬撲滿櫃",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 03",
+        nodeName: "錢幣點數與單位化聚",
+        reward: 1500,
+        question: "【小豬撲滿開箱】顧客抱來撲滿結帳，數出「5 個千、2 個百和 20 個十」，請問合起來是多少元？",
+        options: [
+          "5400 元",
+          "5220 元",
+          "7200 元",
+          "5202 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "先看「20 個十」！10 個十是 1 個百，那麼 20 個十可以換成幾個百呢？",
+          "20 個十 = 2 個百！加上原本的 2 個百，百位總共變成 2 + 2 = 4 個百（十位和個位都是 0）！",
+          "教材解析：5個千(5000) + 2個百(200) + 20個十(200) = 5400 元。"
+        ],
+        visualType: "placeValue",
+        visualData: { k: "5", h: "2", t: "20個十!", o: "0", title: "化聚挑戰：20個十換成百" },
+        wikiKeyword: "Coins",
+        aiPrompt: "cute golden piggy bank with coins on counter"
+      },
+      {
+        id: 10,
+        tileName: "收銀點鈔台",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 03",
+        nodeName: "錢幣點數與單位化聚",
+        reward: 1500,
+        question: "【收銀台點鈔】櫃檯收到一筆貨款，桌上有：2 張 1000 元、1 張 500 元、5 張 100 元，請問合起來一共是多少元？",
+        options: [
+          "3000 元",
+          "2550 元",
+          "2600 元",
+          "2500 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "先把 1 張 500 元和 5 張 100 元合起來數數看是多少元？",
+          "5 張 100 元是 500 元，加上 1 張 500 元剛好湊成「1000 元」！再加原本的 2 張 1000 元就是 3000 元！",
+          "教材解析：2000 + 500 + 500 = 3000 元。"
+        ],
+        visualType: "money",
+        visualData: { k1: 2, h5: 1, h1: 5, t10: 0, o1: 0, note: "點數桌面上的鈔票總額" },
+        wikiKeyword: "Cash register",
+        aiPrompt: "cashier register counting money bills in store"
+      },
+
+      // === Node 04 (3題): 購物付錢與「還不夠多少元」往上數策略 ===
+      {
+        id: 11,
+        tileName: "除溼機專櫃",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 04",
+        nodeName: "購物湊錢與往上數差額",
+        reward: 1500,
+        question: "【除溼機結帳】爸爸買了一臺 4000 元的除溼機，他先把皮夾裡僅有的「3 張 1000 元」拿出來，剩下的錢全部用「100 元鈔票」付，請問要拿出幾張 100 元才剛好？",
+        options: [
+          "10 張 100 元",
+          "1 張 100 元",
+          "12 張 100 元",
+          "4 張 100 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "除溼機 4000 元，3 張 1000 元是 3000 元，還差多少元才滿 4000 元？",
+          "還差 1000 元！把 1 個 1000 元換成 100 元鈔票，需要 10 張 100 元！",
+          "教材解析：3張1000元(3000元) + 10張100元(1000元) = 4000元。"
+        ],
+        visualType: "money",
+        visualData: { k1: 3, h5: 0, h1: 10, t10: 0, o1: 0, note: "目標：湊滿除溼機 4000 元" },
+        wikiKeyword: "Dehumidifier",
+        aiPrompt: "modern home dehumidifier appliance in store"
+      },
+      {
+        id: 12,
+        tileName: "潮流球鞋館",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 04",
+        nodeName: "購物湊錢與往上數差額",
+        reward: 1500,
+        question: "【球鞋專櫃】一雙球鞋賣 1900 元，美美只有 1500 元。我們用課本的「從 1500 往上數百元」策略數到 1900，請問美美還不夠多少元？",
+        options: [
+          "不夠 400 元（差 4 張 100 元）",
+          "不夠 500 元（差 5 張 100 元）",
+          "不夠 300 元（差 3 張 100 元）",
+          "不夠 1400 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "不用列減法喔！從美美有的 1500 元開始，每次加 1 張 100 元往上數到 1900 元！",
+          "一起數：1500 ➔ 1600 (1張) ➔ 1700 (2張) ➔ 1800 (3張) ➔ 1900 (4張)，總共畫了 4 張 100 元！",
+          "教材解析：從 1500 往上數 4 個百就到 1900，所以不夠 400 元。"
+        ],
+        visualType: "countUp",
+        visualData: { item: "👟 球鞋 1900 元", have: 1500, target: 1900, steps: ["+100➔1600", "+100➔1700", "+100➔1800", "+100➔1900"] },
+        wikiKeyword: "Sneakers",
+        aiPrompt: "colorful running sneakers on display shelf"
+      },
+      {
+        id: 13,
+        tileName: "單車戶外館",
+        floor: "💰 3F 家電收銀台",
+        nodeId: "Node 04",
+        nodeName: "購物湊錢與往上數差額",
+        reward: 1500,
+        question: "【腳踏車專櫃】一臺腳踏車賣 2610 元，小甲有 2500 元。用「往上數」策略畫出不夠的錢幣，請問小甲還不夠多少元？",
+        options: [
+          "不夠 110 元（1 張 100 元和 1 個 10 元）",
+          "不夠 100 元（1 張 100 元）",
+          "不夠 210 元（2 張 100 元和 1 個 10 元）",
+          "不夠 101 元（1 張 100 元和 1 個 1 元）"
+        ],
+        correctIndex: 0,
+        hints: [
+          "小甲已經有 2500 元，先往上加 1 張 100 元會變成多少元？",
+          "2500 + 100 = 2600 元！距離售價 2610 元還差 1 個 10 元，所以總共差 1 張 100 元和 1 個 10 元！",
+          "教材解析：從 2500 往上數 1 個百到 2600，再數 1 個十到 2610，共不夠 110 元。"
+        ],
+        visualType: "countUp",
+        visualData: { item: "🚲 腳踏車 2610 元", have: 2500, target: 2610, steps: ["+100➔2600", "+10➔2610"] },
+        wikiKeyword: "Bicycle",
+        aiPrompt: "kids sport bicycle in department store"
+      },
+
+      // === Node 05 (3題): 10000以內數的大小比較與順序排列 ===
+      {
+        id: 14,
+        tileName: "家電比價台",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 05",
+        nodeName: "四位數比大小與排序",
+        reward: 1800,
+        question: "【比價天平】請比較這兩組商品價錢：(1)「1000 □ 878」、(2)「3030 □ 3003」，□ 裡依序應該填入什麼符號？",
+        options: [
+          "(1) ＞ ， (2) ＞",
+          "(1) ＜ ， (2) ＞",
+          "(1) ＞ ， (2) ＜",
+          "(1) ＜ ， (2) ＜"
+        ],
+        correctIndex: 0,
+        hints: [
+          "第(1)題：不用比開頭的 1 和 8 喔！1000 是四位數，878 只有三位數（不到 1000）！",
+          "第(2)題：3030 和 3003 千位都是 3、百位都是 0，比十位：3 ＞ 0，所以 3030 ＞ 3003！",
+          "教材解析：1000 ＞ 878；3030 的十位是 3，大於 3003 的十位 0，故皆填 ＞。"
+        ],
+        visualType: "compareScale",
+        visualData: { left1: "1000", right1: "878", left2: "3030", right2: "3003" },
+        wikiKeyword: "Weighing scale",
+        aiPrompt: "golden balance scale comparing price tags"
+      },
+      {
+        id: 15,
+        tileName: "廣播比價站",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 05",
+        nodeName: "四位數比大小與排序",
+        reward: 1800,
+        question: "【讀寫混合比大小】當國字讀法和阿拉伯數字混合比較時，下列哪一個比大小算式是「完全正確」的？",
+        options: [
+          "3008 ＜ 三千零八十 （且 七千零九 ＜ 7090）",
+          "3008 ＞ 三千零八十",
+          "七千零九 ＞ 7090",
+          "九千 ＜ 8999"
+        ],
+        correctIndex: 0,
+        hints: [
+          "秘訣：先把國字讀法寫成阿拉伯數字，再對齊千位、百位、十位、個位來比！",
+          "「三千零八十」記作 3080（3008 ＜ 3080）；「七千零九」記作 7009（7009 ＜ 7090）；「九千」是 9000（9000 ＞ 8999）！",
+          "教材解析：3008 ＜ 3080（三千零八十），且 7009（七千零九）＜ 7090。"
+        ],
+        visualType: "compareScale",
+        visualData: { left1: "3008", right1: "三千零八十(3080)", left2: "七千零九(7009)", right2: "7090" },
+        wikiKeyword: "Megaphone",
+        aiPrompt: "store announcer with megaphone and sale signs"
+      },
+      {
+        id: 16,
+        tileName: "熱銷排行榜",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 05",
+        nodeName: "四位數比大小與排序",
+        reward: 1800,
+        question: "【營業額排行榜】把「9009、10000、9099」三個數，按照「由大到小（＞）」排出第一名到第三名，哪一組排法正確？",
+        options: [
+          "10000 ＞ 9099 ＞ 9009",
+          "9099 ＞ 9009 ＞ 10000",
+          "10000 ＞ 9009 ＞ 9099",
+          "9009 ＜ 9099 ＜ 10000"
+        ],
+        correctIndex: 0,
+        hints: [
+          "注意連接符號是「＞（大於）」，所以最大的要排最左邊！10000 是一萬（五位數），一定最大！",
+          "接著比較 9099 和 9009：千位都是 9、百位都是 0，比十位：9 ＞ 0，所以 9099 ＞ 9009！",
+          "教材解析：由大到小排列為 10000 ＞ 9099 ＞ 9009。"
+        ],
+        visualType: "compareScale",
+        visualData: { left1: "10000", right1: "9099", left2: "9099", right2: "9009" },
+        wikiKeyword: "Trophy",
+        aiPrompt: "championship trophy podium 1st 2nd 3rd"
+      },
+
+      // === Node 06 (4題): 弄髒的發票推論與指定條件數字卡排四位數 ===
+      {
+        id: 17,
+        tileName: "咖啡漬發票",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 06",
+        nodeName: "髒發票推論與條件排卡",
+        reward: 2000,
+        question: "【偵探破案 1】媽媽買了一件四位數家電，第一張發票上的「千位數字」被弄髒了，顯示為「[？][5][6][8] 元」。請問這件商品最多是多少元？最少是多少元？",
+        options: [
+          "最多是 9568 元，最少是 1568 元",
+          "最多是 9568 元，最少是 0568 元",
+          "最多是 9999 元，最少是 1000 元",
+          "最多是 8568 元，最少是 2568 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "百位 5、十位 6、個位 8 是清楚的不能改！只有千位的 [？] 可以填入數字。",
+          "關鍵陷阱：四位數的最高位（千位）可以放 0 嗎？不行喔！放 0 就變成三位數 568 了，所以千位最少是 1、最多是 9！",
+          "教材解析：四位數千位不可為 0，只能填 1～9，故最多是 9568 元，最少是 1568 元。"
+        ],
+        visualType: "smudgedReceipt",
+        visualData: { k: "？", h: "5", t: "6", o: "8", smudgePos: "k", note: "第一張發票：千位模糊（四位數）" },
+        wikiKeyword: "Receipt",
+        aiPrompt: "detective magnifying glass inspecting a coffee stained receipt"
+      },
+      {
+        id: 18,
+        tileName: "墨水漬發票",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 06",
+        nodeName: "髒發票推論與條件排卡",
+        reward: 2000,
+        question: "【偵探破案 2】第二張家電發票是「百位數字」被墨水弄髒了，位值表顯示為「[2][？][4][5] 元」。請問這件商品最多是多少元？最少是多少元？",
+        options: [
+          "最多是 2945 元，最少是 2045 元",
+          "最多是 2945 元，最少是 2145 元",
+          "最多是 9945 元，最少是 1045 元",
+          "最多是 2845 元，最少是 2045 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "這次模糊的是中間的「百位 [？]」，千位已經有 2 囉！",
+          "既然千位是 2，那百位最少可以填 0 嗎？可以！百位填 0～9 都是四位數，所以最多填 9（2945）、最少填 0（2045）！",
+          "教材解析：百位可填 0～9，因此最多是 2945 元，最少是 2045 元。"
+        ],
+        visualType: "smudgedReceipt",
+        visualData: { k: "2", h: "？", t: "4", o: "5", smudgePos: "h", note: "第二張發票：百位模糊" },
+        wikiKeyword: "Magnifying glass",
+        aiPrompt: "magnifying glass over secret code numbers"
+      },
+      {
+        id: 19,
+        tileName: "金庫密碼鎖A",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 06",
+        nodeName: "髒發票推論與條件排卡",
+        reward: 2000,
+        question: "【金庫密碼鎖 1】用 [4]、[3]、[1]、[5] 四張數字卡排出四位數（數字不能重複），若要排出一個「比 5400 大」的數，下列哪一個排法正確？",
+        options: [
+          "5413（或 5431）",
+          "5341",
+          "4531",
+          "5543"
+        ],
+        correctIndex: 0,
+        hints: [
+          "要比 5400 大，千位只能放哪張數字卡？（只能放 5！如果放 4、3、1 都不到五千）",
+          "千位放 [5] 後，剩下 [4]、[3]、[1]。百位如果放 3 或 1 會比 5400 小，所以百位只能放 [4]！剩下 1 和 3 排十位與個位。",
+          "教材解析：千位必排 5、百位必排 4，剩下 1、3 可排成 5413 或 5431。"
+        ],
+        visualType: "numberCards",
+        visualData: { cards: ["4", "3", "1", "5"], condition: "排出比 5400 大的四位數（不重複）" },
+        wikiKeyword: "Combination lock",
+        aiPrompt: "golden vault door with number cards puzzle"
+      },
+      {
+        id: 20,
+        tileName: "終極金庫門",
+        floor: "🔍 4F 偵探服務台",
+        nodeId: "Node 06",
+        nodeName: "髒發票推論與條件排卡",
+        reward: 2500,
+        question: "【終極金庫密碼 2】用 [7]、[9]、[0]、[1] 四張數字卡排出四位數（數字不能重複），若要排出一個「比 1200 小」的四位數，請問正確密碼是哪一個？",
+        options: [
+          "1079（或 1097）",
+          "0179",
+          "1709",
+          "1107"
+        ],
+        correctIndex: 0,
+        hints: [
+          "注意！這是「四位數」，所以千位絕對不能放 [0]（0179 只有三位數）！要比 1200 小，千位只能放 [1]！",
+          "千位放 [1] 之後，剩下 [7]、[9]、[0]。要比 1200 小，百位要比 2 小，所以百位只能放 [0]！",
+          "教材解析：千位排 1、百位排 0，剩下 7、9 排在十位與個位，可排成 1079 或 1097。"
+        ],
+        visualType: "numberCards",
+        visualData: { cards: ["7", "9", "0", "1"], condition: "排出比 1200 小的四位數（不重複）" },
+        wikiKeyword: "Treasure chest",
+        aiPrompt: "open treasure chest with gold coins in department store"
+      }
+    ];
+
+    /*************************************************************************
+     * 2. 遊戲核心狀態機與雙隊計分系統
+     *************************************************************************/
+    const apiKey = ""; // Gemini Canvas 環境自動注入
+    window.USER_API_KEY = "";
+
+    let gameState = {
+      currentIndex: 0,
+      activeTeam: "red", // 'red' | 'blue'
+      playMode: "turn",  // 'turn' (輪流擲骰) | 'buzz' (雙隊搶答)
+      buzzedTeam: null,
+      redScore: 2000,
+      blueScore: 2000,
+      redCombo: 0,
+      blueCombo: 0,
+      redPos: 0,
+      bluePos: 0,
+      tileOwners: {}, // { questionId: 'red' | 'blue' }
+      wrongAttemptOnCurrent: 0,
+      answeredCompleted: {}, // { questionId: true }
+      wrongQuestionIds: new Set(),
+      nodeStats: {
+        "Node 01": { name: "四位數合成與讀法", total: 0, correctFirstTry: 0 },
+        "Node 02": { name: "累一累十累百跨千序列", total: 0, correctFirstTry: 0 },
+        "Node 03": { name: "錢幣點數與單位化聚", total: 0, correctFirstTry: 0 },
+        "Node 04": { name: "購物湊錢與往上數差額", total: 0, correctFirstTry: 0 },
+        "Node 05": { name: "四位數比大小與排序", total: 0, correctFirstTry: 0 },
+        "Node 06": { name: "髒發票推論與條件排卡", total: 0, correctFirstTry: 0 }
+      },
+      timerEnabled: true,
+      timeLeft: 30,
+      timerInterval: null,
+      muted: false,
+      inRetryMode: false,
+      retryQueue: []
+    };
+
+    /*************************************************************************
+     * 3. Web Audio API 零依賴音效合成器
+     *************************************************************************/
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      if (gameState.muted) return;
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === "dice") {
+          for (let i = 0; i < 4; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(300 + i * 110, now + i * 0.06);
+            gain.gain.setValueAtTime(0.12, now + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.06);
+            osc.stop(now + i * 0.06 + 0.05);
+          }
+        } else if (type === "correct") {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.22);
+          });
+        } else if (type === "wrong") {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(150, now + 0.28);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === "click") {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(600, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        }
+      } catch (e) {}
+    }
+
+    function toggleMute() {
+      gameState.muted = !gameState.muted;
+      document.getElementById("mute-btn").textContent = gameState.muted ? "🔕 音效：關" : "🔔 音效：開";
+    }
+
+    /*************************************************************************
+     * 4. 20 格環狀大富翁棋盤渲染 (6x6 外圍 20 格)
+     *************************************************************************/
+    // Perimeter coordinates (row, col) 1-indexed for 6x6 grid (20 cells clockwise)
+    const PERIMETER_COORDS = [
+      [1,1],[1,2],[1,3],[1,4],[1,5],[1,6],
+      [2,6],[3,6],[4,6],[5,6],
+      [6,6],[6,5],[6,4],[6,3],[6,2],[6,1],
+      [5,1],[4,1],[3,1],[2,1]
+    ];
+
+    function renderBoard() {
+      const grid = document.getElementById("board-grid");
+      grid.innerHTML = "";
+
+      QUESTIONS_DB.slice(0, 20).forEach((q, idx) => {
+        const [r, c] = PERIMETER_COORDS[idx];
+        const cell = document.createElement("div");
+        const owner = gameState.tileOwners[q.id];
+        const isCurrent = idx === gameState.currentIndex;
+
+        let floorBg = "bg-amber-50";
+        if (q.nodeId === "Node 02") floorBg = "bg-sky-50";
+        if (q.nodeId === "Node 03" || q.nodeId === "Node 04") floorBg = "bg-emerald-50";
+        if (q.nodeId === "Node 05" || q.nodeId === "Node 06") floorBg = "bg-purple-50";
+
+        cell.className = `tile-cell ${floorBg} ${isCurrent ? "active-tile" : ""} ${owner === "red" ? "tile-owner-red" : ""} ${owner === "blue" ? "tile-owner-blue" : ""}`;
+        cell.style.gridRow = r;
+        cell.style.gridColumn = c;
+        cell.onclick = () => {
+          playSound("click");
+          gameState.currentIndex = idx;
+          if (gameState.activeTeam === "red") gameState.redPos = idx;
+          else gameState.bluePos = idx;
+          loadQuestion();
+        };
+
+        // Tokens on this tile
+        let tokensHtml = "";
+        if (gameState.redPos === idx) {
+          tokensHtml += `<span class="inline-block w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-4 text-center border border-white shadow token-anim">紅</span>`;
+        }
+        if (gameState.bluePos === idx) {
+          tokensHtml += `<span class="inline-block w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] leading-4 text-center border border-white shadow token-anim">藍</span>`;
+        }
+
+        const ownerFlag = owner === "red" ? "🚩" : owner === "blue" ? "🏴" : "";
+
+        cell.innerHTML = `
+          <div class="w-full flex items-center justify-between px-0.5 text-[10px] text-slate-500">
+            <span>#${idx + 1}</span>
+            <span>${ownerFlag}</span>
+          </div>
+          <div class="text-center leading-tight px-0.5 truncate w-full text-[11px] font-black text-slate-800">${q.tileName}</div>
+          <div class="flex items-center justify-center gap-0.5 h-4">${tokensHtml}</div>
+        `;
+        grid.appendChild(cell);
+      });
+
+      // Center Dice & Status Hub
+      const center = document.createElement("div");
+      center.className = "board-center text-center";
+      center.innerHTML = `
+        <div class="text-xs font-black text-amber-800 mb-1">🎲 萬能百貨中央廣場</div>
+        <div id="dice-visual" onclick="rollDiceAndMove()" class="w-16 h-16 rounded-2xl bg-white border-4 border-slate-900 shadow-md flex items-center justify-center text-4xl cursor-pointer hover:scale-105 transition select-none">
+          🎲
+        </div>
+        <button onclick="rollDiceAndMove()" class="storybook-btn mt-2 px-4 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-sm">
+          擲骰前進下一櫃！
+        </button>
+        <p id="dice-result-text" class="text-xs font-bold text-slate-700 mt-1">點擊骰子推進專櫃任務</p>
+      `;
+      grid.appendChild(center);
+
+      document.getElementById("red-pos-txt").textContent = gameState.redPos + 1;
+      document.getElementById("blue-pos-txt").textContent = gameState.bluePos + 1;
+    }
+
+    function rollDiceAndMove() {
+      playSound("dice");
+      const diceEl = document.getElementById("dice-visual");
+      const faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+      if (diceEl) diceEl.classList.add("rolling");
+
+      setTimeout(() => {
+        if (diceEl) diceEl.classList.remove("rolling");
+        const step = Math.floor(Math.random() * 3) + 1; // 1~3 steps or next unanswered
+        // Find next unanswered or move sequentially so all 20 questions get covered smoothly
+        let nextIdx = (gameState.currentIndex + 1) % QUESTIONS_DB.length;
+        for (let i = 1; i <= QUESTIONS_DB.length; i++) {
+          const candidate = (gameState.currentIndex + i) % QUESTIONS_DB.length;
+          if (!gameState.answeredCompleted[QUESTIONS_DB[candidate].id]) {
+            nextIdx = candidate;
+            break;
+          }
+        }
+        gameState.currentIndex = nextIdx;
+        if (gameState.activeTeam === "red") gameState.redPos = nextIdx;
+        else gameState.bluePos = nextIdx;
+
+        loadQuestion();
+        const diceTxt = document.getElementById("dice-result-text");
+        if (diceTxt) {
+          diceTxt.textContent = `${faces[step - 1]} 前進抵達第 ${nextIdx + 1} 櫃：【${QUESTIONS_DB[nextIdx].tileName}】！`;
+        }
+      }, 380);
+    }
+
+    /*************************************************************************
+     * 5. 內建高質感 SVG 數學教具繪圖引擎 (積木、錢幣、位值表、髒發票、數字卡)
+     *************************************************************************/
+    function renderManipulative(q) {
+      const stage = document.getElementById("svg-manipulative-stage");
+      const v = q.visualData || {};
+
+      if (q.visualType === "blocks") {
+        // Render 1000-cubes, 10-rods, 1-units
+        let cubesHtml = "";
+        for (let i = 0; i < (v.thousands || 0); i++) {
+          cubesHtml += `
+            <div class="flex flex-col items-center">
+              <svg width="46" height="46" viewBox="0 0 60 60">
+                <polygon points="10,20 30,8 50,20 30,32" fill="#FDE047" stroke="#854D0E" stroke-width="2"/>
+                <polygon points="10,20 30,32 30,54 10,42" fill="#FACC15" stroke="#854D0E" stroke-width="2"/>
+                <polygon points="50,20 30,32 30,54 50,42" fill="#EAB308" stroke="#854D0E" stroke-width="2"/>
+                <text x="30" y="25" font-size="11" font-weight="900" text-anchor="middle" fill="#422006">1000</text>
+              </svg>
+            </div>`;
+        }
+        let tensHtml = "";
+        for (let i = 0; i < (v.tens || 0); i++) {
+          tensHtml += `<div class="w-3.5 h-11 bg-orange-400 border-2 border-orange-900 rounded-sm flex items-center justify-center text-[9px] font-black text-white">10</div>`;
+        }
+        let onesHtml = "";
+        for (let i = 0; i < (v.ones || 0); i++) {
+          onesHtml += `<div class="w-4 h-4 bg-sky-300 border-2 border-sky-900 rounded-sm text-[9px] font-black flex items-center justify-center">1</div>`;
+        }
+        stage.innerHTML = `
+          <div class="text-xs font-black text-amber-900 mb-1">🧱 積木教具視覺區（${v.label || ""}）</div>
+          <div class="flex flex-wrap items-center justify-center gap-3 p-1">
+            <div class="flex gap-1 items-center bg-amber-50 px-2 py-1 rounded-lg border border-amber-300">${cubesHtml}</div>
+            <div class="flex gap-1 items-center bg-orange-50 px-2 py-1 rounded-lg border border-orange-300">${tensHtml}</div>
+            <div class="flex gap-1 items-center bg-sky-50 px-2 py-1 rounded-lg border border-sky-300">${onesHtml}</div>
+          </div>
+        `;
+      } else if (q.visualType === "placeValue" || q.visualType === "smudgedReceipt") {
+        const isSmudge = q.visualType === "smudgedReceipt";
+        stage.innerHTML = `
+          <div class="text-xs font-black ${isSmudge ? "text-rose-700" : "text-indigo-900"} mb-1.5">
+            ${isSmudge ? "🕵️ 弄髒的家電發票位值表" : "📋 四位數位值表"} — ${v.title || v.note || ""}
+          </div>
+          <div class="grid grid-cols-4 border-3 border-slate-900 rounded-xl overflow-hidden w-full max-w-md text-center shadow">
+            <div class="bg-pink-200 font-black py-1 border-r-2 border-b-2 border-slate-900 text-sm">千位</div>
+            <div class="bg-sky-200 font-black py-1 border-r-2 border-b-2 border-slate-900 text-sm">百位</div>
+            <div class="bg-amber-200 font-black py-1 border-r-2 border-b-2 border-slate-900 text-sm">十位</div>
+            <div class="bg-emerald-200 font-black py-1 border-b-2 border-slate-900 text-sm">個位</div>
+            <div class="bg-white py-2.5 border-r-2 border-slate-900 text-xl font-black ${v.smudgePos === "k" ? "bg-amber-900/20 text-rose-600 animate-pulse" : ""}">${v.k}</div>
+            <div class="bg-white py-2.5 border-r-2 border-slate-900 text-xl font-black ${v.smudgePos === "h" ? "bg-slate-800/20 text-rose-600 animate-pulse" : ""}">${v.h}</div>
+            <div class="bg-white py-2.5 border-r-2 border-slate-900 text-xl font-black">${v.t}</div>
+            <div class="bg-white py-2.5 text-xl font-black">${v.o}</div>
+          </div>
+        `;
+      } else if (q.visualType === "trainSequence") {
+        const cars = (v.seq || []).map(num => {
+          const isQ = num.includes("？");
+          return `<div class="px-2.5 py-2 rounded-xl border-3 border-slate-900 font-black text-sm md:text-base ${isQ ? "bg-amber-300 text-rose-700 animate-bounce" : "bg-sky-100 text-slate-900"} shadow-sm">${num}</div>`;
+        }).join(`<span class="font-black text-slate-500">➔</span>`);
+        stage.innerHTML = `
+          <div class="text-xs font-black text-sky-900 mb-2">🚂 百貨數詞序列列車（規律：${v.rule}）</div>
+          <div class="flex flex-wrap items-center justify-center gap-1.5">${cars}</div>
+        `;
+      } else if (q.visualType === "money") {
+        let bills = "";
+        for (let i = 0; i < (v.k1 || 0); i++) {
+          bills += `<span class="px-2.5 py-1 rounded bg-sky-600 text-white font-black text-xs border-2 border-slate-900 shadow-sm">💵1000元</span>`;
+        }
+        for (let i = 0; i < (v.h5 || 0); i++) {
+          bills += `<span class="px-2.5 py-1 rounded bg-amber-700 text-white font-black text-xs border-2 border-slate-900 shadow-sm">💴500元</span>`;
+        }
+        for (let i = 0; i < Math.min(v.h1 || 0, 10); i++) {
+          bills += `<span class="px-2 py-1 rounded bg-rose-500 text-white font-black text-xs border-2 border-slate-900 shadow-sm">🧧100元</span>`;
+        }
+        if ((v.t10 || 0) > 0) {
+          bills += `<span class="px-2.5 py-1 rounded-full bg-amber-300 text-slate-900 font-black text-xs border-2 border-slate-900">🪙 10元硬幣 × ${v.t10}個</span>`;
+        }
+        stage.innerHTML = `
+          <div class="text-xs font-black text-emerald-900 mb-1.5">💰 百貨錢幣點數盤（${v.note || ""}）</div>
+          <div class="flex flex-wrap items-center justify-center gap-1.5 max-w-md">${bills}</div>
+        `;
+      } else if (q.visualType === "countUp") {
+        const stepPills = (v.steps || []).map(s => `<span class="px-2 py-1 rounded-lg bg-emerald-100 border-2 border-emerald-700 text-xs font-black text-emerald-900">${s}</span>`).join(" ");
+        stage.innerHTML = `
+          <div class="text-xs font-black text-emerald-900 mb-1">${v.item}｜現有 <span class="text-blue-700">$${v.have}</span> 元，往上數到 <span class="text-rose-600">$${v.target}</span> 元：</div>
+          <div class="flex flex-wrap items-center justify-center gap-1.5 mt-1">${stepPills}</div>
+        `;
+      } else if (q.visualType === "compareScale") {
+        stage.innerHTML = `
+          <div class="text-xs font-black text-purple-900 mb-2">⚖️ 萬能百貨比價天平（先比千位，再比百、十、個位）</div>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <div class="px-3 py-2 rounded-xl bg-purple-100 border-2 border-purple-800 font-black text-sm">${v.left1} <span class="px-1.5 py-0.5 bg-white rounded border border-purple-600 text-rose-600">？</span> ${v.right1}</div>
+            <div class="px-3 py-2 rounded-xl bg-amber-100 border-2 border-amber-800 font-black text-sm">${v.left2} <span class="px-1.5 py-0.5 bg-white rounded border border-amber-600 text-rose-600">？</span> ${v.right2}</div>
+          </div>
+        `;
+      } else if (q.visualType === "numberCards") {
+        const cardsHtml = (v.cards || []).map(c => `
+          <div class="w-12 h-14 rounded-xl bg-amber-300 border-3 border-slate-900 shadow flex items-center justify-center text-2xl font-black text-slate-900">${c}</div>
+        `).join("");
+        stage.innerHTML = `
+          <div class="text-xs font-black text-slate-700 mb-1.5">🔐 數字密碼卡：${v.condition}</div>
+          <div class="flex items-center justify-center gap-3">${cardsHtml}</div>
+        `;
+      }
+    }
+
+    /*************************************************************************
+     * 6. 外部素材 API 取圖 (Wikimedia Commons + Pollinations AI + SVG Fallback)
+     *************************************************************************/
+    async function loadSmartConceptAsset(q) {
+      const imgEl = document.getElementById("concept-img");
+      const capEl = document.getElementById("concept-caption");
+      capEl.textContent = `${q.tileName}（${q.nodeId}）`;
+
+      // Attach guaranteed SVG fallback on error
+      imgEl.onerror = () => handleImgError(imgEl, q.tileName, "#D97706");
+
+      // Try Wikimedia Commons first, fallback to Pollinations educational illustration
+      try {
+        const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=filetype:bitmap|drawing%20${encodeURIComponent(q.wikiKeyword || "department store")}&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const pages = data?.query?.pages;
+        if (pages) {
+          const first = Object.values(pages)[0];
+          const thumb = first?.imageinfo?.[0]?.thumburl || first?.imageinfo?.[0]?.url;
+          if (thumb) {
+            imgEl.src = thumb;
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Fallback to Pollinations AI or immediate SVG
+      const encoded = encodeURIComponent(`${q.aiPrompt || "cute department store illustration"}, children book illustration, flat vector style, no text`);
+      imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=360&height=240&seed=${q.id + 100}&nologo=true`;
+    }
+
+    function handleImgError(imgElement, fallbackTitle, themeColor = "#D97706") {
+      imgElement.onerror = null;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+        <rect width="100%" height="100%" rx="16" fill="#FEF3C7" stroke="${themeColor}" stroke-width="4" stroke-dasharray="8 4"/>
+        <circle cx="160" cy="80" r="34" fill="#FDE68A" stroke="#1E293B" stroke-width="3"/>
+        <text x="160" y="92" font-size="30" text-anchor="middle">🛍️</text>
+        <text x="160" y="155" font-family="sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#1E293B">${fallbackTitle}</text>
+      </svg>`;
+      imgElement.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+
+    /*************************************************************************
+     * 7. 載入題目、洗牌選項與三階漸進鷹架判定
+     *************************************************************************/
+    function loadQuestion() {
+      const q = QUESTIONS_DB[gameState.currentIndex];
+      gameState.wrongAttemptOnCurrent = 0;
+      gameState.buzzedTeam = null;
+
+      // Update Header & Badges
+      document.getElementById("progress-text").textContent = `${gameState.currentIndex + 1} / ${QUESTIONS_DB.length}`;
+      document.getElementById("q-floor-badge").textContent = q.floor;
+      document.getElementById("q-node-badge").textContent = `${q.nodeId}：${q.nodeName}`;
+      document.getElementById("q-reward-badge").textContent = `💰 專櫃獎金 +$${q.reward}`;
+      document.getElementById("q-stem").textContent = q.question;
+
+      // Hide Scaffold Drawer
+      document.getElementById("scaffold-drawer").classList.add("hidden");
+      document.getElementById("next-q-btn").classList.add("hidden");
+
+      // Render Manipulative & Smart Image
+      renderManipulative(q);
+      loadSmartConceptAsset(q);
+
+      // Shuffle Options while tracking correct answer
+      const indexedOptions = q.options.map((text, idx) => ({
+        text,
+        isCorrect: idx === q.correctIndex
+      }));
+      for (let i = indexedOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexedOptions[i], indexedOptions[j]] = [indexedOptions[j], indexedOptions[i]];
+      }
+
+      const grid = document.getElementById("options-grid");
+      grid.innerHTML = "";
+      const labels = ["A", "B", "C", "D"];
+
+      indexedOptions.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "storybook-btn p-3.5 rounded-2xl bg-white hover:bg-amber-50 text-left flex items-center gap-3 font-black text-base md:text-lg text-slate-900";
+        btn.dataset.correct = opt.isCorrect ? "1" : "0";
+        btn.innerHTML = `
+          <span class="w-9 h-9 shrink-0 rounded-xl bg-slate-900 text-amber-300 flex items-center justify-center font-black text-base">${labels[idx]}</span>
+          <span class="flex-1 leading-snug">${opt.text}</span>
+        `;
+        btn.onclick = () => handleAnswerSelect(btn, opt.isCorrect, opt.text, q);
+        grid.appendChild(btn);
+      });
+
+      // Handle Buzz-in mode
+      const buzzPanel = document.getElementById("buzz-panel");
+      if (gameState.playMode === "buzz") {
+        buzzPanel.classList.remove("hidden");
+        toggleOptionsDisabled(true);
+      } else {
+        buzzPanel.classList.add("hidden");
+        toggleOptionsDisabled(false);
+      }
+
+      updateTurnUI();
+      renderBoard();
+      resetAndStartTimer();
+    }
+
+    function toggleOptionsDisabled(disabled) {
+      const btns = document.querySelectorAll("#options-grid button");
+      btns.forEach(b => {
+        b.disabled = disabled;
+        b.classList.toggle("opacity-50", disabled);
+      });
+    }
+
+    function buzzIn(team) {
+      playSound("click");
+      gameState.activeTeam = team;
+      gameState.buzzedTeam = team;
+      updateTurnUI();
+      toggleOptionsDisabled(false);
+      document.getElementById("buzz-panel").classList.add("hidden");
+    }
+
+    function handleAnswerSelect(btn, isCorrect, chosenText, q) {
+      const team = gameState.activeTeam;
+      const drawer = document.getElementById("scaffold-drawer");
+      const badge = document.getElementById("scaffold-badge");
+      const textEl = document.getElementById("scaffold-text");
+      const stealNotice = document.getElementById("steal-turn-notice");
+      const nextBtn = document.getElementById("next-q-btn");
+
+      if (isCorrect) {
+        playSound("correct");
+        clearInterval(gameState.timerInterval);
+        btn.className = "storybook-btn p-3.5 rounded-2xl bg-emerald-400 text-slate-950 text-left flex items-center gap-3 font-black text-base md:text-lg";
+        toggleOptionsDisabled(true);
+
+        // Telemetry record on first completions
+        if (!gameState.answeredCompleted[q.id]) {
+          gameState.answeredCompleted[q.id] = true;
+          if (gameState.nodeStats[q.nodeId]) {
+            gameState.nodeStats[q.nodeId].total += 1;
+            if (gameState.wrongAttemptOnCurrent === 0) {
+              gameState.nodeStats[q.nodeId].correctFirstTry += 1;
+            }
+          }
+        }
+        if (gameState.wrongAttemptOnCurrent === 0) {
+          gameState.wrongQuestionIds.delete(q.id);
+        }
+
+        // Award Score & Tile Ownership
+        gameState.tileOwners[q.id] = team;
+        if (team === "red") {
+          gameState.redCombo += 1;
+          const bonus = gameState.redCombo >= 2 ? 300 : 0;
+          gameState.redScore += q.reward + bonus;
+        } else {
+          gameState.blueCombo += 1;
+          const bonus = gameState.blueCombo >= 2 ? 300 : 0;
+          gameState.blueScore += q.reward + bonus;
+        }
+
+        drawer.classList.remove("hidden");
+        drawer.className = "mt-2 rounded-2xl border-3 border-emerald-600 bg-emerald-50 p-3";
+        badge.className = "px-2.5 py-0.5 text-xs font-black rounded-full bg-emerald-600 text-white";
+        badge.textContent = `🎉 ${team === "red" ? "🔴 紅隊" : "🔵 藍隊"}答對佔領專櫃！ (+$${q.reward})`;
+        stealNotice.textContent = "";
+        textEl.textContent = q.hints[2]; // Full explanation
+        nextBtn.classList.remove("hidden");
+
+        // Switch turn for next round
+        gameState.activeTeam = team === "red" ? "blue" : "red";
+        updateScoreHUD();
+        renderBoard();
+      } else {
+        // WRONG ANSWER -> Progressive Scaffolding!
+        playSound("wrong");
+        gameState.wrongAttemptOnCurrent += 1;
+        gameState.wrongQuestionIds.add(q.id);
+
+        if (team === "red") gameState.redCombo = 0;
+        else gameState.blueCombo = 0;
+
+        btn.disabled = true;
+        btn.className = "storybook-btn p-3.5 rounded-2xl bg-rose-200 text-rose-900 opacity-60 text-left flex items-center gap-3 font-black text-base md:text-lg line-through";
+
+        drawer.classList.remove("hidden");
+        drawer.className = "mt-2 rounded-2xl border-3 border-amber-500 bg-amber-50 p-3";
+
+        if (gameState.wrongAttemptOnCurrent === 1) {
+          badge.className = "px-2.5 py-0.5 text-xs font-black rounded-full bg-amber-500 text-white";
+          badge.textContent = "💡 第一階鷹架提示 (Hint 1：概念線索)";
+          textEl.textContent = q.hints[0];
+          // Allow the other team a steal opportunity or let current team discuss
+          const otherTeamName = team === "red" ? "🔵 藍隊" : "🔴 紅隊";
+          stealNotice.textContent = `⚡ 機會讓渡！可開放 ${otherTeamName} 補刀搶答！`;
+          gameState.activeTeam = team === "red" ? "blue" : "red";
+        } else {
+          badge.className = "px-2.5 py-0.5 text-xs font-black rounded-full bg-rose-600 text-white";
+          badge.textContent = "🛠️ 第二階鷹架提示 (Hint 2：破除迷思)";
+          textEl.textContent = q.hints[1];
+          stealNotice.textContent = "🔍 仔細看上方教具區與提示，找出正確答案！";
+        }
+        updateScoreHUD();
+        updateTurnUI();
+      }
+    }
+
+    function showHintManually() {
+      playSound("click");
+      const q = QUESTIONS_DB[gameState.currentIndex];
+      const drawer = document.getElementById("scaffold-drawer");
+      drawer.classList.remove("hidden");
+      document.getElementById("scaffold-badge").textContent = "💡 小店長主動查看提示";
+      document.getElementById("scaffold-text").textContent = q.hints[0] + " " + q.hints[1];
+    }
+
+    function nextQuestion() {
+      playSound("click");
+      if (gameState.inRetryMode && gameState.retryQueue.length > 0) {
+        const nextId = gameState.retryQueue.shift();
+        const idx = QUESTIONS_DB.findIndex(item => item.id === nextId);
+        if (idx !== -1) {
+          gameState.currentIndex = idx;
+          loadQuestion();
+          return;
+        }
+      }
+      gameState.inRetryMode = false;
+      if (gameState.currentIndex < QUESTIONS_DB.length - 1) {
+        gameState.currentIndex += 1;
+        if (gameState.activeTeam === "red") gameState.redPos = gameState.currentIndex;
+        else gameState.bluePos = gameState.currentIndex;
+        loadQuestion();
+      } else {
+        showDiagnosticReport();
+      }
+    }
+
+    function prevQuestion() {
+      playSound("click");
+      if (gameState.currentIndex > 0) {
+        gameState.currentIndex -= 1;
+        loadQuestion();
+      }
+    }
+
+    /*************************************************************************
+     * 8. HUD 更新、模式切換、計時器與語音報讀 (TTS)
+     *************************************************************************/
+    function updateScoreHUD() {
+      document.getElementById("red-score").textContent = gameState.redScore;
+      document.getElementById("blue-score").textContent = gameState.blueScore;
+
+      const redTiles = Object.values(gameState.tileOwners).filter(v => v === "red").length;
+      const blueTiles = Object.values(gameState.tileOwners).filter(v => v === "blue").length;
+      document.getElementById("red-tiles").textContent = redTiles;
+      document.getElementById("blue-tiles").textContent = blueTiles;
+
+      const rc = document.getElementById("red-combo");
+      const bc = document.getElementById("blue-combo");
+      rc.textContent = `🔥連擊x${gameState.redCombo}`;
+      rc.classList.toggle("hidden", gameState.redCombo < 2);
+      bc.textContent = `🔥連擊x${gameState.blueCombo}`;
+      bc.classList.toggle("hidden", gameState.blueCombo < 2);
+    }
+
+    function updateTurnUI() {
+      const badge = document.getElementById("turn-badge");
+      const hudRed = document.getElementById("hud-red");
+      const hudBlue = document.getElementById("hud-blue");
+
+      if (gameState.activeTeam === "red") {
+        badge.textContent = "輪到：🔴 紅隊回合";
+        badge.className = "text-sm md:text-base font-black px-3 py-1 rounded-full bg-red-600 text-white shadow";
+        hudRed.classList.add("ring-4", "ring-red-400");
+        hudBlue.classList.remove("ring-4", "ring-blue-400");
+      } else {
+        badge.textContent = "輪到：🔵 藍隊回合";
+        badge.className = "text-sm md:text-base font-black px-3 py-1 rounded-full bg-blue-600 text-white shadow";
+        hudBlue.classList.add("ring-4", "ring-blue-400");
+        hudRed.classList.remove("ring-4", "ring-red-400");
+      }
+    }
+
+    function switchTeamTurn() {
+      playSound("click");
+      gameState.activeTeam = gameState.activeTeam === "red" ? "blue" : "red";
+      updateTurnUI();
+    }
+
+    function togglePlayMode() {
+      playSound("click");
+      gameState.playMode = gameState.playMode === "turn" ? "buzz" : "turn";
+      document.getElementById("mode-btn").textContent =
+        gameState.playMode === "turn" ? "🔄 模式：輪流擲骰制" : "⚡ 模式：雙隊按鈴搶答";
+      loadQuestion();
+    }
+
+    function toggleTimer() {
+      gameState.timerEnabled = !gameState.timerEnabled;
+      document.getElementById("timer-toggle-btn").textContent =
+        gameState.timerEnabled ? "⏱️ 倒數：開啟(30s)" : "⏱️ 倒數：關閉";
+      resetAndStartTimer();
+    }
+
+    function resetAndStartTimer() {
+      clearInterval(gameState.timerInterval);
+      const box = document.getElementById("timer-box");
+      if (!gameState.timerEnabled) {
+        box.classList.add("hidden");
+        return;
+      }
+      box.classList.remove("hidden");
+      gameState.timeLeft = 30;
+      document.getElementById("timer-sec").textContent = gameState.timeLeft;
+
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeLeft -= 1;
+        document.getElementById("timer-sec").textContent = gameState.timeLeft;
+        if (gameState.timeLeft <= 0) {
+          clearInterval(gameState.timerInterval);
+          showHintManually();
+        }
+      }, 1000);
+    }
+
+    function speakCurrentQuestion() {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const q = QUESTIONS_DB[gameState.currentIndex];
+      const utter = new SpeechSynthesisUtterance(
+        `${q.question}。選項 A：${q.options[0]}。選項 B：${q.options[1]}。選項 C：${q.options[2]}。選項 D：${q.options[3]}`
+      );
+      utter.lang = "zh-TW";
+      utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    }
+
+    /*************************************************************************
+     * 9. Gemini AI API 蘇格拉底助教、動態延長出題與診斷評語
+     *************************************************************************/
+    async function callGeminiTutor(systemInstruction, userPrompt, responseSchema = null) {
+      const activeKey = window.USER_API_KEY || apiKey;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] }
+      };
+      if (responseSchema) {
+        payload.generationConfig = {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema
+        };
+      }
+      const delays = [1000, 2000, 4000];
+      for (let i = 0; i <= delays.length; i++) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          return data.candidates?.[0]?.content?.parts?.[0]?.text;
+        } catch (err) {
+          if (i === delays.length) return null;
+          await new Promise(r => setTimeout(r, delays[i]));
+        }
+      }
+    }
+
+    async function askGeminiTutor() {
+      const q = QUESTIONS_DB[gameState.currentIndex];
+      const btn = document.getElementById("ai-hint-btn");
+      const textEl = document.getElementById("scaffold-text");
+      btn.disabled = true;
+      btn.textContent = "🤖 思考中...";
+
+      const sys = "你是一位溫暖活潑的台灣國小三年級數學百貨店長顧問。請用60字以內的繁體中文，給予蘇格拉底式不破梗的啟發提問，引導小三學生思考《10000以內的數》位值、錢幣化聚或比大小，絕對不要直接說出答案。";
+      const prompt = `目前題目：${q.question}\n正確觀念提示：${q.hints[0]} ${q.hints[1]}\n請給學生一句親切好懂的引導提示：`;
+
+      const reply = await callGeminiTutor(sys, prompt);
+      if (reply) {
+        textEl.textContent = `🤖 AI 總店長提示：「${reply.trim()}」`;
+      } else {
+        textEl.textContent = `🤖 店長錦囊：「${q.hints[1]}」`;
+      }
+      btn.disabled = false;
+      btn.textContent = "🤖 呼叫 AI 店長顧問";
+    }
+
+    async function generateAiBonusQuestions() {
+      const btn = document.getElementById("ai-bonus-btn");
+      btn.disabled = true;
+      btn.textContent = "✨ AI 正在命題中...";
+
+      const schema = {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            tileName: { type: "STRING" },
+            nodeId: { type: "STRING" },
+            nodeName: { type: "STRING" },
+            question: { type: "STRING" },
+            options: { type: "ARRAY", items: { type: "STRING" } },
+            correctIndex: { type: "INTEGER" },
+            hints: { type: "ARRAY", items: { type: "STRING" } }
+          },
+          required: ["tileName", "nodeId", "nodeName", "question", "options", "correctIndex", "hints"]
+        }
+      };
+
+      const sys = "你是台灣國小三年級數學命題專家，請依據『10000以內的數（四位數位值、跨千進退位、錢幣化聚、弄髒的發票最大最小推論）』設計3題百貨購物情境題。";
+      const resText = await callGeminiTutor(sys, "請生成 3 道全新的百貨公司情境數學題（每題 4 個選項，correctIndex 為 0，含 3 個提示）。", schema);
+
+      if (resText) {
+        try {
+          const newItems = JSON.parse(resText);
+          newItems.forEach((item, idx) => {
+            QUESTIONS_DB.push({
+              id: QUESTIONS_DB.length + 1,
+              tileName: item.tileName || `加碼專櫃 ${idx + 1}`,
+              floor: "🌟 頂樓 AI 加碼館",
+              nodeId: item.nodeId || "Node 06",
+              nodeName: item.nodeName || "AI 進階挑戰",
+              reward: 2500,
+              question: item.question,
+              options: item.options,
+              correctIndex: item.correctIndex || 0,
+              hints: item.hints || ["仔細觀察千百十個位值！", "注意跨千與 0 的占位！", "恭喜破解 AI 加碼題！"],
+              visualType: "placeValue",
+              visualData: { k: "?", h: "?", t: "?", o: "?", title: "🌟 AI 動態加碼挑戰" },
+              wikiKeyword: "Shopping mall",
+              aiPrompt: "futuristic department store trophy"
+            });
+          });
+          closeDiagnosticReport();
+          gameState.currentIndex = QUESTIONS_DB.length - newItems.length;
+          loadQuestion();
+          btn.disabled = false;
+          btn.textContent = "✨ AI 生成 3 題延長加碼賽";
+          return;
+        } catch (e) {}
+      }
+
+      // Offline Fallback Bonus Question if no API key
+      QUESTIONS_DB.push({
+        id: QUESTIONS_DB.length + 1,
+        tileName: "頂樓特賣會",
+        floor: "🌟 頂樓延長加碼賽",
+        nodeId: "Node 06",
+        nodeName: "髒發票推論與條件排卡",
+        reward: 2500,
+        question: "【加碼延長賽】媽媽買了一臺烤箱，發票上的十位數字模糊了，顯示為「[3][6][？][0] 元」，請問這臺烤箱最多是多少元？最少是多少元？",
+        options: [
+          "最多是 3690 元，最少是 3600 元",
+          "最多是 3690 元，最少是 3610 元",
+          "最多是 9690 元，最少是 1600 元",
+          "最多是 3990 元，最少是 3000 元"
+        ],
+        correctIndex: 0,
+        hints: [
+          "模糊的是「十位數字」，千位 3、百位 6、個位 0 都已經確定囉！",
+          "十位在中間，可以填入 0～9 任何一個數字，所以最多填 9（3690），最少填 0（3600）！",
+          "解析：十位最多填 9 是 3690 元，最少填 0 是 3600 元。"
+        ],
+        visualType: "smudgedReceipt",
+        visualData: { k: "3", h: "6", t: "？", o: "0", smudgePos: "h", note: "延長加碼賽：十位模糊" },
+        wikiKeyword: "Oven",
+        aiPrompt: "kitchen toaster oven in department store"
+      });
+      closeDiagnosticReport();
+      gameState.currentIndex = QUESTIONS_DB.length - 1;
+      loadQuestion();
+      btn.disabled = false;
+      btn.textContent = "✨ AI 生成 3 題延長加碼賽";
+    }
+
+    async function requestAiDiagnosticSummary() {
+      const el = document.getElementById("ai-diagnostic-text");
+      el.textContent = "🤖 正在分析全班作答數據並撰寫講評...";
+      const summary = Object.entries(gameState.nodeStats)
+        .map(([k, v]) => `${k}(${v.name}): 答對${v.correctFirstTry}/${v.total}`)
+        .join("；");
+      const reply = await callGeminiTutor(
+        "你是專業親切的國小三年級數學科任老師，請根據各知識節點答題統計，用80字以內給全班鼓勵與具體複習建議。",
+        `本局紅隊 $${gameState.redScore} 元、藍隊 $${gameState.blueScore} 元。知識點表現：${summary}`
+      );
+      if (reply) {
+        el.textContent = reply.trim();
+      } else {
+        el.textContent = "🌟 總店長講評：兩隊小店長表現都非常精彩！建議針對「跨千退位（如 5000 少 1、4205 少 10）」與「弄髒發票千位不可為 0（最少是 1568 元）」再搭配位值表多練習一次喔！";
+      }
+    }
+
+    /*************************************************************************
+     * 10. 結算診斷報告、錯題重練與 CSV/證書匯出
+     *************************************************************************/
+    function showDiagnosticReport() {
+      clearInterval(gameState.timerInterval);
+      const modal = document.getElementById("report-modal");
+      modal.classList.remove("hidden");
+
+      const red = gameState.redScore;
+      const blue = gameState.blueScore;
+      const titleEl = document.getElementById("winner-title");
+      const subEl = document.getElementById("winner-subtitle");
+
+      if (red > blue) {
+        titleEl.textContent = `🏆 🔴 紅隊採購團 領先奪冠！ ($${red} vs $${blue})`;
+      } else if (blue > red) {
+        titleEl.textContent = `🏆 🔵 藍隊採購團 領先奪冠！ ($${blue} vs $${red})`;
+      } else {
+        titleEl.textContent = `🤝 紅藍雙隊平手！並列萬能百貨榮譽總店長！ ($${red})`;
+      }
+      subEl.textContent = `已完成專櫃：${Object.keys(gameState.answeredCompleted).length} / ${QUESTIONS_DB.length} 題｜待複習錯題：${gameState.wrongQuestionIds.size} 題`;
+
+      // Retry button
+      const retryBtn = document.getElementById("retry-wrong-btn");
+      document.getElementById("wrong-count-num").textContent = gameState.wrongQuestionIds.size;
+      retryBtn.classList.toggle("hidden", gameState.wrongQuestionIds.size === 0);
+
+      // Node Breakdown
+      const listEl = document.getElementById("node-breakdown-list");
+      listEl.innerHTML = "";
+      Object.entries(gameState.nodeStats).forEach(([nodeId, stat]) => {
+        const rate = stat.total > 0 ? Math.round((stat.correctFirstTry / stat.total) * 100) : 100;
+        const barColor = rate >= 80 ? "bg-emerald-500" : rate >= 50 ? "bg-amber-500" : "bg-rose-500";
+        listEl.innerHTML += `
+          <div class="p-3 rounded-xl border-2 border-slate-800 bg-slate-50">
+            <div class="flex justify-between text-xs font-black mb-1">
+              <span>${nodeId}：${stat.name}</span>
+              <span>一次精熟率：${rate}% (${stat.correctFirstTry}/${stat.total})</span>
+            </div>
+            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden border border-slate-400">
+              <div class="${barColor} h-full" style="width:${rate}%"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function closeDiagnosticReport() {
+      document.getElementById("report-modal").classList.add("hidden");
+    }
+
+    function startMasteryRetry() {
+      if (gameState.wrongQuestionIds.size === 0) return;
+      gameState.inRetryMode = true;
+      gameState.retryQueue = Array.from(gameState.wrongQuestionIds);
+      const firstId = gameState.retryQueue.shift();
+      const idx = QUESTIONS_DB.findIndex(q => q.id === firstId);
+      closeDiagnosticReport();
+      if (idx !== -1) {
+        gameState.currentIndex = idx;
+        loadQuestion();
+      }
+    }
+
+    function copyCertificateText() {
+      const lines = [
+        "【萬能百貨大富翁：國小三年級數學《10000以內的數》學習歷程報告】",
+        `🔴 紅隊營業額：$${gameState.redScore} 元`,
+        `🔵 藍隊營業額：$${gameState.blueScore} 元`,
+        `完成題數：${Object.keys(gameState.answeredCompleted).length} / ${QUESTIONS_DB.length} 題`,
+        "--- 各知識節點精熟度 ---"
+      ];
+      Object.entries(gameState.nodeStats).forEach(([k, v]) => {
+        lines.push(`${k} ${v.name}：${v.correctFirstTry}/${v.total}`);
+      });
+      navigator.clipboard.writeText(lines.join("\n"));
+      alert("📋 已複製學習歷程文字報告！可直接貼上至群組或紀錄表。");
+    }
+
+    function downloadCsvReport() {
+      let csv = "\uFEFF知識節點編號,知識點名稱,已作答題數,首次答對題數\n";
+      Object.entries(gameState.nodeStats).forEach(([k, v]) => {
+        csv += `"${k}","${v.name}",${v.total},${v.correctFirstTry}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "萬能百貨大富翁_10000以內的數_診斷成績單.csv";
+      a.click();
+    }
+
+    function resetFullGame() {
+      gameState.currentIndex = 0;
+      gameState.redScore = 2000;
+      gameState.blueScore = 2000;
+      gameState.redCombo = 0;
+      gameState.blueCombo = 0;
+      gameState.redPos = 0;
+      gameState.bluePos = 0;
+      gameState.tileOwners = {};
+      gameState.answeredCompleted = {};
+      gameState.wrongQuestionIds.clear();
+      Object.values(gameState.nodeStats).forEach(s => { s.total = 0; s.correctFirstTry = 0; });
+      closeDiagnosticReport();
+      updateScoreHUD();
+      loadQuestion();
+    }
+
+    /*************************************************************************
+     * 11. 課堂幸運座號抽籤器 & API 設定視窗
+     *************************************************************************/
+    function openLuckyPicker() {
+      playSound("click");
+      document.getElementById("picker-modal").classList.remove("hidden");
+    }
+    function closeLuckyPicker() {
+      document.getElementById("picker-modal").classList.add("hidden");
+    }
+    function spinSeatNumber() {
+      playSound("dice");
+      const max = parseInt(document.getElementById("max-seat-input").value, 10) || 30;
+      const disp = document.getElementById("picked-number-display");
+      let count = 0;
+      const timer = setInterval(() => {
+        disp.textContent = `${Math.floor(Math.random() * max) + 1} 號`;
+        count++;
+        if (count > 12) {
+          clearInterval(timer);
+          playSound("correct");
+        }
+      }, 60);
+    }
+
+    function openApiModal() {
+      document.getElementById("api-modal").classList.remove("hidden");
+    }
+    function closeApiModal() {
+      document.getElementById("api-modal").classList.add("hidden");
+    }
+    function saveApiKey() {
+      window.USER_API_KEY = document.getElementById("api-key-input").value.trim();
+      closeApiModal();
+    }
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      updateScoreHUD();
+      loadQuestion();
+    });
+  </script>
+</body>
+</html>

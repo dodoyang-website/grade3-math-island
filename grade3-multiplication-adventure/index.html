@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>乘法王國生活大冒險：三年級數學情境闖關（翰林L04）</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #f8fafc;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+    }
+    .math-font {
+      font-family: 'Consolas', 'Monaco', 'Courier New', 'Microsoft JhengHei', monospace;
+      letter-spacing: 0.04em;
+    }
+    /* 主題漸層背景 */
+    .theme-ocean {
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0e7ff 100%);
+    }
+    .theme-market {
+      background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 50%, #dcfce7 100%);
+    }
+    .theme-dining {
+      background: linear-gradient(135deg, #ffe4e6 0%, #fff1f2 50%, #ffedd5 100%);
+    }
+    .theme-taiwan {
+      background: linear-gradient(135deg, #ccfbf1 0%, #f0fdfa 50%, #e0f2fe 100%);
+    }
+    .theme-school {
+      background: linear-gradient(135deg, #fef9c3 0%, #fefce8 50%, #fae8ff 100%);
+    }
+    .theme-vault {
+      background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 50%, #fef3c7 100%);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    }
+    .opt-card {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .opt-card:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.22);
+    }
+    .opt-card:active:not(:disabled) {
+      transform: translateY(1px) scale(0.99);
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .float-anim {
+      animation: floatSlow 3.2s ease-in-out infinite;
+    }
+    /* 直式位值表格 */
+    .place-grid {
+      display: inline-grid;
+      grid-template-columns: repeat(4, 2.3rem);
+      text-align: center;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+    }
+    .place-header {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .place-cell {
+      font-size: 1.35rem;
+      font-weight: 900;
+      padding: 3px 0;
+      line-height: 1.25;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+  </style>
+</head>
+<body id="appBody" class="theme-ocean min-h-screen flex flex-col justify-between transition-colors duration-500">
+
+  <!-- 頂部狀態導覽列 (HUD) -->
+  <header class="w-full max-w-5xl mx-auto px-3 pt-2.5 pb-2 flex flex-wrap items-center justify-between gap-2 bg-white/85 backdrop-blur-md border-b border-slate-200 rounded-b-2xl shadow-sm sticky top-0 z-30">
+    <!-- 左側：章節與關卡進度 -->
+    <div class="flex items-center gap-2.5">
+      <div id="hudThemeIcon" class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center text-xl shadow-md font-bold">
+        🐬
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-base md:text-lg font-black text-slate-800 tracking-tight">三年級乘法生活大冒險</h1>
+          <span id="chapterPill" class="text-xs font-extrabold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300">海洋水族館</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-600 mt-0.5">
+          <span>關卡 <span id="hudProgressText" class="text-slate-900 font-black">1 / 23</span></span>
+          <div class="w-24 sm:w-36 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div id="hudProgressBar" class="h-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-300 w-[4%]"></div>
+          </div>
+          <span class="text-amber-600 font-black ml-1">⭐ <span id="hudScore">0</span> 分</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中央：單人護盾 / 連擊 / 雙隊PK -->
+    <div class="flex items-center gap-2">
+      <div id="soloShield" class="flex items-center gap-1 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+        <span class="text-xs font-extrabold text-rose-700">護盾</span>
+        <span id="shieldHearts" class="text-sm tracking-wider">💖💖💖</span>
+      </div>
+      <div id="comboDisplay" class="hidden items-center bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-black shadow">
+        🔥 <span id="comboCount">2</span> 連擊
+      </div>
+      <div id="teamScores" class="hidden items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-300 text-xs font-black">
+        <span id="redScorePill" class="px-2 py-0.5 rounded-full bg-rose-500 text-white">🔴 紅隊 0</span>
+        <span class="text-slate-400">VS</span>
+        <span id="blueScorePill" class="px-2 py-0.5 rounded-full bg-blue-600 text-white">🔵 藍隊 0</span>
+      </div>
+    </div>
+
+    <!-- 右側工具列 -->
+    <div class="flex items-center gap-1.5">
+      <button onclick="toggleScratchpad()" class="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-black flex items-center gap-1 transition shadow-sm" title="開啟直式計算草稿板">
+        <span>📝</span>
+        <span>草稿板</span>
+      </button>
+      <button id="soundToggleBtn" onclick="toggleSound()" class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition" title="開關音效">
+        🔊
+      </button>
+      <button onclick="restartGame()" class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition" title="回首頁切換模式">
+        🏠
+      </button>
+    </div>
+  </header>
+
+  <!-- 主遊戲舞台 -->
+  <main class="w-full max-w-5xl mx-auto px-3 py-3 flex-1 flex flex-col justify-center items-center">
+
+    <!-- 1. 首頁情境地圖選單 (START_SCREEN) -->
+    <div id="startScreen" class="w-full glass-card rounded-3xl p-5 md:p-8 border-2 border-white shadow-xl">
+      <div class="text-center mb-5">
+        <span class="inline-block px-3 py-1 rounded-full bg-sky-100 text-sky-800 font-black text-xs border border-sky-200 mb-2">
+          🎯 108課綱 翰林三上數學第 4 單元《乘法》全情境素養特訓
+        </span>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+          乘法王國：六大生活情境闖關記
+        </h2>
+        <p class="text-xs md:text-sm font-bold text-slate-600 mt-1">
+          結合真實購物比價、戶外教育租車、餐廳餐券決策、臺灣鰻魚王國與進位破譯（共 23 題精選）
+        </p>
+      </div>
+
+      <!-- 六大生活情境主題預覽卡 -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5 text-left">
+        <div onclick="startFromChapter(0)" class="p-3 rounded-2xl bg-gradient-to-br from-sky-50 to-blue-100 border border-sky-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">🐬</span>
+            <span class="text-xs font-black text-sky-900">1. 水族館戶外教育</span>
+          </div>
+          <p class="text-xs text-sky-700">遊覽車座位、海獅餵食秀、1500元公費體驗、紀念帽找零</p>
+        </div>
+        <div onclick="startFromChapter(4)" class="p-3 rounded-2xl bg-gradient-to-br from-amber-50 to-emerald-100 border border-emerald-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">🛒</span>
+            <span class="text-xs font-black text-emerald-900">2. 大賣場促銷比價</span>
+          </div>
+          <p class="text-xs text-emerald-700">長褲3件特價、兩家超商洗手乳比價、毛巾檔期、保溫水壺</p>
+        </div>
+        <div onclick="startFromChapter(8)" class="p-3 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-100 border border-rose-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">🍽️</span>
+            <span class="text-xs font-black text-rose-900">3. 餐廳聚餐與電影</span>
+          </div>
+          <p class="text-xs text-rose-700">1600元餐券選餐館、爺爺慶生折抵、義式聚餐、電影票人數陷阱</p>
+        </div>
+        <div onclick="startFromChapter(12)" class="p-3 rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-100 border border-teal-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">🌊</span>
+            <span class="text-xs font-black text-teal-900">4. 臺灣鰻魚王國與交通</span>
+          </div>
+          <p class="text-xs text-teal-700">河口捕鰻魚苗、竹筷子百位計數法、旗津渡輪、鐵路便當熱量</p>
+        </div>
+        <div onclick="startFromChapter(16)" class="p-3 rounded-2xl bg-gradient-to-br from-yellow-50 to-amber-100 border border-amber-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">🏫</span>
+            <span class="text-xs font-black text-amber-900">5. 校園活動與美食</span>
+          </div>
+          <p class="text-xs text-amber-700">老師900元文具發票推理、3箱橡皮擦、運動會飲料、水煎包熱量</p>
+        </div>
+        <div onclick="startFromChapter(20)" class="p-3 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-100 border border-purple-200 cursor-pointer hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xl">👑</span>
+            <span class="text-xs font-black text-purple-900">6. 運動中心與魔晶鎖</span>
+          </div>
+          <p class="text-xs text-purple-700">擊劍課中間有0、琉璃彈珠4004雙零大魔王、皇家金庫雙重密碼</p>
+        </div>
+      </div>
+
+      <!-- 模式與控制列 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <div onclick="selectGameMode('solo')" id="optSolo" class="p-3.5 rounded-2xl border-2 border-sky-500 bg-sky-50/90 cursor-pointer transition flex items-center justify-between">
+          <div>
+            <div class="font-black text-slate-900 text-sm">🧙 個人情境闖關模式（選項隨機洗牌）</div>
+            <div class="text-xs text-slate-600 mt-0.5">含三階解題鷹架、直式位值提示、錯題重練</div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-sky-600 text-white text-xs font-bold">推薦</span>
+        </div>
+        <div onclick="selectGameMode('team')" id="optTeam" class="p-3.5 rounded-2xl border-2 border-slate-200 bg-white/80 cursor-pointer transition flex items-center justify-between">
+          <div>
+            <div class="font-black text-slate-900 text-sm">⚔️ 課堂大屏雙隊 PK 競賽</div>
+            <div class="text-xs text-slate-600 mt-0.5">紅藍兩隊輪流上台挑戰，全班氣氛超熱烈</div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-rose-500 text-white text-xs font-bold">公播</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <input type="text" id="playerInput" placeholder="輸入小勇士姓名或座號" value="三年級乘法小達人" class="w-full sm:w-64 px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:outline-none focus:border-sky-600 font-bold text-center text-slate-800 bg-white text-sm">
+        <button onclick="startGame(0)" class="w-full sm:w-auto px-7 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-black text-base rounded-xl shadow-lg transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+          <span>🚀 從第 1 關開始完整挑戰 (23題)</span>
+        </button>
+      </div>
+      <p class="text-center text-xs text-slate-500 font-bold mt-2">💡 小提示：也可直接點擊上方任一「情境主題卡」跳至該章節開始！</p>
+    </div>
+
+    <!-- 2. 主遊戲畫面 (PLAYING_SCREEN) -->
+    <div id="playingScreen" class="hidden w-full flex flex-col gap-3">
+      
+      <!-- 情境主舞台卡片 -->
+      <div class="w-full glass-card rounded-3xl p-4 md:p-6 border-2 border-white shadow-xl">
+        <!-- 頂欄：關卡資訊與輔助按鈕 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200/80">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span id="questionBadge" class="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-black text-xs">第 1 關</span>
+            <span id="chapterBadge" class="px-2.5 py-1 rounded-lg bg-sky-100 text-sky-900 font-extrabold text-xs border border-sky-300">海洋水族館戶外教育</span>
+            <span id="nodeBadge" class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300">乘法估算與生活決策</span>
+            <span id="teamTurnIndicator" class="hidden px-2.5 py-1 rounded-lg font-black text-xs text-white"></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="openHintModal()" class="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-sm flex items-center gap-1 transition">
+              <span>💡</span>
+              <span>三階解題提示</span>
+            </button>
+            <button onclick="toggleScratchpad()" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-sm flex items-center gap-1 transition">
+              <span>✏️</span>
+              <span>手寫直式草稿</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 精緻情境視覺區：左側精緻 SVG 情境插畫 + 右側真實情境道具看板 & 題目 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          
+          <!-- 左側：精緻動態 SVG 情境插圖與情境道具資訊卡 (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col justify-between bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/90 shadow-inner">
+            <!-- 精緻內建 SVG 場景畫布 -->
+            <div id="sceneSvgBox" class="w-full h-36 sm:h-40 rounded-xl overflow-hidden flex items-center justify-center mb-2.5 relative shadow-sm border border-white">
+              <!-- 由 getSceneSvg(q.sceneType) 動態渲染 -->
+            </div>
+
+            <!-- 情境資訊看板 (如價目表/海報/票根) -->
+            <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+              <div id="propTitleText" class="text-xs font-black text-slate-800 pb-1.5 mb-1.5 border-b border-dashed border-slate-200 flex items-center justify-between">
+                <span>📋 情境看板</span>
+              </div>
+              <div id="propItemsList" class="space-y-1 text-xs">
+                <!-- 動態渲染看板條目 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 右側：生活情境題幹 + 直式位值對齊板 (7 cols) -->
+          <div class="lg:col-span-7 flex flex-col justify-between bg-white/90 rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <div>
+              <div class="text-xs font-extrabold text-indigo-600 mb-1 flex items-center gap-1">
+                <span>📖</span>
+                <span>生活情境任務：</span>
+              </div>
+              <p id="questionText" class="text-base md:text-lg font-black text-slate-900 leading-relaxed mb-3">
+                題目載入中...
+              </p>
+            </div>
+
+            <!-- 解題思路與直式位值對齊區 -->
+            <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex-1 text-left">
+                <div class="text-xs font-extrabold text-slate-500 mb-1">🧭 關鍵解題列式：</div>
+                <div id="formulaText" class="text-xs md:text-sm font-black text-indigo-900 bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-200">
+                  39 × 4 = ？
+                </div>
+              </div>
+              <!-- 標準千百十個位值直式板 -->
+              <div id="verticalMathBox" class="flex items-center gap-2">
+                <!-- 動態生成千/百/十/個位值對齊格 -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 即時作答回饋與詳解區 (答題後展開，附「下一題」按鈕讓學生看清楚原因！) -->
+      <div id="feedbackPanel" class="hidden w-full rounded-2xl p-4 border-2 shadow-lg transition-all">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex-1">
+            <div id="feedbackTitle" class="text-sm md:text-base font-black mb-1"></div>
+            <div id="feedbackReason" class="text-xs md:text-sm font-bold leading-relaxed"></div>
+            <div id="feedbackFullHint" class="text-xs font-bold mt-1.5 px-2.5 py-1 rounded-lg bg-white/80 inline-block"></div>
+          </div>
+          <button id="nextQuestionBtn" onclick="advanceToNextQuestion()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs md:text-sm shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer">
+            <span>前往下一關</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 四選一選項卡片 (動態隨機洗牌，絕不固定在 A！) -->
+      <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+        <!-- JS 動態生成 4 個選項 -->
+      </div>
+
+    </div>
+
+    <!-- 3. 結算診斷報告畫面 (REPORT_SCREEN) -->
+    <div id="reportScreen" class="hidden w-full glass-card rounded-3xl p-6 md:p-8 border-2 border-white shadow-2xl">
+      <div class="text-center mb-5">
+        <div class="text-4xl mb-1">🏆</div>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-900">乘法生活大冒險・診斷結算報告</h2>
+        <p id="reportSubtitle" class="text-xs md:text-sm font-bold text-slate-600 mt-1"></p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 text-center">
+          <span class="text-xs text-emerald-800 font-bold block">答對題數</span>
+          <span id="rptCorrectCount" class="text-2xl font-black text-emerald-600 math-font">0</span>
+          <span id="rptTotalCount" class="text-xs text-emerald-700 font-bold">/ 23 題</span>
+        </div>
+        <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-center">
+          <span class="text-xs text-amber-800 font-bold block">冒險總積分</span>
+          <span id="rptTotalScore" class="text-2xl font-black text-amber-600 math-font">0</span>
+          <span class="text-xs text-amber-700 font-bold">分</span>
+        </div>
+        <div class="bg-orange-50 p-3 rounded-2xl border border-orange-200 text-center">
+          <span class="text-xs text-orange-800 font-bold block">最高連擊</span>
+          <span id="rptMaxCombo" class="text-2xl font-black text-orange-600 math-font">0</span>
+          <span class="text-xs text-orange-700 font-bold">Combo</span>
+        </div>
+        <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200 text-center">
+          <span class="text-xs text-rose-800 font-bold block">闖關評價</span>
+          <span id="rptRankText" class="text-base font-black text-rose-600">傳奇乘法大師</span>
+        </div>
+      </div>
+
+      <!-- 知識點精熟度條 -->
+      <div class="mb-5 bg-white p-4 rounded-2xl border border-slate-200">
+        <h3 class="text-xs md:text-sm font-black text-slate-800 mb-3">📊 單元核心能力診斷分析</h3>
+        <div id="nodeMasteryList" class="space-y-2.5 text-xs font-bold"></div>
+      </div>
+
+      <!-- 錯題重練池 -->
+      <div id="mistakePoolArea" class="hidden mb-5 bg-rose-50 p-4 rounded-2xl border border-rose-200">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs md:text-sm font-black text-rose-900">
+            🛡️ 錯題特訓池（共 <span id="mistakeCount">0</span> 題需要複習）
+          </h3>
+          <button onclick="startRetryMistakes()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow transition">
+            ⚔️ 立即重練錯題
+          </button>
+        </div>
+        <div id="mistakeItemList" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs"></div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 justify-center">
+        <button onclick="restartGame()" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs md:text-sm shadow transition">
+          🔄 返回章節選單
+        </button>
+        <button onclick="copyLearningRecord()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-black text-xs md:text-sm transition">
+          📋 複製成績紀錄
+        </button>
+        <button onclick="downloadCsvReport()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs md:text-sm shadow transition">
+          📥 下載 CSV 報表
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 浮動直式草稿白板 (SCRATCHPAD) -->
+  <div id="scratchpadModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-3">
+    <div class="w-full max-w-2xl bg-white rounded-3xl border-4 border-indigo-400 shadow-2xl p-4 flex flex-col h-[78vh] max-h-[540px]">
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-base">✏️</span>
+          <span id="scratchQuestionTitle" class="font-black text-slate-800 text-xs md:text-sm">直式計算草稿白板</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="clearCanvas()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold">🗑️ 清空</button>
+          <button onclick="toggleScratchpad()" class="px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold">✕ 關閉</button>
+        </div>
+      </div>
+      <div class="flex-1 w-full bg-amber-50/40 rounded-2xl mt-2.5 border-2 border-dashed border-slate-300 overflow-hidden relative touch-none">
+        <canvas id="scratchCanvas" class="w-full h-full cursor-crosshair"></canvas>
+      </div>
+      <div class="pt-2 flex justify-between items-center text-xs text-slate-600 font-bold">
+        <span>💡 可直接在上方手寫直式與進位小數字</span>
+        <div class="flex items-center gap-2">
+          <span>筆色：</span>
+          <button onclick="setPenColor('#1e3a8a')" class="w-5 h-5 rounded-full bg-blue-900 border-2 border-white shadow"></button>
+          <button onclick="setPenColor('#dc2626')" class="w-5 h-5 rounded-full bg-red-600 border-2 border-white shadow"></button>
+          <button onclick="setPenColor('#059669')" class="w-5 h-5 rounded-full bg-emerald-600 border-2 border-white shadow"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 三階解題鷹架彈窗 (HINT_MODAL) -->
+  <div id="hintModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-white rounded-3xl border-4 border-amber-400 p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+          <span>💡</span>
+          <span>三階漸進式解題鷹架</span>
+        </h3>
+        <button onclick="closeHintModal()" class="text-slate-400 hover:text-slate-700 text-lg font-black">✕</button>
+      </div>
+      <div class="space-y-2.5 mb-4">
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+          <div class="text-xs font-black text-amber-800 mb-0.5">🔍 階梯一：讀題與算式方向</div>
+          <p id="hintText1" class="text-xs md:text-sm text-slate-800 font-bold"></p>
+        </div>
+        <div class="bg-sky-50 p-3 rounded-xl border border-sky-200">
+          <div class="text-xs font-black text-sky-800 mb-0.5">🧮 階梯二：直式進位拆解</div>
+          <p id="hintText2" class="text-xs md:text-sm text-slate-800 font-bold"></p>
+        </div>
+        <div id="hintBox3" class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 hidden">
+          <div class="text-xs font-black text-emerald-800 mb-0.5">✨ 階梯三：完整步驟詳解</div>
+          <p id="hintText3" class="text-xs md:text-sm text-emerald-950 font-bold"></p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="unlockNextHint()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow">🔓 顯示完整詳解</button>
+        <button onclick="closeHintModal()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">返回作答</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RAW_QUESTIONS = [
+  {
+    "id": 1,
+    "chapter": "海洋水族館戶外教育",
+    "theme": "ocean",
+    "nodeId": "Node06",
+    "nodeName": "乘法估算與生活決策",
+    "sceneType": "aquarium_bus",
+    "propTitle": "🚌 戶外教育租車方案比較單",
+    "propItems": [
+      {
+        "label": "參加總人數",
+        "val": "150 人",
+        "hi": true
+      },
+      {
+        "label": "甲方案：豪華大巴士",
+        "val": "每輛 39 人座 × 4 輛"
+      },
+      {
+        "label": "乙方案：中型巴士",
+        "val": "每輛 21 人座 × 7 輛"
+      }
+    ],
+    "q": "三年級共有 150 位師生要去水族館戶外教育。比較「甲方案（39人座4輛）」與「乙方案（21人座7輛）」，哪個方案才坐得下所有人？且會剩下幾個空位？",
+    "formula": "甲：39 × 4 = ？ ｜ 乙：21 × 7 = ？",
+    "vMath": {
+      "top": "39",
+      "bot": "4",
+      "unit": "人"
+    },
+    "options": [
+      {
+        "text": "選乙方案，剛好 150 個座位",
+        "isCorrect": false,
+        "reason": "乙方案 21 × 7 = 147 人，比 150 人少 3 個座位，會有 3 個人沒位子坐喔！"
+      },
+      {
+        "text": "選甲方案，總共 156 個座位，剩下 6 個空位",
+        "isCorrect": true,
+        "reason": "太精準了！39 × 4 = 156 個座位，156 > 150 全部坐得下，而且 156 - 150 = 6 個空位！"
+      },
+      {
+        "text": "選甲方案，總共 126 個座位，還差 24 個座位",
+        "isCorrect": false,
+        "reason": "直式計算時忘記加個位進上來的 3 囉！9 × 4 = 36（進3），3 × 4 + 3 = 15，是 156 個座位。"
+      },
+      {
+        "text": "選乙方案，總共 154 個座位，剩下 4 個空位",
+        "isCorrect": false,
+        "reason": "乙方案個位 1 × 7 = 7，十位 2 × 7 = 14，合起來是 147 個座位，不夠 150 人坐喔！"
+      }
+    ],
+    "hints": [
+      "先分別算出甲方案（39 × 4）和乙方案（21 × 7）總共有幾個座位。",
+      "39 × 4：個位 9×4=36（寫6進3），十位 3×4+3=15，共 156 個座位；乙方案 21×7=147 個座位。",
+      "【完整解析】156 > 150，所以要選甲方案；156 - 150 = 6，會剩下 6 個空位。"
+    ]
+  },
+  {
+    "id": 2,
+    "chapter": "海洋水族館戶外教育",
+    "theme": "ocean",
+    "nodeId": "Node05",
+    "nodeName": "兩步驟乘法生活應用",
+    "sceneType": "sealion_feed",
+    "propTitle": "🦭 海獅餵食秀準備清單",
+    "propItems": [
+      {
+        "label": "學生分組",
+        "val": "全體分成 27 組"
+      },
+      {
+        "label": "每組分配",
+        "val": "每組準備 2 碗小魚"
+      },
+      {
+        "label": "每碗數量",
+        "val": "每碗裝有 8 條小魚",
+        "hi": true
+      }
+    ],
+    "q": "到達水族館後，學生分成 27 組體驗餵海獅。飼養員幫「每一組準備 2 碗」小魚，而「每一碗有 8 條」小魚。請問飼養員一共準備了幾碗小魚？總共是幾條小魚？",
+    "formula": "先算碗數：27 × 2 ➔ 再算總條數：碗數 × 8",
+    "vMath": {
+      "top": "54",
+      "bot": "8",
+      "unit": "條"
+    },
+    "options": [
+      {
+        "text": "54 碗，總共 402 條小魚",
+        "isCorrect": false,
+        "reason": "碗數 54 碗算對了！但 54 × 8 個位 4×8=32（進3），十位 5×8+3=43，是 432 條，不是 402 條喔！"
+      },
+      {
+        "text": "44 碗，總共 352 條小魚",
+        "isCorrect": false,
+        "reason": "27 × 2 個位 7×2=14（寫4進1），十位 2×2+1=5，應該是 54 碗喔！"
+      },
+      {
+        "text": "54 碗，總共 432 條小魚",
+        "isCorrect": true,
+        "reason": "完全正確！27 × 2 = 54 碗，再算 54 × 8 = 432 條小魚，兩步驟連乘難不倒你！"
+      },
+      {
+        "text": "29 碗，總共 232 條小魚",
+        "isCorrect": false,
+        "reason": "每組 2 碗、有 27 組要用乘法 27 × 2 = 54 碗，不能用加法 27 + 2 喔！"
+      }
+    ],
+    "hints": [
+      "第一步先算有幾碗：27 組，每組 2 碗，算式是 27 × 2 = ？",
+      "27 × 2 = 54（碗）。第二步再算 54 碗共有幾條小魚：54 × 8 = ？",
+      "【完整解析】27 × 2 = 54 碗；54 × 8：個位 4×8=32（寫2進3），十位 5×8+3=43，共 432 條小魚。"
+    ]
+  },
+  {
+    "id": 3,
+    "chapter": "海洋水族館戶外教育",
+    "theme": "ocean",
+    "nodeId": "Node06",
+    "nodeName": "乘法估算與生活決策",
+    "sceneType": "aquarium_diy",
+    "propTitle": "🎟️ 水族館體驗活動價目表（5人小隊公費：1500元）",
+    "propItems": [
+      {
+        "label": "A. 珊瑚生態 DIY",
+        "val": "每人 297 元"
+      },
+      {
+        "label": "B. 觀景窗夜宿體驗",
+        "val": "每人 499 元"
+      },
+      {
+        "label": "C. 與魚群近距離互動",
+        "val": "每人 309 元",
+        "hi": true
+      }
+    ],
+    "q": "皮皮這組有 5 個人，全組共有 1500 元公費。他們想全組一起參加同一種活動，請問「與魚群近距離互動（每人309元）」錢夠不夠？如果改選「珊瑚生態 DIY（每人297元）」會剩下多少元？",
+    "formula": "魚群互動：309 × 5 ｜ 珊瑚 DIY：297 × 5",
+    "vMath": {
+      "top": "297",
+      "bot": "5",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "魚群互動夠付；珊瑚 DIY 會剩下 25 元",
+        "isCorrect": false,
+        "reason": "魚群互動 309 × 5 = 1545 元，超過 1500 元了，所以不夠付喔！"
+      },
+      {
+        "text": "魚群互動不夠付（需1545元）；珊瑚 DIY 會剩下 15 元",
+        "isCorrect": true,
+        "reason": "太棒了！309 × 5 = 1545 元（超支 45 元）；珊瑚 DIY 297 × 5 = 1485 元，1500 - 1485 = 剩下 15 元！"
+      },
+      {
+        "text": "魚群互動不夠付（需1505元）；珊瑚 DIY 會剩下 115 元",
+        "isCorrect": false,
+        "reason": "小心！309 × 5 是 1545 元；而 297 × 5 = 1485 元，1500 - 1485 = 15 元喔！"
+      },
+      {
+        "text": "兩種活動都不夠付，公費至少要 2000 元",
+        "isCorrect": false,
+        "reason": "珊瑚 DIY 每人 297 元比 300 元少，300 × 5 = 1500 元，所以珊瑚 DIY 一定夠付喔！"
+      }
+    ],
+    "hints": [
+      "先看「魚群互動」每人 309 元，比 300 元貴，5 個人 309 × 5 會不會超過 1500 元？",
+      "309 × 5 = 1545 元（超過 1500 元，不夠付！）。再算「珊瑚 DIY」：297 × 5 = ？",
+      "【完整解析】297 × 5 = 1485 元，1500 - 1485 = 15 元，所以選珊瑚 DIY 夠付且剩下 15 元。"
+    ]
+  },
+  {
+    "id": 4,
+    "chapter": "海洋水族館戶外教育",
+    "theme": "ocean",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "penguin_shop",
+    "propTitle": "🐧 水族館紀念品商店收銀台",
+    "propItems": [
+      {
+        "label": "企鵝造型遮陽帽",
+        "val": "每頂 245 元",
+        "hi": true
+      },
+      {
+        "label": "海豚音樂鑰匙圈",
+        "val": "每個 136 元"
+      },
+      {
+        "label": "皮皮付款金額",
+        "val": "付了 1 張 1000 元鈔票"
+      }
+    ],
+    "q": "離開水族館前，皮皮在紀念品店買了 4 頂「企鵝造型遮陽帽（每頂245元）」送給家人。他付了一張 1000 元大鈔，請問店員應該找回多少元？",
+    "formula": "先算 4 頂帽子：245 × 4 ➔ 再算找回：1000 - 總價",
+    "vMath": {
+      "top": "245",
+      "bot": "4",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "4 頂共 980 元，找回 20 元",
+        "isCorrect": true,
+        "reason": "完全正確！245 × 4 = 980 元，1000 - 980 = 找回 20 元！"
+      },
+      {
+        "text": "4 頂共 880 元，找回 120 元",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 1 囉！40 × 4 + 20 = 180（寫8進1），百位 2×4+1=9，是 980 元。"
+      },
+      {
+        "text": "4 頂共 960 元，找回 40 元",
+        "isCorrect": false,
+        "reason": "十位忘記加個位進上來的 2 囉！5 × 4 = 20（進2），十位 4 × 4 + 2 = 18，不是 16 喔。"
+      },
+      {
+        "text": "4 頂共 980 元，找回 120 元",
+        "isCorrect": false,
+        "reason": "980 元算對了！但是 1000 - 980 是 20 元，不是 120 元喔！"
+      }
+    ],
+    "hints": [
+      "先用直式算出 4 頂帽子的總價：245 × 4 = ？",
+      "個位 5×4=20（寫0進2），十位 4×4+2=18（寫8進1），百位 2×4+1=9，總共 980 元。",
+      "【完整解析】4 頂帽子共 980 元，付 1000 元可找回 1000 - 980 = 20 元。"
+    ]
+  },
+  {
+    "id": 5,
+    "chapter": "大賣場促銷與比價",
+    "theme": "market",
+    "nodeId": "Node06",
+    "nodeName": "乘法估算與生活決策",
+    "sceneType": "pants_sale",
+    "propTitle": "👖 服飾店週年慶促銷海報",
+    "propItems": [
+      {
+        "label": "單買價格",
+        "val": "每件 499 元"
+      },
+      {
+        "label": "促銷組合價",
+        "val": "一次買 3 件特價 1200 元",
+        "hi": true
+      }
+    ],
+    "q": "賣場海報寫著：「休閒長褲單買一件 499 元，一次買 3 件特價 1200 元。」如果阿姨一次買 3 件，比單買 3 件總共便宜了多少元？",
+    "formula": "單買 3 件：499 × 3 ➔ 再減去特價 1200 元",
+    "vMath": {
+      "top": "499",
+      "bot": "3",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "單買 3 件要 1497 元，特價省下 297 元",
+        "isCorrect": true,
+        "reason": "太厲害了！499 × 3 = 1497 元（也可想成 500×3 - 3 = 1497），比 1200 元便宜了 297 元！"
+      },
+      {
+        "text": "單買 3 件要 1297 元，特價省下 97 元",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 2 囉！499 接近 500，乘以 3 接近 1500 元，是 1497 元。"
+      },
+      {
+        "text": "單買 3 件要 1500 元，特價省下 300 元",
+        "isCorrect": false,
+        "reason": "1500 元是「估算值（500×3）」，實際單買一件是 499 元，3 件是 1497 元，實際省下 297 元喔！"
+      },
+      {
+        "text": "單買 3 件要 1477 元，特價省下 277 元",
+        "isCorrect": false,
+        "reason": "十位 9 × 3 = 27，加上個位進上來的 2 是 29（寫 9 進 2），所以十位是 9 不是 7 喔！"
+      }
+    ],
+    "hints": [
+      "先算出如果照原價「單買 3 件」要多少元：499 × 3 = ？",
+      "499 × 3：個位 9×3=27（寫7進2），十位 9×3+2=29（寫9進2），百位 4×3+2=14，共 1497 元。",
+      "【完整解析】原價 3 件 1497 元，減去組合特價 1200 元：1497 - 1200 = 297 元。"
+    ]
+  },
+  {
+    "id": 6,
+    "chapter": "大賣場促銷與比價",
+    "theme": "market",
+    "nodeId": "Node03",
+    "nodeName": "二位數進位乘法",
+    "sceneType": "soap_compare",
+    "propTitle": "🧴 兩家超商洗手乳價格比一比",
+    "propItems": [
+      {
+        "label": "🏪 家家超商",
+        "val": "每瓶單賣 72 元"
+      },
+      {
+        "label": "🏪 來來超商",
+        "val": "4 瓶家庭號特價 250 元",
+        "hi": true
+      }
+    ],
+    "q": "媽媽想買 4 瓶同品牌的抗菌洗手乳。「家家超商」每瓶賣 72 元；「來來超商」4 瓶合購賣 250 元。請問去哪一家買 4 瓶比較便宜？便宜多少元？",
+    "formula": "家家超商 4 瓶：72 × 4 ➔ 與來來超商 250 元比較",
+    "vMath": {
+      "top": "72",
+      "bot": "4",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "家家超商比較便宜，便宜 22 元",
+        "isCorrect": false,
+        "reason": "家家超商 72 × 4 = 288 元，比來來超商的 250 元還貴喔！"
+      },
+      {
+        "text": "來來超商比較便宜，便宜 30 元",
+        "isCorrect": false,
+        "reason": "70 × 4 = 280 是估算，實際算式 72 × 4 = 288 元，288 - 250 = 38 元喔！"
+      },
+      {
+        "text": "來來超商比較便宜，便宜 38 元",
+        "isCorrect": true,
+        "reason": "完全正確！家家超商 72 × 4 = 288 元，比來來超商 250 元貴，所以來來超商便宜 288 - 250 = 38 元！"
+      },
+      {
+        "text": "兩家一樣便宜，都是 280 元",
+        "isCorrect": false,
+        "reason": "家家超商 4 瓶是 72 × 4 = 288 元，來來超商是 250 元，兩家差了 38 元喔！"
+      }
+    ],
+    "hints": [
+      "先算出在「家家超商」買 4 瓶要花多少元：72 × 4 = ？",
+      "72 × 4：個位 2×4=8，十位 7×4=28，合起來是 288 元。",
+      "【完整解析】家家超商要 288 元，來來超商只要 250 元，288 - 250 = 38，來來超商便宜 38 元。"
+    ]
+  },
+  {
+    "id": 7,
+    "chapter": "大賣場促銷與比價",
+    "theme": "market",
+    "nodeId": "Node03",
+    "nodeName": "二位數進位乘法",
+    "sceneType": "towel_compare",
+    "propTitle": "🧺 百貨公司純棉毛巾檔期DM",
+    "propItems": [
+      {
+        "label": "🏬 天天百貨",
+        "val": "每條毛巾 97 元"
+      },
+      {
+        "label": "🏬 日日百貨",
+        "val": "促銷組 5 條 449 元",
+        "hi": true
+      }
+    ],
+    "q": "奶奶想買 5 條純棉毛巾。「天天百貨」每條賣 97 元；「日日百貨」促銷組 5 條賣 449 元。請問哪一家百貨賣得比較便宜？兩家相差多少元？",
+    "formula": "天天百貨 5 條：97 × 5 ➔ 與日日百貨 449 元比較",
+    "vMath": {
+      "top": "97",
+      "bot": "5",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "天天百貨比較便宜，相差 6 元",
+        "isCorrect": false,
+        "reason": "小心進位漏加！97 × 5 個位 7×5=35（進3），十位 9×5+3=48，是 485 元，不是 455 元喔！"
+      },
+      {
+        "text": "日日百貨比較便宜，相差 51 元",
+        "isCorrect": false,
+        "reason": "500 - 449 = 51 是用 100×5 估算的結果，實際 97 × 5 = 485 元，485 - 449 = 36 元喔！"
+      },
+      {
+        "text": "天天百貨比較便宜，相差 36 元",
+        "isCorrect": false,
+        "reason": "天天百貨 97 × 5 = 485 元，日日百貨只要 449 元，所以是「日日百貨」比較便宜喔！"
+      },
+      {
+        "text": "日日百貨比較便宜，相差 36 元",
+        "isCorrect": true,
+        "reason": "太棒了！天天百貨 97 × 5 = 485 元，日日百貨 449 元，485 - 449 = 36 元！"
+      }
+    ],
+    "hints": [
+      "先算在「天天百貨」買 5 條毛巾要多少元：97 × 5 = ？",
+      "97 × 5：個位 7×5=35（寫5進3），十位 9×5=45，加上進位 3 等於 48，共 485 元。",
+      "【完整解析】天天百貨 485 元 > 日日百貨 449 元，日日百貨比較便宜，相差 485 - 449 = 36 元。"
+    ]
+  },
+  {
+    "id": 8,
+    "chapter": "大賣場促銷與比價",
+    "theme": "market",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "water_bottle",
+    "propTitle": "🍼 運動用品區結帳櫃檯",
+    "propItems": [
+      {
+        "label": "商品名稱",
+        "val": "超輕量保溫水壺"
+      },
+      {
+        "label": "單價與數量",
+        "val": "每組 295 元 × 買 4 組",
+        "hi": true
+      },
+      {
+        "label": "媽媽攜帶現金",
+        "val": "1200 元"
+      }
+    ],
+    "q": "一組運動保溫水壺賣 295 元，媽媽帶了 1200 元想買 4 組水壺給全家一人一組。請問媽媽帶的錢夠不夠？結帳後還剩下（或還差）多少元？",
+    "formula": "先算 4 組總價：295 × 4 ➔ 再與 1200 元比較",
+    "vMath": {
+      "top": "295",
+      "bot": "4",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "夠買！4 組共 1180 元，還剩下 20 元",
+        "isCorrect": true,
+        "reason": "完全正確！295 × 4 = 1180 元，1200 - 1180 = 還剩下 20 元！"
+      },
+      {
+        "text": "夠買！4 組共 880 元，還剩下 320 元",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 3 囉！9 × 4 + 2 = 38（寫8進3），百位 2 × 4 + 3 = 11，是 1180 元。"
+      },
+      {
+        "text": "不夠買！4 組共 1280 元，還差 80 元",
+        "isCorrect": false,
+        "reason": "295 比 300 還少，300 × 4 才 1200 元，所以 295 × 4 一定小於 1200 元（1180元）喔！"
+      },
+      {
+        "text": "夠買！4 組剛好 1200 元，不用找錢",
+        "isCorrect": false,
+        "reason": "300 × 4 才是 1200 元，每組 295 元便宜了 5 元，4 組會便宜 20 元，共 1180 元喔！"
+      }
+    ],
+    "hints": [
+      "先估算看看：295 比 300 少 5，300 × 4 = 1200，所以 1200 元一定夠買！",
+      "再用直式精算 295 × 4：個位 5×4=20（寫0進2），十位 9×4+2=38（寫8進3），百位 2×4+3=11，得 1180 元。",
+      "【完整解析】4 組水壺共 1180 元，1200 - 1180 = 剩下 20 元。"
+    ]
+  },
+  {
+    "id": 9,
+    "chapter": "美食餐廳與電影聚會",
+    "theme": "dining",
+    "nodeId": "Node06",
+    "nodeName": "乘法估算與生活決策",
+    "sceneType": "restaurant_menu",
+    "propTitle": "🍽️ 百貨美食街四大主題餐館價目表",
+    "propItems": [
+      {
+        "label": "A 龍蝦牛排館",
+        "val": "每人 508 元"
+      },
+      {
+        "label": "B 和風壽司屋",
+        "val": "每人 318 元"
+      },
+      {
+        "label": "C 義式焗烤坊",
+        "val": "每人 279 元"
+      },
+      {
+        "label": "D 皇家火鍋城",
+        "val": "每人 421 元（餐券預算：4人共1600元）",
+        "hi": true
+      }
+    ],
+    "q": "皮皮全家 4 個人想用掉 1600 元的餐券，如果規定「不能再額外掏錢補差價」，請問 A、B、C、D 四家餐館中，他們可以選擇哪幾家餐館用餐？",
+    "formula": "比較 4 人總花費是否 ≤ 1600 元",
+    "vMath": {
+      "top": "318",
+      "bot": "4",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "B、C、D 三家餐館都可以選擇",
+        "isCorrect": false,
+        "reason": "小心 D 餐館！每人 421 元，421 × 4 = 1684 元，已經超過 1600 元餐券，要補 84 元喔！"
+      },
+      {
+        "text": "只有 C 義式焗烤坊（共 1116 元）可以選",
+        "isCorrect": false,
+        "reason": "B 和風壽司屋每人 318 元，318 × 4 = 1272 元，也小於 1600 元，所以 B 也可以選喔！"
+      },
+      {
+        "text": "只有 B 和風壽司屋（1272元）與 C 義式焗烤坊（1116元）可以選",
+        "isCorrect": true,
+        "reason": "判斷超精準！A 要 2032 元、D 要 1684 元都超支；只有 B (1272元) 和 C (1116元) 在 1600 元以內！"
+      },
+      {
+        "text": "A 龍蝦牛排館與 B 和風壽司屋可以選",
+        "isCorrect": false,
+        "reason": "A 餐館每人 508 元，508 × 4 = 2032 元，遠遠超過 1600 元囉！"
+      }
+    ],
+    "hints": [
+      "4 個人預算 1600 元，因為 400 × 4 = 1600，所以每人單價超過 400 元的餐館一定會超支！",
+      "A 餐館 (508元) 與 D 餐館 (421元) 都超過 400 元；我們再算 B (318×4) 和 C (279×4)。",
+      "【完整解析】B 餐館 318×4 = 1272 元，C 餐館 279×4 = 1116 元，兩家都不超過 1600 元。"
+    ]
+  },
+  {
+    "id": 10,
+    "chapter": "美食餐廳與電影聚會",
+    "theme": "dining",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "birthday_feast",
+    "propTitle": "🎂 爺爺壽宴訂位確認單",
+    "propItems": [
+      {
+        "label": "用餐餐廳",
+        "val": "D 皇家火鍋城（每人 421 元）"
+      },
+      {
+        "label": "聚餐人數",
+        "val": "魯魯全家共 7 個人",
+        "hi": true
+      },
+      {
+        "label": "壽星優惠",
+        "val": "全桌總金額再折抵 100 元"
+      }
+    ],
+    "q": "魯魯全家 7 個人到「D 皇家火鍋城（每人 421 元）」幫爺爺過生日，結帳時餐廳給予壽星全桌折抵 100 元優惠。請問折抵後一共要付多少元？",
+    "formula": "先算 7 人餐費：421 × 7 ➔ 再減去折抵 100 元",
+    "vMath": {
+      "top": "421",
+      "bot": "7",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "餐費 2947 元，折抵後付 2847 元",
+        "isCorrect": true,
+        "reason": "完全正確！421 × 7 = 2947 元，折抵 100 元後是 2847 元！"
+      },
+      {
+        "text": "餐費 2847 元，折抵後付 2747 元",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 1 囉！十位 2 × 7 = 14（寫4進1），百位 4 × 7 + 1 = 29，餐費是 2947 元。"
+      },
+      {
+        "text": "餐費 2947 元，折抵後付 2937 元",
+        "isCorrect": false,
+        "reason": "2947 算對了！但折抵 100 元是減在百位（2947 - 100 = 2847），不是減 10 元喔！"
+      },
+      {
+        "text": "餐費 2941 元，折抵後付 2841 元",
+        "isCorrect": false,
+        "reason": "個位 1 × 7 = 7，不是 1 喔！"
+      }
+    ],
+    "hints": [
+      "第一步先算 7 個人的原價餐費：421 × 7 = ？",
+      "個位 1×7=7，十位 2×7=14（寫4進1），百位 4×7+1=29，原價共 2947 元。",
+      "【完整解析】2947 元減去壽星折抵 100 元：2947 - 100 = 2847 元。"
+    ]
+  },
+  {
+    "id": 11,
+    "chapter": "美食餐廳與電影聚會",
+    "theme": "dining",
+    "nodeId": "Node05",
+    "nodeName": "兩步驟乘法生活應用",
+    "sceneType": "pasta_party",
+    "propTitle": "🍝 C 義式焗烤坊點餐帳單",
+    "propItems": [
+      {
+        "label": "主餐費用",
+        "val": "每人套餐 279 元 × 3 人",
+        "hi": true
+      },
+      {
+        "label": "單點加購",
+        "val": "歡樂炸物拼盤 1 份 120 元"
+      }
+    ],
+    "q": "妙妙和兩位好朋友（共 3 個人）一起到 C 義式焗烤坊用餐，每人點一份 279 元的套餐，另外大家又合點了一份 120 元的炸物拼盤。請問她們一共花了多少元？",
+    "formula": "先算 3 份套餐：279 × 3 ➔ 再加拼盤 120 元",
+    "vMath": {
+      "top": "279",
+      "bot": "3",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "套餐 837 元，加拼盤一共 957 元",
+        "isCorrect": true,
+        "reason": "太棒了！279 × 3 = 837 元，再加上 120 元拼盤 = 957 元！"
+      },
+      {
+        "text": "套餐 817 元，加拼盤一共 937 元",
+        "isCorrect": false,
+        "reason": "十位忘記加個位進上來的 2 囉！9 × 3 = 27（進2），十位 7 × 3 + 2 = 23，套餐是 837 元。"
+      },
+      {
+        "text": "套餐 637 元，加拼盤一共 757 元",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 2 囉！2 × 3 + 2 = 8，套餐是 837 元。"
+      },
+      {
+        "text": "套餐 837 元，加拼盤一共 857 元",
+        "isCorrect": false,
+        "reason": "837 + 120 百位要加 1、十位加 2，合起來是 957 元喔！"
+      }
+    ],
+    "hints": [
+      "先算 3 份 279 元套餐的價錢：279 × 3 = ？",
+      "個位 9×3=27（寫7進2），十位 7×3+2=23（寫3進2），百位 2×3+2=8，套餐共 837 元。",
+      "【完整解析】套餐 837 元加上炸物拼盤 120 元：837 + 120 = 957 元。"
+    ]
+  },
+  {
+    "id": 12,
+    "chapter": "美食餐廳與電影聚會",
+    "theme": "dining",
+    "nodeId": "Node05",
+    "nodeName": "兩步驟乘法生活應用",
+    "sceneType": "cinema_ticket",
+    "propTitle": "🎬 星光電影院售票亭（小心人數陷阱！）",
+    "propItems": [
+      {
+        "label": "早場優待票",
+        "val": "每張 235 元",
+        "hi": true
+      },
+      {
+        "label": "同行人員",
+        "val": "「晨皓」和「4 位同學」一起去看電影"
+      }
+    ],
+    "q": "【閱讀陷阱題】一張早場電影票賣 235 元，「晨皓和 4 位同學」一起相約去看動畫電影，請問買全部人的電影票一共要付多少元？",
+    "formula": "注意總人數：1 + 4 = 5 人 ➔ 235 × 5 = ？",
+    "vMath": {
+      "top": "235",
+      "bot": "5",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "940 元（算式：235 × 4）",
+        "isCorrect": false,
+        "reason": "掉進題目陷阱囉！「晨皓」加上「4 位同學」總共是 5 個人，不是 4 個人喔！"
+      },
+      {
+        "text": "1155 元（十位漏加進位）",
+        "isCorrect": false,
+        "reason": "人數 5 人抓對了！但個位 5×5=25（進2），十位 3×5+2=17（寫7進1），十位是 7 不是 5 喔！"
+      },
+      {
+        "text": "1075 元（百位漏加進位）",
+        "isCorrect": false,
+        "reason": "百位 2 × 5 = 10，還要加上十位進上來的 1，所以是 1175 元喔！"
+      },
+      {
+        "text": "1175 元（算式：235 × 5）",
+        "isCorrect": true,
+        "reason": "火眼金睛！識破「晨皓 + 4位同學 = 5人」的文字陷阱，且 235 × 5 = 1175 元計算完全正確！"
+      }
+    ],
+    "hints": [
+      "仔細讀題目：「晨皓」和「4 位同學」加起來總共有幾個人要買票？",
+      "1 + 4 = 5 個人！所以算式是 235 × 5，個位 5×5=25（寫5進2），十位 3×5+2=17（寫7進1）。",
+      "【完整解析】百位 2 × 5 + 1 = 11，合起來總共要付 1175 元。"
+    ]
+  },
+  {
+    "id": 13,
+    "chapter": "臺灣鰻魚王國與交通",
+    "theme": "taiwan",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數（中間有0）",
+    "sceneType": "eel_fishing",
+    "propTitle": "🌊 臺灣「鰻魚王國」河口漁民夜捕紀錄",
+    "propItems": [
+      {
+        "label": "魚苗特色",
+        "val": "全身透明細如髮線，被稱作水中軟黃金"
+      },
+      {
+        "label": "目前收購價",
+        "val": "每尾鰻魚苗 108 元",
+        "hi": true
+      },
+      {
+        "label": "今晚漁獲量",
+        "val": "成功捕撈到 6 尾鰻魚苗"
+      }
+    ],
+    "q": "臺灣以前有「鰻魚王國」的稱號，每年冬天漁民會到河口捕撈透明的鰻魚苗。現在一尾鰻魚苗可賣 108 元，漁夫阿海伯今晚捕撈到 6 尾，全部賣出可以得到多少元？",
+    "formula": "108 × 6 = (   ) 元（注意十位是 0！）",
+    "vMath": {
+      "top": "108",
+      "bot": "6",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "608 元",
+        "isCorrect": false,
+        "reason": "個位 8 × 6 = 48，忘記把進位的 4 加到十位去了！"
+      },
+      {
+        "text": "6048 元",
+        "isCorrect": false,
+        "reason": "把 48 直接拆成兩位寫進去了！十位 0 × 6 + 4 = 4，三位數乘一位數這題結果是三位數 648 元。"
+      },
+      {
+        "text": "648 元",
+        "isCorrect": true,
+        "reason": "完全正確！8 × 6 = 48（寫8進4），十位 0 × 6 + 4 = 4，百位 1 × 6 = 6，共 648 元！"
+      },
+      {
+        "text": "1048 元",
+        "isCorrect": false,
+        "reason": "百位是 1 × 6 = 6，不是 10 喔！"
+      }
+    ],
+    "hints": [
+      "這是「十位有 0」的三位數乘法：108 × 6。先算個位 8 × 6 = 48（寫 8 進 4）。",
+      "十位是 0 × 6 = 0，別忘了加上剛才個位進上來的 4！所以十位要寫 0 + 4 = 4。",
+      "【完整解析】百位 1 × 6 = 6，十位是 4，個位是 8，共可賣得 648 元。"
+    ]
+  },
+  {
+    "id": 14,
+    "chapter": "臺灣鰻魚王國與交通",
+    "theme": "taiwan",
+    "nodeId": "Node01",
+    "nodeName": "整百乘法與數感推理",
+    "sceneType": "eel_chopsticks",
+    "propTitle": "🥢 漁民的智慧：竹筷子計數法",
+    "propItems": [
+      {
+        "label": "計數規則 1",
+        "val": "每數滿 100 尾魚苗，就放 1 枝竹筷子進水桶"
+      },
+      {
+        "label": "計數規則 2",
+        "val": "剩下的尾數如果不到 100 尾，就不放竹筷子"
+      },
+      {
+        "label": "目前水桶紀錄",
+        "val": "水桶裡有 31 枝竹筷子",
+        "hi": true
+      }
+    ],
+    "q": "【素養閱讀推理】漁民數鰻魚苗時，每滿 100 尾就在水桶放 1 枝竹筷子。現在水桶裡有 31 枝竹筷子，而且旁邊小碗裡還有「剛數了 8 次、每次 4 尾」還沒滿百的魚苗。請問總共有幾尾鰻魚苗？",
+    "formula": "水桶：100 × 31 ➔ 加上小碗：4 × 8",
+    "vMath": {
+      "top": "100",
+      "bot": "31",
+      "unit": "尾"
+    },
+    "options": [
+      {
+        "text": "3132 尾鰻魚苗",
+        "isCorrect": true,
+        "reason": "推理大師！31 枝竹筷代表 31 個百（3100 尾），加上小碗 4 × 8 = 32 尾，合起來是 3132 尾！"
+      },
+      {
+        "text": "342 尾鰻魚苗",
+        "isCorrect": false,
+        "reason": "1 枝竹筷子代表 100 尾，所以 31 枝竹筷子是 3100 尾，不是 310 尾喔！"
+      },
+      {
+        "text": "3112 尾鰻魚苗",
+        "isCorrect": false,
+        "reason": "小碗裡數了 8 次、每次 4 尾，要用乘法 4 × 8 = 32 尾，不是加法 4 + 8 = 12 尾喔！"
+      },
+      {
+        "text": "3108 尾鰻魚苗",
+        "isCorrect": false,
+        "reason": "小碗裡是「8 次、每次 4 尾」，共有 4 × 8 = 32 尾，合起來是 3132 尾喔！"
+      }
+    ],
+    "hints": [
+      "每枝竹筷子代表 100 尾，31 枝竹筷子代表幾個百？就是 3100 尾！",
+      "小碗裡數了 8 次、每次 4 尾：4 × 8 = 32 尾。",
+      "【完整解析】3100 + 32 = 3132 尾鰻魚苗。（若課本問最多可能幾尾，則是 3100 + 99 = 3199 尾！）"
+    ]
+  },
+  {
+    "id": 15,
+    "chapter": "臺灣鰻魚王國與交通",
+    "theme": "taiwan",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "ferry_boat",
+    "propTitle": "⛴️ 觀光渡輪航運日報表",
+    "propItems": [
+      {
+        "label": "船隻載客上限",
+        "val": "每趟滿載 311 人",
+        "hi": true
+      },
+      {
+        "label": "今日客滿航次",
+        "val": "連續行駛 5 趟皆客滿"
+      },
+      {
+        "label": "第 6 趟人數",
+        "val": "載了 200 人"
+      }
+    ],
+    "q": "海港觀光渡輪一趟最多可以載 311 個人。今天前 5 趟每一趟都客滿，請問「前 5 趟」一共載了多少位乘客？",
+    "formula": "311 × 5 = (   ) 人",
+    "vMath": {
+      "top": "311",
+      "bot": "5",
+      "unit": "人"
+    },
+    "options": [
+      {
+        "text": "1505 人",
+        "isCorrect": false,
+        "reason": "十位也是 1 × 5 = 5，不能寫成 0 喔！"
+      },
+      {
+        "text": "1555 人",
+        "isCorrect": true,
+        "reason": "完全正確！個位 1×5=5、十位 1×5=5、百位 3×5=15，前 5 趟共載了 1555 人！"
+      },
+      {
+        "text": "1515 人",
+        "isCorrect": false,
+        "reason": "十位的 1 也要乘以 5 等於 5，所以十位是 5 不是 1 喔！"
+      },
+      {
+        "text": "555 人",
+        "isCorrect": false,
+        "reason": "百位是 3 × 5 = 15，要寫 15 個百（1555），不能只寫 5 喔！"
+      }
+    ],
+    "hints": [
+      "一趟載 311 人，5 趟客滿就是 311 的 5 倍：311 × 5。",
+      "由個位、十位、百位依序乘以 5：1×5=5，1×5=5，3×5=15。",
+      "【完整解析】311 × 5 = 1555 人。"
+    ]
+  },
+  {
+    "id": 16,
+    "chapter": "臺灣鰻魚王國與交通",
+    "theme": "taiwan",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "train_bento",
+    "propTitle": "🍱 火車鐵路便當營養標示卡",
+    "propItems": [
+      {
+        "label": "品名",
+        "val": "懷舊滷排骨鐵路便當"
+      },
+      {
+        "label": "每份熱量",
+        "val": "541 大卡 (kcal)",
+        "hi": true
+      },
+      {
+        "label": "訂購數量",
+        "val": "少棒隊 8 位主力球員每人 1 個"
+      }
+    ],
+    "q": "少棒隊搭火車去比賽，教練買了 8 個「懷舊排骨鐵路便當」，每個便當的熱量是 541 大卡。請問這 8 個便當的熱量總共有多少大卡？",
+    "formula": "541 × 8 = (   ) 大卡",
+    "vMath": {
+      "top": "541",
+      "bot": "8",
+      "unit": "大卡"
+    },
+    "options": [
+      {
+        "text": "4028 大卡",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 3 囉！4 × 8 = 32（寫2進3），百位 5 × 8 + 3 = 43，是 4328 大卡。"
+      },
+      {
+        "text": "4321 大卡",
+        "isCorrect": false,
+        "reason": "個位 1 × 8 = 8，不要忘記乘個位喔！"
+      },
+      {
+        "text": "4328 大卡",
+        "isCorrect": true,
+        "reason": "太精確了！個位 1×8=8，十位 4×8=32（寫2進3），百位 5×8+3=43，合起來是 4328 大卡！"
+      },
+      {
+        "text": "4248 大卡",
+        "isCorrect": false,
+        "reason": "十位是 4 × 8 = 32（寫 2 進 3），不是 24 喔！"
+      }
+    ],
+    "hints": [
+      "列出直式 541 × 8：先算個位 1 × 8 = 8。",
+      "再算十位 4 × 8 = 32（十位寫 2，進 3 到百位）。",
+      "【完整解析】百位 5 × 8 = 40，加上進位的 3 等於 43，總熱量為 4328 大卡。"
+    ]
+  },
+  {
+    "id": 17,
+    "chapter": "校園活動與烘焙工坊",
+    "theme": "school",
+    "nodeId": "Node06",
+    "nodeName": "乘法估算與生活決策",
+    "sceneType": "stationery_buy",
+    "propTitle": "✂️ 老師的文具採購發票謎題",
+    "propItems": [
+      {
+        "label": "A. 影印紙",
+        "val": "每包 119 元 × 買 4 包"
+      },
+      {
+        "label": "B. 造型花邊剪刀",
+        "val": "每組 289 元 × 買 3 組",
+        "hi": true
+      },
+      {
+        "label": "C. 彩色原子筆",
+        "val": "每組 415 元 × 買 3 組"
+      },
+      {
+        "label": "D. 馬卡龍迴紋針",
+        "val": "每盒 97 元 × 買 6 盒"
+      }
+    ],
+    "q": "老師去書局買了同一種文具當作班級獎品，結帳時花了「大約 900 元（最接近 900 元）」。請用估算或計算找找看，老師買的是哪一種文具？實際花了多少元？",
+    "formula": "找哪一個算式最接近 300 × 3 = 900",
+    "vMath": {
+      "top": "289",
+      "bot": "3",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "A. 影印紙 4 包（實際花 476 元）",
+        "isCorrect": false,
+        "reason": "119 接近 100，100 × 4 = 400 元，離 900 元太遠囉！"
+      },
+      {
+        "text": "C. 彩色原子筆 3 組（實際花 1245 元）",
+        "isCorrect": false,
+        "reason": "415 接近 400，400 × 3 = 1200 元，超過 900 元太多囉！"
+      },
+      {
+        "text": "B. 造型花邊剪刀 3 組（實際花 867 元）",
+        "isCorrect": true,
+        "reason": "完全正確！289 最接近 300，300 × 3 = 900；實際計算 289 × 3 = 867 元，最接近 900 元！"
+      },
+      {
+        "text": "D. 馬卡龍迴紋針 6 盒（實際花 582 元）",
+        "isCorrect": false,
+        "reason": "97 接近 100，買 6 盒約 600 元（582元）；要買 9 盒才會接近 900 元喔！"
+      }
+    ],
+    "hints": [
+      "把每種文具的單價估成整百或整十：B 花邊剪刀一組 289 元，最接近幾百元？",
+      "289 最接近 300 元，買 3 組大約是 300 × 3 = 900 元！",
+      "【完整解析】精算 289 × 3：個位 9×3=27（進2），十位 8×3+2=26（進2），百位 2×3+2=8，實際花 867 元。"
+    ]
+  },
+  {
+    "id": 18,
+    "chapter": "校園活動與烘焙工坊",
+    "theme": "school",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "eraser_boxes",
+    "propTitle": "📦 陽光國小總務處學用品驗收單",
+    "propItems": [
+      {
+        "label": "品名",
+        "val": "無毒環保橡皮擦"
+      },
+      {
+        "label": "每箱規格",
+        "val": "每箱裝有 288 個",
+        "hi": true
+      },
+      {
+        "label": "採購箱數",
+        "val": "買了 3 大箱"
+      }
+    ],
+    "q": "一箱無毒環保橡皮擦有 288 個，陽光國小在新學期買了 3 箱分給各班，請問一共有多少個橡皮擦？",
+    "formula": "288 × 3 = (   ) 個（連續進位考驗！）",
+    "vMath": {
+      "top": "288",
+      "bot": "3",
+      "unit": "個"
+    },
+    "options": [
+      {
+        "text": "644 個橡皮擦",
+        "isCorrect": false,
+        "reason": "十位和百位都漏加進位囉！8 × 3 = 24（進2），十位 8×3+2=26（寫6進2），百位 2×3+2=8！"
+      },
+      {
+        "text": "864 個橡皮擦",
+        "isCorrect": true,
+        "reason": "連續進位完全正確！個位寫4進2，十位 24+2=26（寫6進2），百位 6+2=8，共 864 個！"
+      },
+      {
+        "text": "844 個橡皮擦",
+        "isCorrect": false,
+        "reason": "十位忘記加個位進上來的 2 囉！8 × 3 + 2 = 26，十位要寫 6 喔！"
+      },
+      {
+        "text": "664 個橡皮擦",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 2 囉！2 × 3 + 2 = 8，百位是 8 不是 6 喔！"
+      }
+    ],
+    "hints": [
+      "列出直式 288 × 3：個位 8 × 3 = 24，個位寫 4、進 2 到十位。",
+      "十位也是 8 × 3 = 24，加上進位的 2 等於 26！十位寫 6、再進 2 到百位。",
+      "【完整解析】百位 2 × 3 = 6，加上進位的 2 等於 8，合起來是 864 個橡皮擦。"
+    ]
+  },
+  {
+    "id": 19,
+    "chapter": "校園活動與烘焙工坊",
+    "theme": "school",
+    "nodeId": "Node05",
+    "nodeName": "兩步驟乘法生活應用",
+    "sceneType": "sports_drinks",
+    "propTitle": "🥤 校慶運動會三年甲班補給站",
+    "propItems": [
+      {
+        "label": "家長會贊助",
+        "val": "每箱 24 瓶運動飲料 × 6 箱",
+        "hi": true
+      },
+      {
+        "label": "第一輪發放",
+        "val": "全班師生先喝掉 34 瓶"
+      }
+    ],
+    "q": "校慶運動會時，家長會長送給三年級 6 箱運動飲料，每箱有 24 瓶。大隊接力跑完後，選手與啦啦隊一共喝掉了 34 瓶，請問還剩下幾瓶運動飲料？",
+    "formula": "先算 6 箱總瓶數：24 × 6 ➔ 再減喝掉的 34 瓶",
+    "vMath": {
+      "top": "24",
+      "bot": "6",
+      "unit": "瓶"
+    },
+    "options": [
+      {
+        "text": "總共 144 瓶，喝掉後剩下 110 瓶",
+        "isCorrect": true,
+        "reason": "太棒了！24 × 6 = 144 瓶，扣掉喝掉的 34 瓶：144 - 34 = 剩下 110 瓶！"
+      },
+      {
+        "text": "總共 124 瓶，喝掉後剩下 90 瓶",
+        "isCorrect": false,
+        "reason": "24 × 6 個位 4×6=24（進2），十位 2×6+2=14，總共是 144 瓶，不是 124 瓶喔！"
+      },
+      {
+        "text": "總共 144 瓶，喝掉後剩下 114 瓶",
+        "isCorrect": false,
+        "reason": "144 瓶算對了！但 144 - 34 個位 4 - 4 = 0，所以是剩下 110 瓶喔！"
+      },
+      {
+        "text": "總共 164 瓶，喝掉後剩下 130 瓶",
+        "isCorrect": false,
+        "reason": "十位是「先乘再加」：2 × 6 + 2 = 14（144瓶），不是 164 瓶喔！"
+      }
+    ],
+    "hints": [
+      "第一步先算 6 箱共有幾瓶飲料：24 × 6 = ？",
+      "24 × 6：個位 4×6=24（寫4進2），十位 2×6+2=14，共有 144 瓶飲料。",
+      "【完整解析】144 瓶減去喝掉的 34 瓶：144 - 34 = 110 瓶。"
+    ]
+  },
+  {
+    "id": 20,
+    "chapter": "校園活動與烘焙工坊",
+    "theme": "school",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數",
+    "sceneType": "steamed_bun",
+    "propTitle": "🥟 傳統手工水煎包營養與價目牌",
+    "propItems": [
+      {
+        "label": "高麗菜水煎包",
+        "val": "每個熱量 127 大卡",
+        "hi": true
+      },
+      {
+        "label": "哥哥早餐食量",
+        "val": "吃了 4 個水煎包"
+      }
+    ],
+    "q": "早餐店一個高麗菜水煎包的熱量是 127 大卡，哥哥運動完肚子餓，一口氣吃了 4 個水煎包。請問哥哥光吃水煎包就攝取了多少大卡的熱量？",
+    "formula": "127 × 4 = (   ) 大卡",
+    "vMath": {
+      "top": "127",
+      "bot": "4",
+      "unit": "大卡"
+    },
+    "options": [
+      {
+        "text": "488 大卡",
+        "isCorrect": false,
+        "reason": "個位 7 × 4 = 28（寫8進2），十位 2 × 4 + 2 = 10（寫0進1），十位要進 1 到百位喔！"
+      },
+      {
+        "text": "408 大卡",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 1 囉！1 × 4 + 1 = 5，百位是 5 不是 4 喔！"
+      },
+      {
+        "text": "508 大卡",
+        "isCorrect": true,
+        "reason": "完全正確！7×4=28（寫8進2），十位 2×4+2=10（寫0進1），百位 1×4+1=5，剛好是 508 大卡！"
+      },
+      {
+        "text": "528 大卡",
+        "isCorrect": false,
+        "reason": "十位 2 × 4 = 8，加上進位的 2 是 10（寫0進1），十位是 0 不是 2 喔！"
+      }
+    ],
+    "hints": [
+      "列出直式 127 × 4：個位 7 × 4 = 28（寫 8 進 2 到十位）。",
+      "十位 2 × 4 = 8，加上進位的 2 剛好是 10！所以十位寫 0，再進 1 到百位。",
+      "【完整解析】百位 1 × 4 + 1 = 5，合起來是 508 大卡。"
+    ]
+  },
+  {
+    "id": 21,
+    "chapter": "運動中心與魔晶密碼",
+    "theme": "vault",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數（中間有0）",
+    "sceneType": "fencing_class",
+    "propTitle": "🤺 國民運動中心假日體驗課價目表",
+    "propItems": [
+      {
+        "label": "排球體驗營",
+        "val": "每人 210 元"
+      },
+      {
+        "label": "皇家擊劍體驗課",
+        "val": "每人 405 元",
+        "hi": true
+      },
+      {
+        "label": "飛輪有氧課",
+        "val": "每人 310 元"
+      }
+    ],
+    "q": "安安和 3 位同學（一共 4 個人）一起報名參加運動中心的「皇家擊劍體驗課（每人 405 元）」，請問他們 4 個人一共要繳多少元報名費？",
+    "formula": "405 × 4 = (   ) 元（小心中間的 0！）",
+    "vMath": {
+      "top": "405",
+      "bot": "4",
+      "unit": "元"
+    },
+    "options": [
+      {
+        "text": "16020 元",
+        "isCorrect": false,
+        "reason": "把 5×4=20 直接寫成兩位數塞在中間了！個位寫 0 進 2 到十位，十位 0×4+2=2，是四位數 1620 元喔！"
+      },
+      {
+        "text": "1600 元",
+        "isCorrect": false,
+        "reason": "忘記算個位的 5 × 4 = 20 囉！"
+      },
+      {
+        "text": "1620 元",
+        "isCorrect": true,
+        "reason": "太強了！個位 5×4=20（寫0進2），十位 0×4+2=2，百位 4×4=16，合起來是 1620 元！"
+      },
+      {
+        "text": "1215 元",
+        "isCorrect": false,
+        "reason": "安安和 3 位同學總共是 4 個人（405 × 4 = 1620），不是 3 個人（405 × 3 = 1215）喔！"
+      }
+    ],
+    "hints": [
+      "「安安和 3 位同學」共有 4 個人！算式是 405 × 4。",
+      "個位 5 × 4 = 20（寫 0 進 2）；十位 0 × 4 = 0，加上進位的 2 等於 2！",
+      "【完整解析】百位 4 × 4 = 16，十位是 2，個位是 0，共要繳 1620 元。"
+    ]
+  },
+  {
+    "id": 22,
+    "chapter": "運動中心與魔晶密碼",
+    "theme": "vault",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數（連續進位）",
+    "sceneType": "marble_factory",
+    "propTitle": "🔮 魔法琉璃彈珠工坊產量表",
+    "propItems": [
+      {
+        "label": "機台產能",
+        "val": "每小時生產 572 顆琉璃彈珠",
+        "hi": true
+      },
+      {
+        "label": "運轉時間",
+        "val": "連續運轉 7 小時"
+      }
+    ],
+    "q": "【雙零進位大魔王】魔法琉璃工坊的自動機台每小時可生產 572 顆彈珠，今天連續運轉了 7 小時，請問一共生產了多少顆彈珠？",
+    "formula": "572 × 7 = (   ) 顆",
+    "vMath": {
+      "top": "572",
+      "bot": "7",
+      "unit": "顆"
+    },
+    "options": [
+      {
+        "text": "3994 顆彈珠",
+        "isCorrect": false,
+        "reason": "十位 7 × 7 = 49，加上個位進上來的 1 是 50（寫0進5），不是 49 喔！"
+      },
+      {
+        "text": "3504 顆彈珠",
+        "isCorrect": false,
+        "reason": "百位忘記加十位進上來的 5 囉！5 × 7 = 35，35 + 5 = 40，是 4004 顆！"
+      },
+      {
+        "text": "404 顆彈珠",
+        "isCorrect": false,
+        "reason": "少寫了一個 0！百位 5×7+5=40，十位也是 0，個位是 4，合起來是四位數 4004 顆喔！"
+      },
+      {
+        "text": "4004 顆彈珠",
+        "isCorrect": true,
+        "reason": "大魔王破關！2×7=14（寫4進1），7×7+1=50（寫0進5），5×7+5=40，精準算出 4004 顆！"
+      }
+    ],
+    "hints": [
+      "這題算出來中間會有兩個 0 喔！先算個位：2 × 7 = 14（寫 4 進 1）。",
+      "再算十位：7 × 7 = 49，加上進位的 1 等於 50！十位寫 0，進 5 到百位。",
+      "【完整解析】百位 5 × 7 = 35，加上進位的 5 等於 40！合起來是 4004 顆。"
+    ]
+  },
+  {
+    "id": 23,
+    "chapter": "運動中心與魔晶密碼",
+    "theme": "vault",
+    "nodeId": "Node04",
+    "nodeName": "三位數乘一位數（終極破譯）",
+    "sceneType": "golden_vault",
+    "propTitle": "👑 皇家魔晶金庫終極密碼鎖",
+    "propItems": [
+      {
+        "label": "第一道鎖 A",
+        "val": "603 × 9 = ( ？ )"
+      },
+      {
+        "label": "第二道鎖 B",
+        "val": "762 × 6 = ( ？ )",
+        "hi": true
+      }
+    ],
+    "q": "【終極雙重密碼鎖】要打開魔晶金庫的最後大門，必須同時算出兩道乘法密碼：第一道鎖「603 × 9」與第二道鎖「762 × 6」。請問正確的兩組密碼分別是多少？",
+    "formula": "鎖A：603 × 9 ｜ 鎖B：762 × 6",
+    "vMath": {
+      "top": "762",
+      "bot": "6",
+      "unit": ""
+    },
+    "options": [
+      {
+        "text": "鎖 A 是 5407 ｜ 鎖 B 是 4572",
+        "isCorrect": false,
+        "reason": "鎖 A 的十位忘記加進位 2 囉！3 × 9 = 27（寫7進2），十位 0 × 9 + 2 = 2，鎖 A 是 5427！"
+      },
+      {
+        "text": "鎖 A 是 5427 ｜ 鎖 B 是 4572",
+        "isCorrect": true,
+        "reason": "恭喜榮登傳奇乘法騎士！603 × 9 = 5427、762 × 6 = 4572，兩道終極密碼完全破解！"
+      },
+      {
+        "text": "鎖 A 是 5427 ｜ 鎖 B 是 4272",
+        "isCorrect": false,
+        "reason": "鎖 B 的百位忘記加十位進上來的 3 囉！7 × 6 = 42，加上進位 3 是 45，鎖 B 是 4572！"
+      },
+      {
+        "text": "鎖 A 是 54027 ｜ 鎖 B 是 4562",
+        "isCorrect": false,
+        "reason": "603 × 9 是四位數 5427；而 762 × 6 十位是 6×6+1=37，是 4572 喔！"
+      }
+    ],
+    "hints": [
+      "先算鎖 A (603 × 9)：個位 3×9=27（寫7進2），十位 0×9+2=2，百位 6×9=54，得 5427。",
+      "再算鎖 B (762 × 6)：個位 2×6=12（寫2進1），十位 6×6+1=37（寫7進3）。",
+      "【完整解析】鎖 B 百位 7×6+3 = 45，得 4572。正確組合為 5427 與 4572！"
+    ]
+  }
+];
+
+    // 精緻情境 SVG 插畫庫 (100% 內建向量繪圖，配合每一題真實情境，絕不破圖！)
+    function getSceneSvg(sceneType) {
+      const scenes = {
+        aquarium_bus: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <defs>
+              <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
+            </defs>
+            <rect width="320" height="140" fill="url(#skyG)"/>
+            <circle cx="45" cy="30" r="14" fill="#fde047" opacity="0.9"/>
+            <!-- 海洋館拱門背景 -->
+            <path d="M210 115 Q255 35 300 115 Z" fill="#0369a1" stroke="#7dd3fc" stroke-width="2"/>
+            <text x="255" y="95" text-anchor="middle" fill="#e0f2fe" font-size="10" font-weight="bold">海洋館</text>
+            <!-- 地面 -->
+            <rect x="0" y="112" width="320" height="28" fill="#334155"/>
+            <line x1="10" y1="126" x2="310" y2="126" stroke="#facc15" stroke-width="2" stroke-dasharray="12 8"/>
+            <!-- 豪華遊覽車 -->
+            <g class="float-anim">
+              <rect x="25" y="52" width="155" height="58" rx="10" fill="#f59e0b" stroke="#ffffff" stroke-width="2.5"/>
+              <rect x="35" y="60" width="32" height="24" rx="4" fill="#e0f2fe"/>
+              <rect x="73" y="60" width="32" height="24" rx="4" fill="#e0f2fe"/>
+              <rect x="111" y="60" width="32" height="24" rx="4" fill="#e0f2fe"/>
+              <rect x="149" y="60" width="24" height="34" rx="4" fill="#bae6fd"/>
+              <rect x="35" y="90" width="108" height="14" rx="4" fill="#b45309"/>
+              <text x="89" y="100" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold">39人座 × 4輛 vs 21人座 × 7輛</text>
+              <circle cx="58" cy="112" r="11" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
+              <circle cx="145" cy="112" r="11" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
+            </g>
+          </svg>`,
+        sealion_feed: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#0369a1"/>
+            <path d="M0 95 Q80 80 160 95 T320 95 L320 140 L0 140 Z" fill="#0ea5e9"/>
+            <!-- 海獅與舞台 -->
+            <ellipse cx="95" cy="105" rx="45" ry="16" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2"/>
+            <path d="M75 98 Q85 45 108 55 Q118 60 112 98 Z" fill="#475569"/>
+            <circle cx="102" cy="56" r="3" fill="#ffffff"/>
+            <circle cx="114" cy="52" r="9" fill="#ef4444" class="float-anim"/>
+            <!-- 小魚碗圖示 -->
+            <g transform="translate(175, 28)">
+              <rect x="0" y="0" width="125" height="82" rx="12" fill="#ffffff" opacity="0.95"/>
+              <text x="62" y="20" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="bold">🥣 27組 × 每組2碗</text>
+              <path d="M22 45 Q62 72 102 45 Z" fill="#f59e0b"/>
+              <text x="62" y="42" text-anchor="middle" fill="#0284c7" font-size="13" font-weight="bold">🐟🐟🐟 × 8條/碗</text>
+              <text x="62" y="72" text-anchor="middle" fill="#b45309" font-size="10" font-weight="bold">兩步驟連乘挑戰！</text>
+            </g>
+          </svg>`,
+        aquarium_diy: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#0f172a"/>
+            <circle cx="60" cy="40" r="4" fill="#38bdf8" opacity="0.5"/>
+            <circle cx="270" cy="30" r="6" fill="#38bdf8" opacity="0.4"/>
+            <!-- 三張體驗票卡 -->
+            <g transform="translate(14, 22)">
+              <rect x="0" y="0" width="92" height="95" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
+              <text x="46" y="22" text-anchor="middle" fill="#0e7490" font-size="10" font-weight="bold">🪸 珊瑚 DIY</text>
+              <text x="46" y="50" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">$297</text>
+              <text x="46" y="75" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">5人: 297×5</text>
+            </g>
+            <g transform="translate(114, 22)">
+              <rect x="0" y="0" width="92" height="95" rx="10" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
+              <text x="46" y="22" text-anchor="middle" fill="#0369a1" font-size="10" font-weight="bold">🐠 魚群互動</text>
+              <text x="46" y="50" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">$309</text>
+              <text x="46" y="75" text-anchor="middle" fill="#dc2626" font-size="10" font-weight="bold">5人: 309×5</text>
+            </g>
+            <g transform="translate(214, 22)">
+              <rect x="0" y="0" width="92" height="95" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+              <text x="46" y="24" text-anchor="middle" fill="#92400e" font-size="10" font-weight="bold">💰 小隊公費</text>
+              <text x="46" y="52" text-anchor="middle" fill="#b45309" font-size="16" font-weight="900">$1500</text>
+              <text x="46" y="75" text-anchor="middle" fill="#78350f" font-size="10" font-weight="bold">共 5 人參加</text>
+            </g>
+          </svg>`,
+        penguin_shop: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#e0f2fe"/>
+            <rect x="0" y="105" width="320" height="35" fill="#bae6fd"/>
+            <!-- 企鵝帽展示 -->
+            <g class="float-anim" transform="translate(32, 18)">
+              <circle cx="50" cy="55" r="36" fill="#1e293b"/>
+              <ellipse cx="50" cy="62" rx="24" ry="26" fill="#ffffff"/>
+              <circle cx="40" cy="44" r="4" fill="#ffffff"/>
+              <circle cx="60" cy="44" r="4" fill="#ffffff"/>
+              <polygon points="44,52 56,52 50,60" fill="#f59e0b"/>
+              <rect x="18" y="88" width="64" height="20" rx="6" fill="#0284c7"/>
+              <text x="50" y="102" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="bold">每頂 $245</text>
+            </g>
+            <!-- 1000元鈔票與買4頂 -->
+            <g transform="translate(145, 24)">
+              <rect x="0" y="0" width="150" height="44" rx="8" fill="#1d4ed8" stroke="#93c5fd" stroke-width="2"/>
+              <text x="75" y="18" text-anchor="middle" fill="#bfdbfe" font-size="9" font-weight="bold">中華民國壹仟圓</text>
+              <text x="75" y="36" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">💵 付 $1000 元</text>
+              <rect x="0" y="52" width="150" height="38" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+              <text x="75" y="75" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="900">買 4 頂 ➔ 找回？元</text>
+            </g>
+          </svg>`,
+        pants_sale: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fef3c7"/>
+            <!-- 特賣海報 -->
+            <rect x="18" y="14" width="135" height="112" rx="12" fill="#dc2626" stroke="#fde047" stroke-width="3"/>
+            <text x="85" y="36" text-anchor="middle" fill="#fef08a" font-size="12" font-weight="900">🔥 全館長褲大特賣</text>
+            <text x="85" y="64" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">單買 1 件 $499</text>
+            <rect x="28" y="76" width="115" height="36" rx="8" fill="#fef08a"/>
+            <text x="85" y="99" text-anchor="middle" fill="#b91c1c" font-size="13" font-weight="900">3 件特價 $1200</text>
+            <!-- 長褲圖示 -->
+            <g class="float-anim" transform="translate(175, 22)">
+              <path d="M20 10 L75 10 L82 92 L55 92 L48 45 L40 92 L13 92 Z" fill="#2563eb" stroke="#1e40af" stroke-width="2.5"/>
+              <rect x="85" y="25" width="48" height="45" rx="8" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+              <text x="109" y="45" text-anchor="middle" fill="#b45309" font-size="10" font-weight="bold">買 3 件</text>
+              <text x="109" y="61" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="900">省多少?</text>
+            </g>
+          </svg>`,
+        soap_compare: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#ecfdf5"/>
+            <g transform="translate(16, 16)">
+              <rect x="0" y="0" width="136" height="108" rx="12" fill="#ffffff" stroke="#10b981" stroke-width="2.5"/>
+              <rect x="0" y="0" width="136" height="28" rx="10" fill="#10b981"/>
+              <text x="68" y="19" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">🏪 家家超商</text>
+              <text x="68" y="58" text-anchor="middle" fill="#065f46" font-size="14" font-weight="900">🧴 每瓶 $72 元</text>
+              <text x="68" y="86" text-anchor="middle" fill="#047857" font-size="11" font-weight="bold">買 4 瓶 = 72 × 4</text>
+            </g>
+            <g transform="translate(168, 16)">
+              <rect x="0" y="0" width="136" height="108" rx="12" fill="#ffffff" stroke="#f59e0b" stroke-width="2.5"/>
+              <rect x="0" y="0" width="136" height="28" rx="10" fill="#f59e0b"/>
+              <text x="68" y="19" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">🏪 來來超商</text>
+              <text x="68" y="58" text-anchor="middle" fill="#92400e" font-size="13" font-weight="900">🧴🧴🧴🧴 4瓶組</text>
+              <text x="68" y="86" text-anchor="middle" fill="#dc2626" font-size="14" font-weight="900">特價 $250 元</text>
+            </g>
+          </svg>`,
+        towel_compare: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fffbeb"/>
+            <g transform="translate(16, 16)">
+              <rect x="0" y="0" width="136" height="108" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2.5"/>
+              <rect x="0" y="0" width="136" height="28" rx="10" fill="#3b82f6"/>
+              <text x="68" y="19" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">🏬 天天百貨</text>
+              <text x="68" y="56" text-anchor="middle" fill="#1e3a8a" font-size="14" font-weight="900">每條毛巾 $97</text>
+              <text x="68" y="86" text-anchor="middle" fill="#2563eb" font-size="11" font-weight="bold">買 5 條 = 97 × 5</text>
+            </g>
+            <g transform="translate(168, 16)">
+              <rect x="0" y="0" width="136" height="108" rx="12" fill="#ffffff" stroke="#ec4899" stroke-width="2.5"/>
+              <rect x="0" y="0" width="136" height="28" rx="10" fill="#ec4899"/>
+              <text x="68" y="19" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">🏬 日日百貨</text>
+              <text x="68" y="56" text-anchor="middle" fill="#831843" font-size="13" font-weight="900">5 條禮盒促銷組</text>
+              <text x="68" y="86" text-anchor="middle" fill="#db2777" font-size="14" font-weight="900">整組 $449 元</text>
+            </g>
+          </svg>`,
+        water_bottle: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#f0fdf4"/>
+            <!-- 4個水壺 -->
+            <g class="float-anim" transform="translate(20, 22)">
+              <rect x="10" y="18" width="26" height="68" rx="8" fill="#0ea5e9"/>
+              <rect x="15" y="6" width="16" height="12" rx="3" fill="#334155"/>
+              <rect x="46" y="18" width="26" height="68" rx="8" fill="#f43f5e"/>
+              <rect x="51" y="6" width="16" height="12" rx="3" fill="#334155"/>
+              <rect x="82" y="18" width="26" height="68" rx="8" fill="#10b981"/>
+              <rect x="87" y="6" width="16" height="12" rx="3" fill="#334155"/>
+              <rect x="118" y="18" width="26" height="68" rx="8" fill="#f59e0b"/>
+              <rect x="123" y="6" width="16" height="12" rx="3" fill="#334155"/>
+              <text x="77" y="105" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">每組 $295 × 4 組</text>
+            </g>
+            <g transform="translate(185, 28)">
+              <rect x="0" y="0" width="118" height="84" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+              <text x="59" y="26" text-anchor="middle" fill="#15803d" font-size="11" font-weight="bold">👛 媽媽錢包預算</text>
+              <text x="59" y="54" text-anchor="middle" fill="#166534" font-size="18" font-weight="900">$1200 元</text>
+              <text x="59" y="74" text-anchor="middle" fill="#ca8a04" font-size="10" font-weight="bold">夠不夠？剩幾元？</text>
+            </g>
+          </svg>`,
+        restaurant_menu: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fff1f2"/>
+            <g transform="translate(12, 14)">
+              <rect x="0" y="0" width="68" height="110" rx="8" fill="#ffffff" stroke="#f43f5e" stroke-width="2"/>
+              <text x="34" y="24" text-anchor="middle" fill="#be123c" font-size="10" font-weight="900">A 牛排館</text>
+              <text x="34" y="55" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">$508</text>
+              <text x="34" y="85" text-anchor="middle" fill="#64748b" font-size="9" font-weight="bold">每人單價</text>
+            </g>
+            <g transform="translate(88, 14)">
+              <rect x="0" y="0" width="68" height="110" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="2"/>
+              <text x="34" y="24" text-anchor="middle" fill="#047857" font-size="10" font-weight="900">B 壽司屋</text>
+              <text x="34" y="55" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">$318</text>
+              <text x="34" y="85" text-anchor="middle" fill="#64748b" font-size="9" font-weight="bold">每人單價</text>
+            </g>
+            <g transform="translate(164, 14)">
+              <rect x="0" y="0" width="68" height="110" rx="8" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+              <text x="34" y="24" text-anchor="middle" fill="#b45309" font-size="10" font-weight="900">C 焗烤坊</text>
+              <text x="34" y="55" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">$279</text>
+              <text x="34" y="85" text-anchor="middle" fill="#64748b" font-size="9" font-weight="bold">每人單價</text>
+            </g>
+            <g transform="translate(240, 14)">
+              <rect x="0" y="0" width="68" height="110" rx="8" fill="#ffffff" stroke="#6366f1" stroke-width="2"/>
+              <text x="34" y="24" text-anchor="middle" fill="#4338ca" font-size="10" font-weight="900">D 火鍋城</text>
+              <text x="34" y="55" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">$421</text>
+              <text x="34" y="85" text-anchor="middle" fill="#64748b" font-size="9" font-weight="bold">每人單價</text>
+            </g>
+          </svg>`,
+        birthday_feast: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fef2f2"/>
+            <!-- 生日蛋糕與火鍋 -->
+            <g class="float-anim" transform="translate(28, 22)">
+              <rect x="15" y="45" width="80" height="45" rx="8" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/>
+              <rect x="25" y="22" width="60" height="25" rx="6" fill="#fb7185"/>
+              <line x1="55" y1="8" x2="55" y2="22" stroke="#f59e0b" stroke-width="4"/>
+              <circle cx="55" cy="6" r="4" fill="#fde047"/>
+              <text x="55" y="72" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">👴 爺爺大壽</text>
+            </g>
+            <g transform="translate(145, 20)">
+              <rect x="0" y="0" width="155" height="100" rx="12" fill="#ffffff" stroke="#e11d48" stroke-width="2.5"/>
+              <text x="77" y="26" text-anchor="middle" fill="#be123c" font-size="12" font-weight="900">🍲 D 皇家火鍋城</text>
+              <text x="77" y="50" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">$421 × 全家 7 人</text>
+              <rect x="16" y="62" width="123" height="26" rx="6" fill="#ffe4e6"/>
+              <text x="77" y="79" text-anchor="middle" fill="#e11d48" font-size="11" font-weight="900">🎁 壽星全桌折 $100</text>
+            </g>
+          </svg>`,
+        pasta_party: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fff7ed"/>
+            <g transform="translate(20, 20)">
+              <rect x="0" y="0" width="135" height="100" rx="12" fill="#ffffff" stroke="#ea580c" stroke-width="2"/>
+              <text x="67" y="26" text-anchor="middle" fill="#c2410c" font-size="11" font-weight="900">🍝 C 義式焗烤套餐</text>
+              <text x="67" y="56" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">$279 × 3 人</text>
+              <text x="67" y="82" text-anchor="middle" fill="#ea580c" font-size="10" font-weight="bold">妙妙 + 2位朋友</text>
+            </g>
+            <text x="166" y="75" text-anchor="middle" fill="#ea580c" font-size="20" font-weight="900">+</text>
+            <g transform="translate(180, 20)">
+              <rect x="0" y="0" width="120" height="100" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+              <text x="60" y="28" text-anchor="middle" fill="#92400e" font-size="11" font-weight="900">🍟 炸物大拼盤</text>
+              <text x="60" y="58" text-anchor="middle" fill="#b45309" font-size="16" font-weight="900">+$120 元</text>
+              <text x="60" y="82" text-anchor="middle" fill="#78350f" font-size="10" font-weight="bold">合點 1 份共享</text>
+            </g>
+          </svg>`,
+        cinema_ticket: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#1e1b4b"/>
+            <!-- 電影票根 -->
+            <g class="float-anim" transform="translate(18, 22)">
+              <rect x="0" y="0" width="155" height="92" rx="10" fill="#facc15" stroke="#ffffff" stroke-width="2.5"/>
+              <line x1="115" y1="0" x2="115" y2="92" stroke="#ca8a04" stroke-width="2" stroke-dasharray="6 4"/>
+              <text x="58" y="26" text-anchor="middle" fill="#422006" font-size="11" font-weight="900">🎬 CINEMA TICKET</text>
+              <text x="58" y="54" text-anchor="middle" fill="#713f12" font-size="18" font-weight="900">每張 $235</text>
+              <text x="58" y="76" text-anchor="middle" fill="#dc2626" font-size="10" font-weight="bold">早場動畫優待票</text>
+              <text x="135" y="52" text-anchor="middle" fill="#422006" font-size="11" font-weight="900">VIP</text>
+            </g>
+            <!-- 5個人頭像提醒 -->
+            <g transform="translate(186, 22)">
+              <rect x="0" y="0" width="118" height="92" rx="10" fill="#312e81" stroke="#818cf8" stroke-width="2"/>
+              <text x="59" y="25" text-anchor="middle" fill="#e0e7ff" font-size="10" font-weight="bold">⚠️ 仔細數人數：</text>
+              <text x="59" y="50" text-anchor="middle" fill="#fde047" font-size="12" font-weight="900">👦晨皓 + 4位同學</text>
+              <text x="59" y="75" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="900">🧑‍🤝‍🧑 共 5 個人！</text>
+            </g>
+          </svg>`,
+        eel_fishing: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#0f172a"/>
+            <circle cx="275" cy="28" r="14" fill="#fef08a"/>
+            <path d="M0 90 Q80 78 160 90 T320 90 L320 140 L0 140 Z" fill="#0d9488"/>
+            <!-- 透明鰻魚苗與價格 -->
+            <g class="float-anim" transform="translate(22, 20)">
+              <rect x="0" y="0" width="165" height="95" rx="12" fill="#134e4a" stroke="#2dd4bf" stroke-width="2"/>
+              <text x="82" y="24" text-anchor="middle" fill="#99f6e4" font-size="11" font-weight="900">🌊 臺灣鰻魚王國・軟黃金</text>
+              <path d="M25 48 Q55 38 85 48 T145 48" stroke="#ffffff" stroke-width="3" fill="none"/>
+              <path d="M25 62 Q55 52 85 62 T145 62" stroke="#ccfbf1" stroke-width="3" fill="none"/>
+              <text x="82" y="84" text-anchor="middle" fill="#fde047" font-size="12" font-weight="900">每尾 $108 × 捕獲 6 尾</text>
+            </g>
+            <g transform="translate(202, 46)">
+              <rect x="0" y="0" width="98" height="68" rx="10" fill="#ffffff"/>
+              <text x="49" y="28" text-anchor="middle" fill="#0f766e" font-size="11" font-weight="bold">直式十位是 0</text>
+              <text x="49" y="52" text-anchor="middle" fill="#0f172a" font-size="15" font-weight="900">108 × 6</text>
+            </g>
+          </svg>`,
+        eel_chopsticks: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#f0fdfa"/>
+            <!-- 水桶與31枝竹筷 -->
+            <g transform="translate(22, 16)">
+              <polygon points="15,35 115,35 102,108 28,108" fill="#0284c7" stroke="#0369a1" stroke-width="2.5"/>
+              <line x1="38" y1="8" x2="48" y2="42" stroke="#d97706" stroke-width="4"/>
+              <line x1="55" y1="6" x2="60" y2="42" stroke="#d97706" stroke-width="4"/>
+              <line x1="72" y1="8" x2="72" y2="42" stroke="#d97706" stroke-width="4"/>
+              <line x1="89" y1="10" x2="82" y2="42" stroke="#d97706" stroke-width="4"/>
+              <text x="65" y="68" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="900">🥢 31 枝竹筷</text>
+              <text x="65" y="90" text-anchor="middle" fill="#fef08a" font-size="10" font-weight="bold">1枝 = 100尾</text>
+            </g>
+            <g transform="translate(158, 22)">
+              <rect x="0" y="0" width="142" height="96" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="2.5"/>
+              <text x="71" y="25" text-anchor="middle" fill="#0f766e" font-size="11" font-weight="900">🥣 加上小碗零頭：</text>
+              <text x="71" y="52" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="900">數了 8 次 × 每次 4 尾</text>
+              <text x="71" y="80" text-anchor="middle" fill="#ea580c" font-size="12" font-weight="900">31個百 + 4×8 = ？</text>
+            </g>
+          </svg>`,
+        ferry_boat: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#e0f2fe"/>
+            <path d="M0 100 Q80 88 160 100 T320 100 L320 140 L0 140 Z" fill="#0284c7"/>
+            <g class="float-anim" transform="translate(35, 22)">
+              <polygon points="10,65 230,65 205,92 35,92" fill="#1e3a8a" stroke="#ffffff" stroke-width="2"/>
+              <rect x="42" y="34" width="150" height="31" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+              <rect x="95" y="14" width="36" height="20" rx="4" fill="#ef4444"/>
+              <text x="117" y="54" text-anchor="middle" fill="#1e3a8a" font-size="12" font-weight="900">⛴️ 每趟滿載 311 人 × 5 趟</text>
+            </g>
+          </svg>`,
+        train_bento: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fef3c7"/>
+            <!-- 便當盒 -->
+            <g transform="translate(22, 18)">
+              <rect x="0" y="0" width="142" height="104" rx="14" fill="#92400e" stroke="#78350f" stroke-width="3"/>
+              <rect x="10" y="10" width="122" height="84" rx="8" fill="#fef9c3"/>
+              <ellipse cx="55" cy="48" rx="34" ry="22" fill="#b45309"/>
+              <circle cx="105" cy="35" r="12" fill="#f59e0b"/>
+              <circle cx="105" cy="68" r="12" fill="#16a34a"/>
+              <text x="71" y="86" text-anchor="middle" fill="#78350f" font-size="11" font-weight="900">🍱 鐵路便當 541 大卡</text>
+            </g>
+            <g transform="translate(180, 26)">
+              <rect x="0" y="0" width="120" height="88" rx="12" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+              <text x="60" y="28" text-anchor="middle" fill="#b45309" font-size="11" font-weight="bold">⚾ 少棒隊球員</text>
+              <text x="60" y="55" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">共買 8 個</text>
+              <text x="60" y="76" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="900">541 × 8 = ？</text>
+            </g>
+          </svg>`,
+        stationery_buy: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fefce8"/>
+            <g transform="translate(14, 15)">
+              <rect x="0" y="0" width="185" height="110" rx="10" fill="#ffffff" stroke="#eab308" stroke-width="2"/>
+              <text x="92" y="22" text-anchor="middle" fill="#854d0e" font-size="11" font-weight="900">🧾 哪個最接近 $900 元？</text>
+              <text x="14" y="44" fill="#334155" font-size="10" font-weight="bold">• 影印紙：$119 × 4 包</text>
+              <text x="14" y="64" fill="#b45309" font-size="11" font-weight="900">• 花邊剪刀：$289 × 3 組</text>
+              <text x="14" y="84" fill="#334155" font-size="10" font-weight="bold">• 原子筆：$415 × 3 組</text>
+              <text x="14" y="102" fill="#334155" font-size="10" font-weight="bold">• 迴紋針：$97 × 6 盒</text>
+            </g>
+            <g class="float-anim" transform="translate(212, 26)">
+              <circle cx="46" cy="44" r="40" fill="#fef08a" stroke="#ca8a04" stroke-width="2.5"/>
+              <text x="46" y="40" text-anchor="middle" fill="#854d0e" font-size="11" font-weight="900">目標預算</text>
+              <text x="46" y="60" text-anchor="middle" fill="#dc2626" font-size="15" font-weight="900">≈ $900</text>
+            </g>
+          </svg>`,
+        eraser_boxes: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fef9c3"/>
+            <g class="float-anim" transform="translate(18, 26)">
+              <rect x="0" y="10" width="82" height="72" rx="8" fill="#d97706" stroke="#92400e" stroke-width="2"/>
+              <text x="41" y="45" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">📦 第 1 箱</text>
+              <text x="41" y="65" text-anchor="middle" fill="#fef08a" font-size="12" font-weight="900">288 個</text>
+              <rect x="98" y="10" width="82" height="72" rx="8" fill="#d97706" stroke="#92400e" stroke-width="2"/>
+              <text x="139" y="45" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">📦 第 2 箱</text>
+              <text x="139" y="65" text-anchor="middle" fill="#fef08a" font-size="12" font-weight="900">288 個</text>
+              <rect x="196" y="10" width="82" height="72" rx="8" fill="#d97706" stroke="#92400e" stroke-width="2"/>
+              <text x="237" y="45" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">📦 第 3 箱</text>
+              <text x="237" y="65" text-anchor="middle" fill="#fef08a" font-size="12" font-weight="900">288 個</text>
+            </g>
+          </svg>`,
+        sports_drinks: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#ecfeff"/>
+            <g transform="translate(18, 20)">
+              <rect x="0" y="0" width="138" height="100" rx="12" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+              <text x="69" y="28" text-anchor="middle" fill="#e0f2fe" font-size="11" font-weight="bold">🥤 運動飲料 6 箱</text>
+              <text x="69" y="56" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">每箱 24 瓶 × 6</text>
+              <text x="69" y="82" text-anchor="middle" fill="#fde047" font-size="11" font-weight="bold">先算總共幾瓶！</text>
+            </g>
+            <text x="168" y="75" text-anchor="middle" fill="#0f172a" font-size="22" font-weight="900">-</text>
+            <g transform="translate(182, 20)">
+              <rect x="0" y="0" width="120" height="100" rx="12" fill="#ffffff" stroke="#f43f5e" stroke-width="2.5"/>
+              <text x="60" y="30" text-anchor="middle" fill="#e11d48" font-size="11" font-weight="900">🏃 大隊接力喝掉</text>
+              <text x="60" y="58" text-anchor="middle" fill="#be123c" font-size="17" font-weight="900">- 34 瓶</text>
+              <text x="60" y="82" text-anchor="middle" fill="#64748b" font-size="10" font-weight="bold">還剩下幾瓶？</text>
+            </g>
+          </svg>`,
+        steamed_bun: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#fffbeb"/>
+            <g class="float-anim" transform="translate(22, 28)">
+              <circle cx="32" cy="42" r="24" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+              <circle cx="88" cy="42" r="24" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+              <circle cx="144" cy="42" r="24" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+              <circle cx="200" cy="42" r="24" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+              <text x="116" y="88" text-anchor="middle" fill="#92400e" font-size="12" font-weight="900">🥟 每個 127 大卡 × 吃 4 個</text>
+            </g>
+          </svg>`,
+        fencing_class: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#eef2ff"/>
+            <g transform="translate(20, 18)">
+              <rect x="0" y="0" width="165" height="104" rx="12" fill="#4f46e5" stroke="#818cf8" stroke-width="2.5"/>
+              <text x="82" y="28" text-anchor="middle" fill="#e0e7ff" font-size="11" font-weight="bold">🤺 皇家擊劍體驗課</text>
+              <text x="82" y="58" text-anchor="middle" fill="#ffffff" font-size="17" font-weight="900">每人 $405 元</text>
+              <text x="82" y="84" text-anchor="middle" fill="#fde047" font-size="11" font-weight="900">安安 + 3位同學 = 4人</text>
+            </g>
+            <g transform="translate(198, 28)">
+              <rect x="0" y="0" width="102" height="84" rx="12" fill="#ffffff" stroke="#6366f1" stroke-width="2"/>
+              <text x="51" y="30" text-anchor="middle" fill="#4338ca" font-size="11" font-weight="bold">中間有 0 乘法</text>
+              <text x="51" y="58" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">405 × 4</text>
+            </g>
+          </svg>`,
+        marble_factory: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#f5f3ff"/>
+            <g class="float-anim" transform="translate(24, 24)">
+              <circle cx="30" cy="45" r="20" fill="#8b5cf6"/>
+              <circle cx="78" cy="45" r="20" fill="#ec4899"/>
+              <circle cx="126" cy="45" r="20" fill="#06b6d4"/>
+              <text x="78" y="90" text-anchor="middle" fill="#4c1d95" font-size="11" font-weight="900">🔮 每小時 572 顆 × 7 小時</text>
+            </g>
+            <g transform="translate(184, 24)">
+              <rect x="0" y="0" width="116" height="92" rx="12" fill="#ffffff" stroke="#8b5cf6" stroke-width="2.5"/>
+              <text x="58" y="28" text-anchor="middle" fill="#6d28d9" font-size="11" font-weight="900">⚠️ 雙零進位魔王</text>
+              <text x="58" y="56" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">572 × 7</text>
+              <text x="58" y="78" text-anchor="middle" fill="#dc2626" font-size="10" font-weight="bold">小心十位百位進位</text>
+            </g>
+          </svg>`,
+        golden_vault: `
+          <svg viewBox="0 0 320 140" class="w-full h-full">
+            <rect width="320" height="140" fill="#1e1b4b"/>
+            <g transform="translate(18, 18)">
+              <rect x="0" y="0" width="134" height="104" rx="12" fill="#312e81" stroke="#facc15" stroke-width="2.5"/>
+              <text x="67" y="28" text-anchor="middle" fill="#fde047" font-size="11" font-weight="900">🔐 第一道鎖 A</text>
+              <text x="67" y="62" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="900">603 × 9</text>
+              <text x="67" y="88" text-anchor="middle" fill="#93c5fd" font-size="10" font-weight="bold">十位有 0 進位</text>
+            </g>
+            <g transform="translate(168, 18)">
+              <rect x="0" y="0" width="134" height="104" rx="12" fill="#312e81" stroke="#facc15" stroke-width="2.5"/>
+              <text x="67" y="28" text-anchor="middle" fill="#fde047" font-size="11" font-weight="900">🔐 第二道鎖 B</text>
+              <text x="67" y="62" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="900">762 × 6</text>
+              <text x="67" y="88" text-anchor="middle" fill="#93c5fd" font-size="10" font-weight="bold">三位連續進位</text>
+            </g>
+          </svg>`
+      };
+      return scenes[sceneType] || scenes.aquarium_bus;
+    }
+
+    // 遊戲狀態
+    let state = {
+      mode: 'solo',
+      playerName: '三年級乘法小達人',
+      currentIndex: 0,
+      activeQuestions: [],
+      currentShuffledOptions: [],
+      answeredCurrent: false,
+      score: 0,
+      shields: 3,
+      combo: 0,
+      maxCombo: 0,
+      soundEnabled: true,
+      currentTeam: 'red',
+      redScore: 0,
+      blueScore: 0,
+      nodeStats: {},
+      mistakes: []
+    };
+
+    // 音效引擎
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    function playTone(freq, type = 'triangle', duration = 0.14, gainVal = 0.12) {
+      if (!state.soundEnabled) return;
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+    function playCorrectSound() {
+      playTone(523.25, 'triangle', 0.1, 0.12);
+      setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.12), 80);
+      setTimeout(() => playTone(783.99, 'triangle', 0.22, 0.14), 160);
+    }
+    function playWrongSound() {
+      playTone(311.13, 'sawtooth', 0.18, 0.08);
+      setTimeout(() => playTone(261.63, 'sawtooth', 0.25, 0.08), 120);
+    }
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      document.getElementById('soundToggleBtn').innerText = state.soundEnabled ? '🔊' : '🔇';
+    }
+
+    // Fisher-Yates 洗牌演算法：確保每道題目的選項順序隨機分佈在 A, B, C, D！
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function selectGameMode(m) {
+      state.mode = m;
+      const optSolo = document.getElementById('optSolo');
+      const optTeam = document.getElementById('optTeam');
+      if (m === 'solo') {
+        optSolo.className = 'p-3.5 rounded-2xl border-2 border-sky-500 bg-sky-50/90 cursor-pointer transition flex items-center justify-between';
+        optTeam.className = 'p-3.5 rounded-2xl border-2 border-slate-200 bg-white/80 cursor-pointer transition flex items-center justify-between';
+      } else {
+        optTeam.className = 'p-3.5 rounded-2xl border-2 border-rose-500 bg-rose-50/90 cursor-pointer transition flex items-center justify-between';
+        optSolo.className = 'p-3.5 rounded-2xl border-2 border-slate-200 bg-white/80 cursor-pointer transition flex items-center justify-between';
+      }
+    }
+
+    function resetStats() {
+      state.nodeStats = {
+        'Node01': { name: '整百乘法與數感推理', total: 0, correct: 0 },
+        'Node03': { name: '二位數進位乘法比價', total: 0, correct: 0 },
+        'Node04': { name: '三位數乘一位數（含0與連續進位）', total: 0, correct: 0 },
+        'Node05': { name: '兩步驟乘法生活應用', total: 0, correct: 0 },
+        'Node06': { name: '乘法估算與生活預算決策', total: 0, correct: 0 }
+      };
+    }
+
+    function startFromChapter(startIndex) {
+      startGame(startIndex);
+    }
+
+    function startGame(startIndex = 0) {
+      initAudio();
+      const pInput = document.getElementById('playerInput').value.trim();
+      if (pInput) state.playerName = pInput;
+
+      state.activeQuestions = [...RAW_QUESTIONS];
+      state.currentIndex = startIndex;
+      state.score = 0;
+      state.shields = 3;
+      state.combo = 0;
+      state.maxCombo = 0;
+      state.redScore = 0;
+      state.blueScore = 0;
+      state.mistakes = [];
+      resetStats();
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('reportScreen').classList.add('hidden');
+      document.getElementById('playingScreen').classList.remove('hidden');
+
+      if (state.mode === 'solo') {
+        document.getElementById('soloShield').classList.remove('hidden');
+        document.getElementById('teamScores').classList.add('hidden');
+        document.getElementById('teamTurnIndicator').classList.add('hidden');
+      } else {
+        document.getElementById('soloShield').classList.add('hidden');
+        document.getElementById('teamScores').classList.remove('hidden');
+        state.currentTeam = 'red';
+      }
+
+      updateShieldDisplay();
+      renderCurrentQuestion();
+    }
+
+    // 切換章節主題配色
+    function applyTheme(theme) {
+      const body = document.getElementById('appBody');
+      body.className = `theme-${theme} min-h-screen flex flex-col justify-between transition-colors duration-500`;
+      const iconMap = {
+        ocean: '🐬',
+        market: '🛒',
+        dining: '🍽️',
+        taiwan: '🌊',
+        school: '🏫',
+        vault: '👑'
+      };
+      document.getElementById('hudThemeIcon').innerText = iconMap[theme] || '🐬';
+    }
+
+    // 渲染千/百/十/個位值對齊直式板
+    function renderVerticalMathBoard(vMath) {
+      const box = document.getElementById('verticalMathBox');
+      if (!vMath) {
+        box.innerHTML = '';
+        return;
+      }
+      const topDigits = vMath.top.padStart(4, ' ').split('');
+      const botDigits = vMath.bot.padStart(3, ' ').split('');
+
+      box.innerHTML = `
+        <div class="place-grid shadow-sm">
+          <div class="place-header bg-rose-50 text-rose-700">千</div>
+          <div class="place-header bg-amber-50 text-amber-700">百</div>
+          <div class="place-header bg-emerald-50 text-emerald-700">十</div>
+          <div class="place-header bg-sky-50 text-sky-700">個</div>
+
+          <div class="place-cell text-slate-800">${topDigits[0]}</div>
+          <div class="place-cell text-slate-800">${topDigits[1]}</div>
+          <div class="place-cell text-slate-800">${topDigits[2]}</div>
+          <div class="place-cell text-slate-800">${topDigits[3]}</div>
+
+          <div class="place-cell text-amber-600 border-b-2 border-slate-700">×</div>
+          <div class="place-cell text-slate-800 border-b-2 border-slate-700">${botDigits[0]}</div>
+          <div class="place-cell text-slate-800 border-b-2 border-slate-700">${botDigits[1]}</div>
+          <div class="place-cell text-slate-800 border-b-2 border-slate-700">${botDigits[2]}</div>
+
+          <div class="place-cell text-indigo-500 text-sm py-1 col-span-4 bg-indigo-50/50 font-bold">
+            ？ ${vMath.unit || ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCurrentQuestion() {
+      state.answeredCurrent = false;
+      const q = state.activeQuestions[state.currentIndex];
+      const total = state.activeQuestions.length;
+
+      applyTheme(q.theme);
+
+      // 更新頂部進度
+      document.getElementById('hudProgressText').innerText = `${state.currentIndex + 1} / ${total}`;
+      document.getElementById('hudProgressBar').style.width = `${Math.round(((state.currentIndex + 1) / total) * 100)}%`;
+      document.getElementById('hudScore').innerText = state.score;
+      document.getElementById('chapterPill').innerText = q.chapter;
+
+      // 標籤與題幹
+      document.getElementById('questionBadge').innerText = `第 ${state.currentIndex + 1} 關`;
+      document.getElementById('chapterBadge').innerText = q.chapter;
+      document.getElementById('nodeBadge').innerText = q.nodeName;
+      document.getElementById('questionText').innerText = q.q;
+      document.getElementById('formulaText').innerText = q.formula;
+      document.getElementById('scratchQuestionTitle').innerText = `草稿計算：${q.formula}`;
+
+      // 渲染精緻 SVG 場景與情境看板
+      document.getElementById('sceneSvgBox').innerHTML = getSceneSvg(q.sceneType);
+      document.getElementById('propTitleText').innerText = q.propTitle;
+      const pList = document.getElementById('propItemsList');
+      pList.innerHTML = '';
+      q.propItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between px-2 py-1 rounded-lg ${item.hi ? 'bg-amber-100/90 text-amber-950 font-black border border-amber-300' : 'bg-slate-50 text-slate-700 font-bold'}`;
+        row.innerHTML = `<span>${item.label}</span><span class="math-font">${item.val}</span>`;
+        pList.appendChild(row);
+      });
+
+      // 渲染直式位值板
+      renderVerticalMathBoard(q.vMath);
+
+      // 隱藏回饋面板
+      document.getElementById('feedbackPanel').classList.add('hidden');
+
+      // 隨機洗牌 4 個選項 (確保 A/B/C/D 機率完全均等！)
+      state.currentShuffledOptions = shuffleArray(q.options);
+      renderOptions();
+
+      if (state.mode === 'team') {
+        updateTeamHUD();
+      }
+    }
+
+    function renderOptions() {
+      const grid = document.getElementById('optionsGrid');
+      grid.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const badgeColors = [
+        'bg-sky-100 text-sky-800 border-sky-300',
+        'bg-emerald-100 text-emerald-800 border-emerald-300',
+        'bg-amber-100 text-amber-800 border-amber-300',
+        'bg-purple-100 text-purple-800 border-purple-300'
+      ];
+
+      state.currentShuffledOptions.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-card glass-card p-3.5 md:p-4 rounded-2xl border-2 border-slate-200/90 text-left flex items-center justify-between group cursor-pointer';
+        btn.onclick = () => handleSelectOption(idx, btn);
+        btn.innerHTML = `
+          <div class="flex items-center gap-3 pr-2">
+            <span class="w-8 h-8 rounded-xl ${badgeColors[idx]} border font-black text-sm flex items-center justify-center shrink-0">
+              ${letters[idx]}
+            </span>
+            <span class="text-sm md:text-base font-black text-slate-800 leading-snug">
+              ${opt.text}
+            </span>
+          </div>
+          <span class="text-slate-300 group-hover:text-sky-600 font-black text-base transition">➔</span>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleSelectOption(selectedIndex, clickedBtn) {
+      if (state.answeredCurrent) return;
+      state.answeredCurrent = true;
+
+      const q = state.activeQuestions[state.currentIndex];
+      const chosenOpt = state.currentShuffledOptions[selectedIndex];
+      const isCorrect = chosenOpt.isCorrect;
+
+      // 鎖定按鈕並標示正確答案位置
+      const allBtns = document.querySelectorAll('#optionsGrid button');
+      allBtns.forEach((b, idx) => {
+        b.disabled = true;
+        if (state.currentShuffledOptions[idx].isCorrect) {
+          b.className = 'p-3.5 md:p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-left flex items-center justify-between shadow-md';
+        }
+      });
+
+      if (!state.nodeStats[q.nodeId]) {
+        state.nodeStats[q.nodeId] = { name: q.nodeName, total: 0, correct: 0 };
+      }
+      state.nodeStats[q.nodeId].total++;
+
+      const fbPanel = document.getElementById('feedbackPanel');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbReason = document.getElementById('feedbackReason');
+      const fbFull = document.getElementById('feedbackFullHint');
+      fbPanel.classList.remove('hidden');
+
+      if (isCorrect) {
+        state.nodeStats[q.nodeId].correct++;
+        state.score += 10 + (state.combo * 2);
+        state.combo++;
+        if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+        document.getElementById('hudScore').innerText = state.score;
+
+        playCorrectSound();
+        clickedBtn.className = 'p-3.5 md:p-4 rounded-2xl border-2 border-emerald-600 bg-emerald-500 text-white text-left flex items-center justify-between shadow-lg';
+
+        fbPanel.className = 'w-full rounded-2xl p-4 border-2 shadow-lg bg-emerald-50 border-emerald-400 text-emerald-950';
+        fbTitle.innerHTML = '🎉 答對了！觀念與計算超級精準！';
+        fbReason.innerText = chosenOpt.reason;
+        fbFull.innerText = q.hints[2];
+
+        if (state.mode === 'team') {
+          if (state.currentTeam === 'red') state.redScore += 10;
+          else state.blueScore += 10;
+          updateTeamHUD();
+        } else if (state.combo >= 2) {
+          const cd = document.getElementById('comboDisplay');
+          cd.classList.remove('hidden');
+          cd.classList.add('flex');
+          document.getElementById('comboCount').innerText = state.combo;
+        }
+      } else {
+        state.combo = 0;
+        document.getElementById('comboDisplay').classList.add('hidden');
+        playWrongSound();
+
+        clickedBtn.className = 'p-3.5 md:p-4 rounded-2xl border-2 border-rose-600 bg-rose-500 text-white text-left flex items-center justify-between shadow-lg';
+
+        if (!state.mistakes.includes(q.id)) state.mistakes.push(q.id);
+
+        fbPanel.className = 'w-full rounded-2xl p-4 border-2 shadow-lg bg-rose-50 border-rose-400 text-rose-950';
+        fbTitle.innerHTML = '💡 發現迷思陷阱了！看看為什麼這個選項不對：';
+        fbReason.innerText = chosenOpt.reason;
+        fbFull.innerText = q.hints[2];
+
+        if (state.mode === 'solo') {
+          state.shields = Math.max(0, state.shields - 1);
+          updateShieldDisplay();
+        }
+      }
+    }
+
+    function updateShieldDisplay() {
+      const hearts = ['💔💔💔', '💖💔💔', '💖💖💔', '💖💖💖'];
+      document.getElementById('shieldHearts').innerText = hearts[Math.max(0, Math.min(3, state.shields))];
+    }
+
+    function updateTeamHUD() {
+      document.getElementById('redScorePill').innerText = `🔴 紅隊 ${state.redScore}`;
+      document.getElementById('blueScorePill').innerText = `🔵 藍隊 ${state.blueScore}`;
+      const ind = document.getElementById('teamTurnIndicator');
+      ind.classList.remove('hidden');
+      if (state.currentTeam === 'red') {
+        ind.innerText = '🔴 紅隊回合';
+        ind.className = 'px-2.5 py-1 rounded-lg font-black text-xs bg-rose-500 text-white';
+      } else {
+        ind.innerText = '🔵 藍隊回合';
+        ind.className = 'px-2.5 py-1 rounded-lg font-black text-xs bg-blue-600 text-white';
+      }
+    }
+
+    function advanceToNextQuestion() {
+      if (state.mode === 'team') {
+        state.currentTeam = (state.currentTeam === 'red') ? 'blue' : 'red';
+      }
+      state.currentIndex++;
+      if (state.currentIndex < state.activeQuestions.length) {
+        renderCurrentQuestion();
+      } else {
+        showReportScreen();
+      }
+    }
+
+    function showReportScreen() {
+      document.getElementById('playingScreen').classList.add('hidden');
+      document.getElementById('reportScreen').classList.remove('hidden');
+
+      let totalCorrect = 0;
+      let totalAnswered = 0;
+      Object.keys(state.nodeStats).forEach(k => {
+        totalCorrect += state.nodeStats[k].correct;
+        totalAnswered += state.nodeStats[k].total;
+      });
+
+      document.getElementById('reportSubtitle').innerText = `${state.playerName}，已完成三年級乘法生活情境試煉！`;
+      document.getElementById('rptCorrectCount').innerText = totalCorrect;
+      document.getElementById('rptTotalCount').innerText = `/ ${totalAnswered} 題`;
+      document.getElementById('rptTotalScore').innerText = state.score;
+      document.getElementById('rptMaxCombo').innerText = state.maxCombo;
+
+      const rate = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 100;
+      document.getElementById('rptRankText').innerText = rate >= 90 ? '👑 傳奇生活數學大師' : (rate >= 75 ? '⚔️ 皇家精熟騎士' : '🛡️ 潛力進階勇者');
+
+      const nList = document.getElementById('nodeMasteryList');
+      nList.innerHTML = '';
+      Object.keys(state.nodeStats).forEach(k => {
+        const item = state.nodeStats[k];
+        if (item.total === 0) return;
+        const pct = Math.round((item.correct / item.total) * 100);
+        const barColor = pct >= 80 ? 'bg-emerald-500' : (pct >= 60 ? 'bg-amber-500' : 'bg-rose-500');
+        const row = document.createElement('div');
+        row.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <span>${item.name}</span>
+            <span class="math-font">${item.correct} / ${item.total} (${pct}%)</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full ${barColor}" style="width: ${pct}%"></div>
+          </div>
+        `;
+        nList.appendChild(row);
+      });
+
+      const mArea = document.getElementById('mistakePoolArea');
+      const mList = document.getElementById('mistakeItemList');
+      if (state.mistakes.length > 0) {
+        mArea.classList.remove('hidden');
+        document.getElementById('mistakeCount').innerText = state.mistakes.length;
+        mList.innerHTML = '';
+        state.mistakes.forEach(qid => {
+          const mq = RAW_QUESTIONS.find(x => x.id === qid);
+          if (mq) {
+            const correctOpt = mq.options.find(o => o.isCorrect);
+            const d = document.createElement('div');
+            d.className = 'p-2.5 rounded-xl bg-white border border-rose-200';
+            d.innerHTML = `
+              <div class="font-black text-slate-900">[${mq.chapter}] ${mq.q}</div>
+              <div class="text-emerald-700 font-extrabold mt-0.5">✅ 正確解答：${correctOpt ? correctOpt.text : ''}</div>
+              <div class="text-slate-600 mt-0.5">${mq.hints[2]}</div>
+            `;
+            mList.appendChild(d);
+          }
+        });
+      } else {
+        mArea.classList.add('hidden');
+      }
+    }
+
+    function startRetryMistakes() {
+      if (state.mistakes.length === 0) return;
+      state.activeQuestions = RAW_QUESTIONS.filter(q => state.mistakes.includes(q.id));
+      state.mistakes = [];
+      state.currentIndex = 0;
+      state.shields = 3;
+      document.getElementById('reportScreen').classList.add('hidden');
+      document.getElementById('playingScreen').classList.remove('hidden');
+      renderCurrentQuestion();
+    }
+
+    function restartGame() {
+      document.getElementById('playingScreen').classList.add('hidden');
+      document.getElementById('reportScreen').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+    }
+
+    // 提示彈窗
+    function openHintModal() {
+      const q = state.activeQuestions[state.currentIndex];
+      document.getElementById('hintText1').innerText = q.hints[0];
+      document.getElementById('hintText2').innerText = q.hints[1];
+      document.getElementById('hintText3').innerText = q.hints[2];
+      document.getElementById('hintBox3').classList.add('hidden');
+      document.getElementById('hintModal').classList.remove('hidden');
+    }
+    function closeHintModal() {
+      document.getElementById('hintModal').classList.add('hidden');
+    }
+    function unlockNextHint() {
+      document.getElementById('hintBox3').classList.remove('hidden');
+    }
+
+    // 複製與匯出
+    function copyLearningRecord() {
+      let txt = `【三年級乘法生活大冒險・學習認證】\n學生：${state.playerName}\n總分：${state.score} 分｜最高連擊：${state.maxCombo}\n`;
+      Object.keys(state.nodeStats).forEach(k => {
+        const it = state.nodeStats[k];
+        if (it.total > 0) txt += `• ${it.name}：${it.correct}/${it.total}\n`;
+      });
+      navigator.clipboard.writeText(txt).then(() => alert('已複製成績紀錄！'));
+    }
+    function downloadCsvReport() {
+      let csv = '題號,情境章節,知識節點,題目,正確答案\n';
+      RAW_QUESTIONS.forEach(q => {
+        const cOpt = q.options.find(o => o.isCorrect);
+        csv += `"${q.id}","${q.chapter}","${q.nodeName}","${q.q.replace(/"/g, '""')}","${cOpt ? cOpt.text : ''}"\n`;
+      });
+      const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '三年級乘法生活冒險_題庫與報表.csv';
+      a.click();
+    }
+
+    // 草稿白板
+    let canvas, ctx, isDrawing = false, penColor = '#1e3a8a';
+    function initCanvas() {
+      canvas = document.getElementById('scratchCanvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', stopDraw);
+      canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); });
+      canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); });
+      canvas.addEventListener('touchend', stopDraw);
+    }
+    function resizeCanvas() {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    function startDraw(e) {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+    function stopDraw() { isDrawing = false; }
+    function clearCanvas() {
+      if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    function setPenColor(c) { penColor = c; }
+    function toggleScratchpad() {
+      const m = document.getElementById('scratchpadModal');
+      if (m.classList.contains('hidden')) {
+        m.classList.remove('hidden');
+        setTimeout(resizeCanvas, 50);
+      } else {
+        m.classList.add('hidden');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initCanvas);
+  </script>
+</body>
+</html>

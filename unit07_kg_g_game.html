@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>黃金磅秤王國：公斤與公克刻度神探大冒險 (三上數學第7單元)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@600;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #fff7ed;
+      color: #431407;
+      margin: 0;
+      padding: 0;
+    }
+    .font-comic { font-family: 'Fredoka', 'Noto Sans TC', sans-serif; }
+
+    /* 捲軸美化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #ffedd5; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
+    /* 彈跳按鈕效果 */
+    .bouncy-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bouncy-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .bouncy-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* 柔和發光與卡片陰影 */
+    .scale-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px -5px rgba(249, 115, 22, 0.18), 0 0 0 1.5px rgba(249, 115, 22, 0.25);
+    }
+
+    /* 平滑指針與動畫過渡 */
+    .trans-smooth {
+      transition: all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  </style>
+</head>
+<body class="bg-orange-50/70 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- =========================================================================
+       1. 頂部導覽列與單元題號導航
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-orange-200 sticky top-0 z-40 px-3 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題與標籤 -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-orange-300">
+          ⚖️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm md:text-base font-black text-orange-950 flex items-center gap-1.5 leading-tight">
+              三上第 7 單元：公斤與公克
+            </h1>
+            <span class="bg-orange-100 text-orange-800 text-[11px] px-2.5 py-0.5 rounded-full border border-orange-300 font-extrabold hidden sm:inline">
+              翰林版 115上
+            </span>
+          </div>
+          <span id="stageBadge" class="text-xs font-black text-orange-700 inline-block mt-0.5">
+            第 1 區：認識 1 公斤秤與公克刻度
+          </span>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕列 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <!-- 切換模式 -->
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm flex items-center gap-1 border border-orange-400">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <!-- 看解析 -->
+        <button onclick="showCurrentExplanation()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+          <span>💡</span>
+          <span>看解析</span>
+        </button>
+
+        <!-- 自動下一題 -->
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <!-- 星星積分 -->
+        <div class="flex items-center bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs">
+          <span class="text-amber-500 text-sm mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0 分</span>
+        </div>
+
+        <!-- 音效開關 -->
+        <button id="muteBtn" onclick="toggleMute()" title="切換音效" class="bouncy-btn w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-sm shadow-xs">
+          🔊
+        </button>
+
+        <!-- 秤重秘笈重點卡 -->
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-amber-950 border border-amber-300 shadow-sm flex items-center gap-1">
+          <span>📜</span>
+          <span>秤重秘笈</span>
+        </button>
+
+        <!-- 返回 3D 地圖按鈕 (支援 iframe 或獨立分頁) -->
+        <button onclick="returnToMainMap()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-rose-500 hover:bg-rose-600 text-white border border-rose-400 shadow-sm flex items-center gap-1">
+          <span>🏝️</span>
+          <span>回 3D 地圖</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元分段與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-orange-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 上下題切換條 (單題模式時顯示) -->
+    <div id="singleNavControls" class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0 flex items-center gap-1">
+        <span>◀</span>
+        <span>上一題</span>
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-orange-800 font-bold mb-0.5 px-0.5">
+          <span id="progressPercentText">進度：第 1 / 20 題</span>
+          <span id="accuracyText">正確率：100%</span>
+        </div>
+        <div class="w-full bg-orange-100 rounded-full h-2 overflow-hidden border border-orange-200">
+          <div id="progressBar" class="bg-gradient-to-r from-orange-500 to-amber-500 h-2 rounded-full transition-all duration-300" style="width: 5%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-orange-600 hover:bg-orange-700 text-white shrink-0 shadow-xs flex items-center gap-1">
+        <span>下一題</span>
+        <span>▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. 主要作答主體區 (單題闖關模式)
+       ========================================================================= -->
+  <main id="singleQuestionView" class="max-w-5xl mx-auto w-full px-3 py-4 flex-1 flex flex-col justify-center">
+    <div class="scale-card rounded-3xl p-4 sm:p-6 border-2 border-orange-200 shadow-xl flex flex-col gap-4">
+
+      <!-- 頂部題目標籤與迷思提醒 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 border-b border-orange-100 pb-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="questionTag" class="bg-orange-600 text-white font-black text-xs px-3 py-1 rounded-xl shadow-xs">
+            Q1 認識 1 公斤秤
+          </span>
+          <span id="stageNameTag" class="bg-orange-100 text-orange-800 font-extrabold text-xs px-2.5 py-1 rounded-xl border border-orange-200">
+            第 1 區：認識 1 公斤秤與公克刻度
+          </span>
+        </div>
+        <div id="misconceptionBadge" class="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
+          <span>⚠️ 迷思防禦：</span>
+          <span id="misconceptionText">看清楚磅秤圓心寫的是 1kg 還是 3kg！</span>
+        </div>
+      </div>
+
+      <!-- 題目文字陳述 -->
+      <div class="text-base sm:text-lg font-black text-slate-800 leading-snug">
+        <span class="text-orange-600 mr-1.5" id="qNumberPrefix">第 1 題.</span>
+        <span id="questionText">題目載入中...</span>
+      </div>
+
+      <!-- 視覺互動展演舞台 (SVG 動態磅秤 + 放大鏡教具) -->
+      <div id="interactiveStage" class="w-full bg-slate-50/90 rounded-2xl border-2 border-orange-200 p-3 sm:p-4 min-h-[220px] flex flex-col items-center justify-center relative overflow-hidden transition-all">
+        <!-- 動態由 buildQuestionVisualHTML 填入 -->
+      </div>
+
+      <!-- 操作輔助按鈕列與思考提示 (Hint 1 / Hint 2) -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+        <div class="flex items-center gap-2 flex-wrap" id="actionToolsArea">
+          <!-- 互動教具按鈕 (放大鏡看刻度 / 放上物品測試指針) -->
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="revealHint(1)" class="bouncy-btn text-xs font-bold text-orange-800 bg-orange-50 hover:bg-orange-100 px-2.5 py-1 rounded-lg border border-orange-300">
+            💡 提示 1
+          </button>
+          <button onclick="revealHint(2)" class="bouncy-btn text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+            🔍 提示 2
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示內容顯示區塊 (預設收起) -->
+      <div id="hintDisplayArea" class="hidden text-xs font-bold text-slate-700 bg-orange-50/80 p-2.5 rounded-xl border border-orange-200 transition-all"></div>
+
+      <!-- 選項按鈕區 (4 選 1) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1" id="optionsGrid">
+        <!-- 動態填入選項 -->
+      </div>
+
+      <!-- 作答反饋提示卡 (答對綠色 / 答錯溫馨提示) -->
+      <div id="feedbackBox" class="hidden rounded-2xl p-4 transition-all duration-300">
+        <div class="flex items-start gap-3">
+          <div id="feedbackIcon" class="text-2xl shrink-0">🎉</div>
+          <div>
+            <h4 id="feedbackTitle" class="font-black text-sm md:text-base">答對了！太厲害了！</h4>
+            <p id="feedbackDetail" class="text-xs md:text-sm font-bold mt-0.5 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       3. 全題目一覽模式 (一次檢視全部 20 題，含圖、選項與完整詳解)
+       ========================================================================= -->
+  <section id="allQuestionsView" class="hidden max-w-5xl mx-auto w-full px-3 py-4 flex-1">
+    <div class="scale-card rounded-3xl p-5 border-2 border-orange-200 mb-4 bg-white/95">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-lg font-black text-orange-950 flex items-center gap-2">
+            <span>📚</span>
+            <span>三上第 7 單元：公斤與公克 全 20 題題庫全景一覽</span>
+          </h2>
+          <p class="text-xs font-bold text-slate-500 mt-0.5">適合課堂投影講解、觀察秤面刻度與複習，點選每題可直接跳至單題模式練習！</p>
+        </div>
+        <button onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-orange-600 hover:bg-orange-700 text-white">
+          返回單題闖關模式
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4" id="allQuestionsContainer">
+      <!-- 動態填入全部題目卡片 -->
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. 彈出視窗：看解析 Modal
+       ========================================================================= -->
+  <div id="explanationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-orange-300 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-orange-100">
+        <h3 id="modalExpTitle" class="text-base font-black text-orange-950 flex items-center gap-2">
+          <span>💡</span>
+          <span>本題深度詳解</span>
+        </h3>
+        <button onclick="closeExplanationModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div id="modalExpBody" class="mt-4 text-sm leading-relaxed"></div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeExplanationModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs">
+          我知道了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. 彈出視窗：秤重秘笈重點卡 Modal
+       ========================================================================= -->
+  <div id="formulaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-200">
+        <h3 class="text-lg font-black text-amber-950 flex items-center gap-2">
+          <span>📜</span>
+          <span>三年級公斤與公克神探大秘笈（翰林版精華考點）</span>
+        </h3>
+        <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div class="mt-4 space-y-4 text-xs sm:text-sm text-slate-700 font-bold">
+        <!-- 秘笈 1 -->
+        <div class="p-3.5 bg-orange-50 rounded-2xl border border-orange-200">
+          <h4 class="font-black text-orange-900 text-sm mb-1">🌟 1. 核心單位換算與「補 0 陷阱」</h4>
+          <p class="text-orange-950 text-base font-black mb-1">
+            1 公斤（kg）＝ 1000 公克（g）
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-rose-600 font-black">超常考陷阱</span>：3 公斤 50 公克 ＝ 3000g ＋ 50g ＝ <span class="underline font-black text-rose-700">3050 公克</span>（百位沒東西一定要補 0，千萬不可寫成 350 公克！）。</li>
+            <li>反過來：4008 公克 ＝ 4000g ＋ 8g ＝ <span class="text-orange-800 font-black">4 公斤 8 公克</span>。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 2 -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
+          <h4 class="font-black text-amber-900 text-sm mb-1">⚖️ 2. 1 公斤秤 vs 3 公斤秤的刻度密碼</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-amber-800 font-black">1 公斤（1000g）秤</span>：轉一圈是 1000 公克。數字標示 100、200...900；中格（半格）是 <span class="font-black text-slate-900">50 公克</span>，最小格（把 50g 分成 5 小格或 100g 分 10 小格）每 1 小格代表 <span class="font-black text-rose-600">10 公克</span>（若分成 200 小格則 1 小格為 5g）。</li>
+            <li><span class="text-amber-800 font-black">3 公斤（3000g）秤</span>：轉一圈是 3 公斤。每 1 公斤中間有 500g 標記，每 1 小格代表 <span class="font-black text-rose-600">100 公克</span>（或 50 公克，依秤面格數而定）。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 3 -->
+        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <h4 class="font-black text-emerald-900 text-sm mb-1">🧮 3. 重量直式加減與進退位</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-emerald-700 font-black">加法進位</span>：公克加公克如果 <span class="font-black text-emerald-900">滿 1000 公克</span>，就要向「公斤」進 1！</li>
+            <li><span class="text-emerald-700 font-black">減法退位</span>：公克不夠減時，向「公斤」借 1 公斤，換成 <span class="font-black text-emerald-900">1000 公克</span> 再減！</li>
+            <li><span class="text-emerald-700 font-black">淨重公式</span>：水果真正重量 ＝（水果＋籃子總重）－ 空籃子重量。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 4 -->
+        <div class="p-3.5 bg-sky-50 rounded-2xl border border-sky-200">
+          <h4 class="font-black text-sky-900 text-sm mb-1">🍎 4. 生活中的重量量感（選單位必考）</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li>用<span class="text-sky-700 font-black">「公克（g）」</span>：1 枚硬幣約 8g、1 顆雞蛋約 60g、1 顆蘋果約 250g、1 瓶養樂多約 100g。</li>
+            <li>用<span class="text-sky-700 font-black">「公斤（kg）」</span>：1 大包米約 3kg、1 顆大西瓜約 4kg、三年級小學生體重約 28~32kg。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs">
+          記住秘笈了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       6. 闖關完成結算彈窗 (3 星通關，可點擊返回 3D 群島)
+       ========================================================================= -->
+  <div id="completionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-orange-400 text-center transform transition-all scale-100">
+      <div class="text-5xl mb-2 animate-bounce">🏆</div>
+      <h3 class="text-2xl font-black text-orange-950">恭喜完成黃金磅秤試煉！</h3>
+      <p class="text-xs font-bold text-slate-500 mt-1">三年級數學第 7 單元：公斤與公克 實力認證</p>
+
+      <div class="my-5 p-4 bg-orange-50 rounded-2xl border-2 border-orange-200">
+        <div class="text-3xl text-amber-500 mb-1" id="endStarsDisplay">⭐⭐⭐</div>
+        <div class="text-lg font-black text-slate-800" id="endScoreDisplay">最終得分：100 分</div>
+        <div class="text-xs text-orange-800 font-bold mt-1" id="endAccDisplay">正確率：100%（20/20）</div>
+      </div>
+
+      <p class="text-xs text-slate-600 font-bold mb-5 leading-relaxed">
+        你已經徹底學會 1kg 與 3kg 秤面刻度報讀、公斤公克換算補 0、重量加減進退位與天平推理！
+        快將這份榮耀帶回 3D 數學冒險群島吧！
+      </p>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="returnToMainMap(true)" class="bouncy-btn w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-sm shadow-lg flex items-center justify-center gap-2">
+          <span>🏝️</span>
+          <span>領取 3 顆星並返回 3D 冒險群島</span>
+        </button>
+        <button onclick="restartQuiz()" class="bouncy-btn w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+          🔄 重新挑戰黃金磅秤王國
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       7. 頁尾資訊
+       ========================================================================= -->
+  <footer class="bg-white/80 border-t border-orange-100 py-2 px-3 text-center text-[11px] text-orange-900 font-bold">
+    三年級數學冒險群島系列教材・第 07 單元【公斤與公克】・符合臺灣教育部 108 課綱與 115上 翰林版
+  </footer>
+
+  <!-- =========================================================================
+       8. 核心 JavaScript 邏輯與題庫系統
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       Web Audio API 音效合成器 (100% 離線純合成，無載入依賴)
+       ------------------------------------------------------------------------- */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(720, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.26);
+          });
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.22);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.23);
+        } else if (type === 'victory') {
+          const freqs = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+          freqs.forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.1);
+            gain.gain.setValueAtTime(0.25, now + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.42);
+          });
+        } else if (type === 'scale') {
+          // 磅秤彈簧音效
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(620, now + 0.12);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        }
+      } catch (e) {
+        console.warn('Audio error:', e);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       20 道精選題庫資料庫 (翰林版 115上 第 7 單元：公斤與公克)
+       ------------------------------------------------------------------------- */
+    const QUESTIONS_DB = [
+      // ================= 第 1 區：認識 1 公斤秤與公克刻度 (Q1 ~ Q4) =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "認識 1 公斤秤與公克刻度",
+        tag: "Q1 1公斤等於幾公克",
+        misconception: "1 公斤是 100 公克還是 1000 公克？看秤面最頂端！",
+        visualType: "scale_1kg",
+        weightGrams: 1000,
+        itemEmoji: "🍍",
+        itemName: "大鳳梨",
+        zoomRange: [900, 1000],
+        question: "觀察這個「1 公斤（1kg）」的圓盤磅秤，放上一顆大鳳梨後，指針剛好轉了一整圈指在最上方的「1kg（1000g）」刻度。請問 1 公斤等於多少公克？",
+        options: [
+          { text: "1000 公克", correct: true, note: "完全正確！1 公斤（1 kg）就等於 1000 公克（1000 g）！" },
+          { text: "100 公克", correct: false, note: "100 公克只是秤面上的第一大格數字，轉一整圈是 1000 公克喔！" },
+          { text: "10 公克", correct: false, note: "10 公克在 1 公斤秤上只是小小的一格喔！" },
+          { text: "500 公克", correct: false, note: "500 公克是指針指在正下方（半圈）的重量喔！" }
+        ],
+        hint1: "看看秤面上的數字：100、200、300... 到 900，再往下走 100 公克就是頂端的 1kg。",
+        hint2: "900 公克再加 100 公克就是 1000 公克，所以 1 公斤 ＝ 1000 公克。",
+        explanation: "在 1 公斤秤面上，每隔 100 公克有一個數字標記（100, 200, ..., 900），轉完一整圈回到頂端就是 1000 公克，也就是 1 公斤（1 kg ＝ 1000 g）。"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "認識 1 公斤秤與公克刻度",
+        tag: "Q2 報讀整百與半格(50g)",
+        misconception: "兩個百位數字正中間的長刻度代表多 50 公克",
+        visualType: "scale_1kg",
+        weightGrams: 350,
+        itemEmoji: "🥭",
+        itemName: "愛文芒果",
+        zoomRange: [300, 400],
+        question: "把一顆愛文芒果放在「1 公斤秤」上，指針指在「300」和「400」正中間的長刻度上（可點擊放大鏡查看），請問這顆芒果重幾公克？",
+        options: [
+          { text: "350 公克", correct: true, note: "太棒了！300 和 400 正中間的長刻度代表 350 公克！" },
+          { text: "305 公克", correct: false, note: "300 和 400 相差 100 公克，正中間的一半是 50 公克，所以是 350 公克喔！" },
+          { text: "450 公克", correct: false, note: "指針還沒超過 400，是在 300 到 400 之間喔！" },
+          { text: "310 公克", correct: false, note: "310 公克只超過 300 一小格，正中間是過了 5 小格（50 公克）喔！" }
+        ],
+        hint1: "300 公克到 400 公克之間相差 100 公克。",
+        hint2: "100 公克的一半是 50 公克，所以 300 ＋ 50 ＝ 350 公克。",
+        explanation: "在 1 公斤秤上，相鄰兩個數字（如 300 與 400）相差 100 公克，正中間較長的刻度線代表一半（50 公克），因此讀數為 300 ＋ 50 ＝ 350 公克。"
+      },
+      {
+        id: 3,
+        stage: 1,
+        stageName: "認識 1 公斤秤與公克刻度",
+        tag: "Q3 1公斤秤的細刻度(10g)",
+        misconception: "把 100 公克平分成 10 小格，每一小格是 10 公克（不是 1 公克！）",
+        visualType: "scale_1kg",
+        weightGrams: 630,
+        itemEmoji: "🍇",
+        itemName: "紫葡萄",
+        zoomRange: [600, 700],
+        question: "一串紫葡萄放在 1 公斤秤上，已知 600 到 700 之間平分成 10 小格（每 1 小格是 10 公克）。指針指在「600 往後數第 3 小格」，請問葡萄重幾公克？",
+        options: [
+          { text: "630 公克", correct: true, note: "完全正確！1 小格是 10 公克，3 小格是 30 公克，600 ＋ 30 ＝ 630 公克！" },
+          { text: "603 公克", correct: false, note: "小心陷阱！1 小格代表 10 公克，不是 1 公克喔！" },
+          { text: "615 公克", correct: false, note: "這裡每 1 小格是 10 公克，3 小格是 30 公克喔！" },
+          { text: "730 公克", correct: false, note: "指針是在 600 和 700 之間，還沒到 700 喔！" }
+        ],
+        hint1: "先確認 1 小格代表幾公克：100 公克 ÷ 10 小格 ＝ 10 公克。",
+        hint2: "從 600 往後走 3 小格：600 ＋ 10 ＋ 10 ＋ 10 ＝ 630 公克。",
+        explanation: "在這個 1 公斤秤面上，每 100 公克平分成 10 小格，所以每 1 小格代表 10 公克。指針從 600 順時鐘再走 3 小格，重量是 600 ＋ 30 ＝ 630 公克。"
+      },
+      {
+        id: 4,
+        stage: 1,
+        stageName: "認識 1 公斤秤與公克刻度",
+        tag: "Q4 接近1公斤的報讀",
+        misconception: "過了 850 公克繼續數小格，或從 900 往回扣",
+        visualType: "scale_1kg",
+        weightGrams: 880,
+        itemEmoji: "🍱",
+        itemName: "豪華便當禮盒",
+        zoomRange: [800, 900],
+        question: "把豪華便當禮盒放上 1 公斤秤（每小格代表 10 公克），指針指在「800 往後第 8 小格」（也就是 900 往前退 2 小格），請問便當禮盒重幾公克？",
+        options: [
+          { text: "880 公克", correct: true, note: "太厲害了！800 ＋ 80 ＝ 880 公克（或 900 － 20 ＝ 880 公克）！" },
+          { text: "808 公克", correct: false, note: "1 小格是 10 公克，8 小格是 80 公克，不是 8 公克喔！" },
+          { text: "920 公克", correct: false, note: "指針還沒到 900 喔！是比 900 少 2 小格（880 公克）。" },
+          { text: "850 公克", correct: false, note: "850 公克是第 5 小格，這題指在第 8 小格喔！" }
+        ],
+        hint1: "可以用加法：800 公克 ＋ 8 小格（80 公克）；也可以用減法：900 公克退後 2 小格（20 公克）。",
+        hint2: "800 ＋ 80 ＝ 880 公克。",
+        explanation: "當指針很接近下一個百位數（900）時，除了從 800 往後數 8 小格（800 + 80 = 880g），也可以從 900 往回扣 2 小格（900 - 20 = 880g），算得更快更準！"
+      },
+
+      // ================= 第 2 區：認識 3 公斤秤與複名數報讀 (Q5 ~ Q8) =================
+      {
+        id: 5,
+        stage: 2,
+        stageName: "認識 3 公斤秤與複名數報讀",
+        tag: "Q5 3公斤秤的大刻度",
+        misconception: "換成 3 公斤秤了！轉一圈是 3kg，每小格代表 100 公克",
+        visualType: "scale_3kg",
+        weightGrams: 1500,
+        itemEmoji: "🍉",
+        itemName: "小玉西瓜",
+        zoomRange: [1000, 2000],
+        question: "注意看！這是一個「3 公斤（3kg）」的磅秤。放上一顆小玉西瓜後，指針指在「1kg」和「2kg」正中間的長刻度上，請問西瓜有多重？",
+        options: [
+          { text: "1 公斤 500 公克", correct: true, note: "完全正確！在 1kg 和 2kg 正中間，就是 1 公斤又多半公斤（500 公克）！" },
+          { text: "1 公斤 50 公克", correct: false, note: "1 公斤到 2 公斤相差 1000 公克，正中間的一半是 500 公克，不是 50 公克喔！" },
+          { text: "150 公克", correct: false, note: "這是 3 公斤秤，指針已經超過 1 公斤（1000 公克）了喔！" },
+          { text: "2 公斤 500 公克", correct: false, note: "指針在 1kg 和 2kg 之間，還沒超過 2kg 喔！" }
+        ],
+        hint1: "1 公斤到 2 公斤之間相差 1 公斤（也就是 1000 公克）。",
+        hint2: "1000 公克的一半是 500 公克，所以是 1 公斤 500 公克。",
+        explanation: "在 3 公斤秤上，1kg 到 2kg 相差 1000 公克，正中間的長線代表 500 公克。所以指針指在 1kg 與 2kg 正中間時，重量是 1 公斤 500 公克（或 1500 公克）。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "認識 3 公斤秤與複名數報讀",
+        tag: "Q6 3公斤秤的100g格線",
+        misconception: "3 公斤秤把 1 公斤平分成 10 格，每 1 格是 100 公克！",
+        visualType: "scale_3kg",
+        weightGrams: 2300,
+        itemEmoji: "🎃",
+        itemName: "黃金大南瓜",
+        zoomRange: [2000, 3000],
+        question: "在「3 公斤秤」上，每 1 公斤之間被平分成 10 格（每 1 格代表 100 公克）。放上大南瓜後，指針指在「超過 2kg 再往後數 3 格」，請問南瓜有多重？",
+        options: [
+          { text: "2 公斤 300 公克", correct: true, note: "太棒了！超過 2kg 走 3 格（每格 100g），就是 2 公斤 300 公克！" },
+          { text: "2 公斤 30 公克", correct: false, note: "小心！在 3 公斤秤上，1kg 分成 10 格，每 1 格是 100 公克，不是 10 公克喔！" },
+          { text: "230 公克", correct: false, note: "指針已經超過 2 公斤（2000 公克）了，總重是 2300 公克喔！" },
+          { text: "3 公斤 200 公克", correct: false, note: "是超過 2 公斤 3 格，不是 3 公斤喔！" }
+        ],
+        hint1: "1 公斤（1000 公克）平分成 10 格，每 1 格是 1000 ÷ 10 ＝ 100 公克。",
+        hint2: "超過 2 公斤再走 3 格：3 × 100 公克 ＝ 300 公克，合起來是 2 公斤 300 公克。",
+        explanation: "3 公斤秤與 1 公斤秤不同！在 3 公斤秤上，1kg 到 2kg（共 1000g）分成 10 格，所以每 1 格代表 100 公克。超過 2kg 第 3 格就是 2 公斤 300 公克。"
+      },
+      {
+        id: 7,
+        stage: 2,
+        stageName: "認識 3 公斤秤與複名數報讀",
+        tag: "Q7 秤面指針位置反推",
+        misconception: "1800 公克在秤面上的位置判斷",
+        visualType: "scale_3kg",
+        weightGrams: 1800,
+        itemEmoji: "🐔",
+        itemName: "烤全雞",
+        zoomRange: [1000, 2000],
+        question: "媽媽買了一隻重「1 公斤 800 公克」的烤全雞，如果放到這個「3 公斤秤」（每格代表 100 公克）上，指針會指在哪一個位置？",
+        options: [
+          { text: "超過 1kg 再往後數第 8 格（接近 2kg）", correct: true, note: "答對了！1 公斤 800 公克就是 1kg 往後 8 格（每格 100g）！" },
+          { text: "超過 1kg 再往後數第 80 格", correct: false, note: "每 1 格就是 100 公克，800 公克只要數 8 格就夠了喔！" },
+          { text: "在 0 和 1kg 之間的第 8 格", correct: false, note: "那是 800 公克，還沒滿 1 公斤喔！" },
+          { text: "超過 2kg 再往後數第 8 格", correct: false, note: "那是 2 公斤 800 公克，烤全雞只有 1 公斤 800 公克喔！" }
+        ],
+        hint1: "1 公斤 800 公克比 1 公斤重，但還不到 2 公斤，所以指針一定在 1kg 和 2kg 之間。",
+        hint2: "因為 1 格是 100 公克，800 公克就是從 1kg 往後數 8 格。",
+        explanation: "1 公斤 800 公克介於 1kg 與 2kg 之間。因為每 1 格代表 100 公克，800 公克就是從 1kg 刻度再順時鐘走 8 格的位置。"
+      },
+      {
+        id: 8,
+        stage: 2,
+        stageName: "認識 3 公斤秤與複名數報讀",
+        tag: "Q8 雙磅秤比一比",
+        misconception: "同樣重量放在 1kg 秤和 3kg 秤上，指針轉動的角度不一樣！",
+        visualType: "dual_scales_compare",
+        weightGrams: 500,
+        question: "把同一個「500 公克」的鐵砝碼，分別放到「甲：1 公斤秤」與「乙：3 公斤秤」上，請問哪一個磅秤的指針會剛好指在【正下方（半圈）】？",
+        options: [
+          { text: "甲：1 公斤秤（因為 500g 剛好是 1000g 的一半）", correct: true, note: "太聰明了！1 公斤秤一圈是 1000g，所以 500g 剛好轉半圈指在正下方！" },
+          { text: "乙：3 公斤秤", correct: false, note: "3 公斤秤一圈是 3000g，正下方（半圈）是 1 公斤 500 公克喔！" },
+          { text: "兩個磅秤的指針都會指在正下方", correct: false, note: "兩個磅秤的最大秤重不同，500g 在兩個秤面上的位置不一樣喔！" },
+          { text: "兩個磅秤的指針都會指在最上方", correct: false, note: "最上方是 0（還沒放東西或滿一圈）喔！" }
+        ],
+        hint1: "指在「正下方」代表重量剛好是整個磅秤最大秤重的「一半（半圈）」。",
+        hint2: "1 公斤（1000g）的一半剛好是 500 公克；而 3 公斤的一半是 1 公斤 500 公克。",
+        explanation: "1 公斤秤轉一圈是 1000 公克，因此 500 公克剛好是半圈（正下方 6 點鐘方向）。而在 3 公斤秤上，500 公克只轉了六分之一圈（約 2 點鐘方向）。"
+      },
+
+      // ================= 第 3 區：公斤與公克的換算與比大小 (Q9 ~ Q12) =================
+      {
+        id: 9,
+        stage: 3,
+        stageName: "單位換算與重量比大小",
+        tag: "Q9 補 0 大陷阱！",
+        misconception: "2 公斤 50 公克換算成公克時，百位是 0 絕對不能漏掉！",
+        visualType: "conversion_place_value",
+        kg: 2,
+        g: 50,
+        totalG: 2050,
+        wrongG: 250,
+        question: "【段考必考陷阱】一袋砂糖重「2 公斤 50 公克」，如果全部換算成「公克」，請問是多少公克？",
+        options: [
+          { text: "2050 公克", correct: true, note: "太優秀了！2 公斤是 2000 公克，2000 ＋ 50 ＝ 2050 公克，百位的 0 沒漏掉！" },
+          { text: "250 公克", correct: false, note: "掉進陷阱囉！250 公克還不到 1 公斤呢！2 公斤是 2000 公克，加 50 公克是 2050 公克！" },
+          { text: "2500 公克", correct: false, note: "2500 公克是「2 公斤 500 公克」，但題目只有 50 公克喔！" },
+          { text: "2005 公克", correct: false, note: "2005 公克是「2 公斤 5 公克」，題目是 50 公克喔！" }
+        ],
+        hint1: "先把「2 公斤」換成公克：2 公斤 ＝ 2000 公克。",
+        hint2: "再把 2000 公克加上 50 公克：2000 ＋ 50 ＝ 2050 公克。",
+        explanation: "這是三年級最容易寫錯的題目！\n2 公斤 ＝ 2000 公克。\n2000 公克 ＋ 50 公克 ＝ 2050 公克。\n因為沒有百公克，百位必須補 0，千萬不能寫成 250 公克！"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "單位換算與重量比大小",
+        tag: "Q10 公克換幾公斤幾公克",
+        misconception: "把千位數拆成公斤，剩下的百十個位是公克",
+        visualType: "conversion_g_to_kg",
+        totalG: 4080,
+        kg: 4,
+        g: 80,
+        question: "一隻胖橘貓的體重是「4080 公克」，換成「幾公斤幾公克」應該怎麼表示？",
+        options: [
+          { text: "4 公斤 80 公克", correct: true, note: "完全正確！4000 公克是 4 公斤，剩下 80 公克，合起來是 4 公斤 80 公克！" },
+          { text: "4 公斤 800 公克", correct: false, note: "4 公斤 800 公克是 4800 公克，但題目是 4080 公克喔！" },
+          { text: "40 公斤 80 公克", correct: false, note: "1000 公克才是 1 公斤，4000 公克是 4 公斤，不是 40 公斤喔！" },
+          { text: "4 公斤 8 公克", correct: false, note: "尾數是 80 公克，不是 8 公克喔！" }
+        ],
+        hint1: "把 4080 公克拆開成「整千公克」和「剩下的公克」：4080g ＝ 4000g ＋ 80g。",
+        hint2: "因為 1000g ＝ 1kg，所以 4000g ＝ 4kg。",
+        explanation: "4080 公克 ＝ 4000 公克 ＋ 80 公克。\n因為 1000 公克 ＝ 1 公斤，所以 4000 公克 ＝ 4 公斤。\n因此 4080 公克 ＝ 4 公斤 80 公克。"
+      },
+      {
+        id: 11,
+        stage: 3,
+        stageName: "單位換算與重量比大小",
+        tag: "Q11 重量比大小",
+        misconception: "單位不同時，不能只看數字大小（例如誤以為 3090 > 3kg 500g）",
+        visualType: "weight_compare_three",
+        question: "貨車上有三個神祕包裹，甲重「3 公斤 400 公克」、乙重「3040 公克」、丙重「3 公斤 40 公克」。請問哪一個包裹【最重】？",
+        options: [
+          { text: "甲包裹（3 公斤 400 公克）", correct: true, note: "太厲害了！甲換成公克是 3400 公克，比乙和丙（3040 公克）都重！" },
+          { text: "乙包裹（3040 公克）", correct: false, note: "乙是 3040 公克，而甲是 3400 公克，甲比較重喔！" },
+          { text: "丙包裹（3 公斤 40 公克）", correct: false, note: "丙換成公克也是 3040 公克，比甲的 3400 公克輕喔！" },
+          { text: "三個包裹一樣重", correct: false, note: "只有乙和丙一樣重（都是 3040g），甲是 3400g 喔！" }
+        ],
+        hint1: "比較重量時，先把全部包裹都統一換算成「公克（g）」最不容易錯！",
+        hint2: "甲 ＝ 3400g、乙 ＝ 3040g、丙 ＝ 3040g。3400g 最大！",
+        explanation: "比較重量大小秘訣：統一換成「公克」！\n・甲：3 公斤 400 公克 ＝ 3400 公克\n・乙：3040 公克\n・丙：3 公斤 40 公克 ＝ 3040 公克\n3400g ＞ 3040g，所以甲包裹最重！"
+      },
+      {
+        id: 12,
+        stage: 3,
+        stageName: "單位換算與重量比大小",
+        tag: "Q12 生活重量量感",
+        misconception: "分不清楚生活中常見物品應該用「公克」還是「公斤」",
+        visualType: "life_sense_cards",
+        question: "關於生活中物品的重量，下列哪一個敘述最合理？",
+        options: [
+          { text: "一位國小三年級學生的體重約 30 公斤", correct: true, note: "完全正確！三年級小學生體重約 25~35 公斤最合理！" },
+          { text: "一顆紅蘋果大約重 250 公斤", correct: false, note: "250 公斤比一頭大豬還重！一顆蘋果大約是 250「公克」才對喔！" },
+          { text: "一個十元硬幣大約重 8 公斤", correct: false, note: "8 公斤像兩大顆西瓜那麼重！十元硬幣大約重 8「公克」喔！" },
+          { text: "一包家庭號大包白米大約重 3 公克", correct: false, note: "3 公克只有一張紙加迴紋針那麼輕！一包大白米約重 3「公斤」喔！" }
+        ],
+        hint1: "想一想：1 公克像 1 個迴紋針那麼輕；1 公斤像 1 大瓶家庭號鮮奶那麼重。",
+        hint2: "蘋果和硬幣較輕要用「公克」；大包白米和小學生體重要用「公斤」。",
+        explanation: "建立重量量感：\n・1 個十元硬幣約 8 公克\n・1 顆蘋果約 250 公克\n・1 大包米約 3 公斤\n・國小三年級學生體重約 30 公斤。"
+      },
+
+      // ================= 第 4 區：重量的加減計算與進退位 (Q13 ~ Q16) =================
+      {
+        id: 13,
+        stage: 4,
+        stageName: "重量的加減計算與進退位",
+        tag: "Q13 重量直式加法(不進位)",
+        misconception: "公斤加公斤、公克加公克，單位要對齊",
+        visualType: "vertical_weight_calc",
+        op: "+",
+        kg1: 1, g1: 350,
+        kg2: 2, g2: 400,
+        resKg: 3, resG: 750,
+        noteText: "公斤對齊公斤，公克對齊公克相加",
+        question: "媽媽去市場買了「1 公斤 350 公克」的豬肉，又買了「2 公斤 400 公克」的雞肉，兩種肉合起來共重幾公斤幾公克？",
+        options: [
+          { text: "3 公斤 750 公克", correct: true, note: "太棒了！1kg + 2kg = 3kg，350g + 400g = 750g，共重 3 公斤 750 公克！" },
+          { text: "3 公斤 75 公克", correct: false, note: "350 ＋ 400 是 750 公克，尾數的 0 不要漏掉喔！" },
+          { text: "4 公斤 750 公克", correct: false, note: "750 公克還不到 1000 公克，不需要進位到公斤喔！" },
+          { text: "1 公斤 50 公克", correct: false, note: "題目問「合起來共重多少」，要用加法不是減法喔！" }
+        ],
+        hint1: "把「公斤」和「公斤」相加，「公克」和「公克」相加。",
+        hint2: "公斤：1 ＋ 2 ＝ 3（公斤）；公克：350 ＋ 400 ＝ 750（公克）。",
+        explanation: "複名數重量加法：\n・公克部分：350g ＋ 400g ＝ 750g\n・公斤部分：1kg ＋ 2kg ＝ 3kg\n合起來共重 3 公斤 750 公克。"
+      },
+      {
+        id: 14,
+        stage: 4,
+        stageName: "重量的加減計算與進退位",
+        tag: "Q14 滿1000公克進位！",
+        misconception: "公克相加超過 1000g 時，要把 1000g 換成 1kg 進位！",
+        visualType: "vertical_weight_calc",
+        op: "+",
+        kg1: 2, g1: 650,
+        kg2: 1, g2: 550,
+        resKg: 4, resG: 200,
+        noteText: "650g + 550g = 1200g ➜ 滿 1000g 進 1kg，剩 200g！",
+        question: "水果籃裡原本有「2 公斤 650 公克」的柳丁，爸爸又放進「1 公斤 550 公克」的蘋果，現在一共重幾公斤幾公克？",
+        options: [
+          { text: "4 公斤 200 公克", correct: true, note: "太強了！650g + 550g = 1200g（1kg 200g），進位後變成 2 + 1 + 1 = 4 公斤 200 公克！" },
+          { text: "3 公斤 1200 公克", correct: false, note: "公克部分已經滿 1000 公克了，必須換成 1 公斤進位到公斤欄喔！" },
+          { text: "3 公斤 200 公克", correct: false, note: "別忘了公克滿 1000g 要向公斤「進 1」，所以是 3 + 1 = 4 公斤喔！" },
+          { text: "4 公斤 100 公克", correct: false, note: "650 ＋ 550 ＝ 1200，剩下的是 200 公克不是 100 公克喔！" }
+        ],
+        hint1: "先算公克：650 公克 ＋ 550 公克 ＝ 1200 公克 ＝ 1 公斤 200 公克。",
+        hint2: "再算公斤：2 公斤 ＋ 1 公斤 ＋ 進位的 1 公斤 ＝ 4 公斤。",
+        explanation: "重量加法進位：\n1. 公克相加：650g ＋ 550g ＝ 1200g。\n2. 滿 1000g 進 1kg：1200g ＝ 1kg 200g。\n3. 公斤相加：2kg ＋ 1kg ＋ 1kg（進位）＝ 4kg。\n答案為 4 公斤 200 公克。"
+      },
+      {
+        id: 15,
+        stage: 4,
+        stageName: "重量的加減計算與進退位",
+        tag: "Q15 借1公斤換1000公克！",
+        misconception: "公克不夠減時，向公斤借 1kg 是換成 1000g（不是借 100g！）",
+        visualType: "vertical_weight_calc",
+        op: "-",
+        kg1: 3, g1: 200,
+        kg2: 1, g2: 700,
+        resKg: 1, resG: 500,
+        noteText: "200g 不夠減 700g ➜ 借 1kg 換 1000g，1200g - 700g = 500g！",
+        question: "烘焙坊有一袋重「3 公斤 200 公克」的麵粉，做蛋糕用掉了「1 公斤 700 公克」，請問還剩下幾公斤幾公克？",
+        options: [
+          { text: "1 公斤 500 公克", correct: true, note: "完全正確！借 1 公斤換成 1000 公克，1200g - 700g = 500g，2kg - 1kg = 1kg！" },
+          { text: "2 公斤 500 公克", correct: false, note: "3 公斤已經被借走 1 公斤了，只剩 2 公斤，2 - 1 = 1 公斤喔！" },
+          { text: "1 公斤 300 公克", correct: false, note: "不能拿 700 反過來減 200 喔！1200 減 700 是 500 公克！" },
+          { text: "1 公斤 400 公克", correct: false, note: "1200 － 700 ＝ 500 公克喔！" }
+        ],
+        hint1: "200 公克不夠減 700 公克，要從 3 公斤借 1 公斤過來變成 1000 公克。",
+        hint2: "公克變成 1000 ＋ 200 ＝ 1200 公克，1200 － 700 ＝ 500 公克；公斤剩下 2 － 1 ＝ 1 公斤。",
+        explanation: "重量減法借位：\n1. 200g 不夠減 700g，向 3kg 借 1kg（變成 2kg），換成 1000g。\n2. 公克相減：1000g ＋ 200g － 700g ＝ 500g。\n3. 公斤相減：2kg － 1kg ＝ 1kg。\n答：剩下 1 公斤 500 公克。"
+      },
+      {
+        id: 16,
+        stage: 4,
+        stageName: "重量的加減計算與進退位",
+        tag: "Q16 扣掉空籃求水果淨重",
+        misconception: "秤出來的總重包含了籃子，要減掉空籃重才是水果真正的重量",
+        visualType: "basket_net_weight",
+        totalWeightG: 2450,
+        basketG: 350,
+        netG: 2100,
+        question: "把裝滿櫻桃的竹籃放到秤上，秤出來的總重量是「2 公斤 450 公克」。已知空竹籃本身重「350 公克」，請問裡面的櫻桃真正有多重？",
+        options: [
+          { text: "2 公斤 100 公克", correct: true, note: "太聰明了！總重 2kg 450g 減掉空籃 350g，櫻桃淨重就是 2 公斤 100 公克！" },
+          { text: "2 公斤 800 公克", correct: false, note: "求櫻桃的重量要把空籃子的重量「減掉」，不是加上去喔！" },
+          { text: "2 公斤 450 公克", correct: false, note: "這是「櫻桃＋竹籃」的總重量，還要扣掉竹籃的 350 公克喔！" },
+          { text: "1 公斤 900 公克", correct: false, note: "450 公克減 350 公克夠減，等於 100 公克，不用借位喔！" }
+        ],
+        hint1: "（櫻桃＋竹籃總重）－ 空竹籃重量 ＝ 櫻桃真正的重量。",
+        hint2: "2 公斤 450 公克 － 350 公克 ＝ 2 公斤 100 公克。",
+        explanation: "生活中的淨重問題：\n總重量（2 公斤 450 公克）包含了櫻桃與竹籃。\n扣掉空竹籃的 350 公克：\n450g － 350g ＝ 100g，因此櫻桃重 2 公斤 100 公克。"
+      },
+
+      // ================= 第 5 區：天平推理與生活素養應用 (Q17 ~ Q20) =================
+      {
+        id: 17,
+        stage: 5,
+        stageName: "天平推理與生活素養應用",
+        tag: "Q17 等臂天平砝碼推理",
+        misconception: "天平水平平衡時，左盤總重 ＝ 右盤所有砝碼加起來的重量",
+        visualType: "balance_scale_weights",
+        itemEmoji: "🧸",
+        itemName: "玩具熊",
+        weights: [500, 200, 50, 10],
+        totalG: 760,
+        question: "在水平平衡的天平上，左盤放了一隻玩具熊，右盤放了「1 個 500g、1 個 200g、1 個 50g 和 1 個 10g」的砝碼。請問玩具熊重幾公克？",
+        options: [
+          { text: "760 公克", correct: true, note: "賓果！500 ＋ 200 ＋ 50 ＋ 10 ＝ 760 公克，天平平衡代表兩邊一樣重！" },
+          { text: "750 公克", correct: false, note: "別忘了還有 1 個 10g 的小砝碼喔！500 + 200 + 50 + 10 = 760g。" },
+          { text: "800 公克", correct: false, note: "500 + 200 = 700，50 + 10 = 60，合起來是 760 公克喔！" },
+          { text: "526 公克", correct: false, note: "注意位值對齊：500 ＋ 200 ＋ 50 ＋ 10 ＝ 760 公克！" }
+        ],
+        hint1: "天平保持水平平衡，表示左邊玩具熊的重量 ＝ 右邊全部砝碼的總和。",
+        hint2: "把右盤的砝碼全部加起來：500 ＋ 200 ＋ 50 ＋ 10 ＝ 760 公克。",
+        explanation: "當等臂天平保持水平時，左右兩盤重量相等。\n右盤砝碼總重：500g ＋ 200g ＋ 50g ＋ 10g ＝ 760g。\n所以玩具熊重 760 公克。"
+      },
+      {
+        id: 18,
+        stage: 5,
+        stageName: "天平推理與生活素養應用",
+        tag: "Q18 天平兩側同時放砝碼",
+        misconception: "當物品那側也有放砝碼時，要用「右盤總重 － 左盤砝碼」才等於物品重！",
+        visualType: "balance_scale_both_sides",
+        leftItem: "📙 字典",
+        leftWeight: 100,
+        rightWeight: 1000,
+        answerG: 900,
+        question: "【進階推理】天平左盤放了「一本字典和 1 個 100g 砝碼」，右盤放了「1 個 1kg（1000g）大砝碼」，此時天平剛好水平平衡。請問這本字典重幾公克？",
+        options: [
+          { text: "900 公克", correct: true, note: "太神了！字典 ＋ 100g ＝ 1000g，所以字典重 1000 － 100 ＝ 900 公克！" },
+          { text: "1100 公克", correct: false, note: "100g 砝碼是跟字典放在同一邊（左盤），所以要用 1000g 減掉 100g 喔！" },
+          { text: "1000 公克", correct: false, note: "1000 公克是「字典＋100g砝碼」合起來的重量喔！" },
+          { text: "800 公克", correct: false, note: "1000 減 100 等於 900 公克喔！" }
+        ],
+        hint1: "寫出平衡關係式：字典重量 ＋ 100 公克 ＝ 1 公斤（1000 公克）。",
+        hint2: "把兩邊同時拿走 100 公克：1000 公克 － 100 公克 ＝ 900 公克。",
+        explanation: "左盤總重 ＝ 右盤總重：\n字典 ＋ 100g ＝ 1000g（1kg）\n因此字典的重量 ＝ 1000g － 100g ＝ 900 公克。"
+      },
+      {
+        id: 19,
+        stage: 5,
+        stageName: "天平推理與生活素養應用",
+        tag: "Q19 素養題：包裹限重檢查",
+        misconception: "先加總所有物品重量，再與限重標準比較並求相差多少",
+        visualType: "shipping_box_limit",
+        item1: "鳳梨酥 1kg 400g",
+        item2: "茶葉罐 800g",
+        totalG: 2200,
+        limitG: 3000,
+        remainG: 800,
+        question: "郵局便利箱限重「3 公斤」。阿公放進一盒重「1 公斤 400 公克」的鳳梨酥和一罐重「800 公克」的茶葉後，最多還能再放進幾公克的東西才不會超重？（不計紙箱重）",
+        options: [
+          { text: "800 公克", correct: true, note: "完全正確！目前已放 2 公斤 200 公克（2200g），距離 3 公斤（3000g）還差 800 公克！" },
+          { text: "1 公斤 200 公克", correct: false, note: "1400g ＋ 800g ＝ 2200g，3000g － 2200g ＝ 800g，不到 1 公斤喔！" },
+          { text: "2 公斤 200 公克", correct: false, note: "2 公斤 200 公克是已經放進去的總重量，題目問「還能再放多少」喔！" },
+          { text: "600 公克", correct: false, note: "3000 － 2200 ＝ 800 公克喔！" }
+        ],
+        hint1: "第一步先算已經放進去多少：1 公斤 400 公克（1400g）＋ 800 公克 ＝ 2200 公克。",
+        hint2: "第二步用限重 3 公斤（3000g）減去 2200g：3000 － 2200 ＝ 800 公克。",
+        explanation: "兩步驟重量素養題：\n1. 已放入重量：1kg 400g ＋ 800g ＝ 1400g ＋ 800g ＝ 2200g（2kg 200g）。\n2. 還可放入重量：3kg（3000g）－ 2200g ＝ 800 公克。"
+      },
+      {
+        id: 20,
+        stage: 5,
+        stageName: "天平推理與生活素養應用",
+        tag: "Q20 素養題：烘焙材料倍數",
+        misconception: "公克乘以倍數後滿 1000 公克要換算成幾公斤幾公克",
+        visualType: "bakery_recipe_mult",
+        perCakeG: 400,
+        count: 6,
+        totalG: 2400,
+        question: "製作 1 個重乳酪蛋糕需要「400 公克」的奶油乳酪。烘焙師傅今天要做 6 個同樣的重乳酪蛋糕，一共需要準備幾公斤幾公克的奶油乳酪？",
+        options: [
+          { text: "2 公斤 400 公克", correct: true, note: "太完美了！400g × 6 ＝ 2400g ＝ 2 公斤 400 公克，恭喜完成全部挑戰！" },
+          { text: "24 公斤", correct: false, note: "2400 公克是 2 公斤 400 公克，不是 24 公斤喔！" },
+          { text: "2 公斤 40 公克", correct: false, note: "2400 公克拆開是 2000g ＋ 400g，所以是 2 公斤 400 公克喔！" },
+          { text: "1 公斤 800 公克", correct: false, note: "400 × 6 ＝ 2400 公克，不是 1800 公克喔！" }
+        ],
+        hint1: "1 個蛋糕用 400 公克，6 個蛋糕就是 400 × 6 ＝ 2400 公克。",
+        hint2: "把 2400 公克換算成幾公斤幾公克：2000g ＋ 400g ＝ 2 公斤 400 公克。",
+        explanation: "結合乘法與單位換算：\n1. 400 公克 × 6 ＝ 2400 公克。\n2. 因為 1000 公克 ＝ 1 公斤，2400 公克 ＝ 2000 公克 ＋ 400 公克 ＝ 2 公斤 400 公克。"
+      }
+    ];
+
+    /* -------------------------------------------------------------------------
+       遊戲狀態管理與互動教具狀態
+       ------------------------------------------------------------------------- */
+    let currentQIndex = 0;
+    let userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+    let totalScore = 0;
+    let autoNextEnabled = false;
+    let isOverviewMode = false;
+
+    // 互動教具狀態：是否開啟「刻度放大鏡」與「放上物品動態秤重」
+    let isZoomedIn = false;
+    let isWeightPlaced = true;
+
+    function toggleScaleZoom() {
+      playSound('click');
+      isZoomedIn = !isZoomedIn;
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('interactiveStage').innerHTML = buildQuestionVisualHTML(q, true);
+      renderActionTools(q);
+    }
+
+    function toggleWeightOnPan() {
+      playSound('scale');
+      isWeightPlaced = !isWeightPlaced;
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('interactiveStage').innerHTML = buildQuestionVisualHTML(q, true);
+      renderActionTools(q);
+    }
+
+    /* -------------------------------------------------------------------------
+       高精度 SVG 圓盤磅秤繪製引擎 (1kg 秤 / 3kg 秤 + 局部放大鏡)
+       ------------------------------------------------------------------------- */
+    function renderCircularScaleSVG(maxGrams, currentGrams, itemEmoji, itemName, showZoom, zoomRange) {
+      const displayGrams = isWeightPlaced ? currentGrams : 0;
+      const is1Kg = (maxGrams === 1000);
+      const cx = 130, cy = 148, r = 82;
+
+      // 產生圓盤刻度線與數字
+      let ticksSVG = '';
+      if (is1Kg) {
+        // 1kg 秤：100 個小格 (每格 10g)，每 50g 中格，每 100g 大格與數字
+        for (let g = 0; g < 1000; g += 10) {
+          const deg = (g / 1000) * 360;
+          const rad = (deg * Math.PI) / 180;
+          const is100 = (g % 100 === 0);
+          const is50 = (g % 50 === 0 && !is100);
+          const innerR = is100 ? r - 13 : (is50 ? r - 9 : r - 5);
+          const strokeW = is100 ? 2.4 : (is50 ? 1.6 : 0.9);
+          const strokeColor = is100 ? '#1e293b' : (is50 ? '#dc2626' : '#64748b');
+
+          const x1 = (cx + r * Math.sin(rad)).toFixed(1);
+          const y1 = (cy - r * Math.cos(rad)).toFixed(1);
+          const x2 = (cx + innerR * Math.sin(rad)).toFixed(1);
+          const y2 = (cy - innerR * Math.cos(rad)).toFixed(1);
+          ticksSVG += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeW}"/>`;
+
+          if (is100) {
+            const textR = r - 23;
+            const tx = (cx + textR * Math.sin(rad)).toFixed(1);
+            const ty = (cy - textR * Math.cos(rad) + 3.5).toFixed(1);
+            const label = g === 0 ? '1kg' : `${g}`;
+            const color = g === 0 ? '#dc2626' : '#0f172a';
+            const fontSize = g === 0 ? '10.5' : '9.5';
+            ticksSVG += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="900" fill="${color}" text-anchor="middle">${label}</text>`;
+          }
+        }
+      } else {
+        // 3kg 秤：30 格 (每格 100g)，每 500g 中長紅格，每 1000g 大格標示 1kg, 2kg, 3kg
+        for (let g = 0; g < 3000; g += 100) {
+          const deg = (g / 3000) * 360;
+          const rad = (deg * Math.PI) / 180;
+          const is1000 = (g % 1000 === 0);
+          const is500 = (g % 500 === 0 && !is1000);
+          const innerR = is1000 ? r - 15 : (is500 ? r - 11 : r - 6);
+          const strokeW = is1000 ? 2.8 : (is500 ? 2.2 : 1.3);
+          const strokeColor = is1000 ? '#0f172a' : (is500 ? '#dc2626' : '#475569');
+
+          const x1 = (cx + r * Math.sin(rad)).toFixed(1);
+          const y1 = (cy - r * Math.cos(rad)).toFixed(1);
+          const x2 = (cx + innerR * Math.sin(rad)).toFixed(1);
+          const y2 = (cy - innerR * Math.cos(rad)).toFixed(1);
+          ticksSVG += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeW}"/>`;
+
+          if (is1000 || is500) {
+            const textR = r - 25;
+            const tx = (cx + textR * Math.sin(rad)).toFixed(1);
+            const ty = (cy - textR * Math.cos(rad) + 3.5).toFixed(1);
+            let label = '';
+            if (g === 0) label = '3kg';
+            else if (is1000) label = `${g / 1000}kg`;
+            else label = '500g';
+            const color = is1000 ? '#dc2626' : '#b45309';
+            const fontSize = is1000 ? '11' : '8.5';
+            ticksSVG += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="900" fill="${color}" text-anchor="middle">${label}</text>`;
+          }
+        }
+      }
+
+      // 指針旋轉角度
+      const needleDeg = (displayGrams / maxGrams) * 360;
+
+      // 產生右側「高倍刻度放大鏡（線性展開視圖）」讓學生一格一格數清楚！
+      let zoomPanelHTML = '';
+      if (showZoom && zoomRange) {
+        const [zStart, zEnd] = zoomRange;
+        const step = is1Kg ? 10 : 100;
+        const midVal = (zStart + zEnd) / 2;
+        const totalSteps = (zEnd - zStart) / step; // 10 格
+        const targetRatio = Math.max(0, Math.min(1, (displayGrams - zStart) / (zEnd - zStart)));
+        const pointerX = 30 + targetRatio * 220;
+
+        let linearTicks = '';
+        for (let i = 0; i <= totalSteps; i++) {
+          const val = zStart + i * step;
+          const x = 30 + (i / totalSteps) * 220;
+          const isEnd = (i === 0 || i === totalSteps);
+          const isMid = (i === 5);
+          const h = isEnd ? 28 : (isMid ? 21 : 13);
+          const col = isEnd ? '#0f172a' : (isMid ? '#dc2626' : '#64748b');
+          const sw = isEnd ? 3 : (isMid ? 2.2 : 1.5);
+          linearTicks += `<line x1="${x}" y1="35" x2="${x}" y2="${35 + h}" stroke="${col}" stroke-width="${sw}"/>`;
+
+          if (isEnd || isMid) {
+            let lbl = '';
+            if (is1Kg) {
+              lbl = val === 1000 ? '1000g(1kg)' : `${val}g`;
+            } else {
+              if (val % 1000 === 0) lbl = `${val / 1000}kg`;
+              else lbl = `${Math.floor(val / 1000)}kg 500g`;
+            }
+            linearTicks += `<text x="${x}" y="80" font-size="11" font-weight="900" fill="${isMid ? '#dc2626' : '#0f172a'}" text-anchor="middle">${lbl}</text>`;
+          }
+        }
+
+        zoomPanelHTML = `
+          <div class="bg-amber-50/95 border-2 border-amber-400 rounded-2xl p-3 flex flex-col items-center justify-center shadow-md w-full max-w-[300px]">
+            <div class="flex items-center gap-1.5 text-xs font-black text-amber-900 mb-1">
+              <span>🔍</span>
+              <span>局部刻度高倍放大鏡（每小格 ＝ ${step}g）</span>
+            </div>
+            <svg width="280" height="105" viewBox="0 0 280 105" class="bg-white rounded-xl border border-amber-200">
+              <!-- 刻度底線 -->
+              <line x1="20" y1="35" x2="260" y2="35" stroke="#1e293b" stroke-width="2.5"/>
+              ${linearTicks}
+              <!-- 紅色指針箭頭 -->
+              <g class="trans-smooth" style="transform: translateX(${pointerX}px);">
+                <polygon points="0,33 -6,12 6,12" fill="#dc2626"/>
+                <circle cx="0" cy="10" r="4" fill="#dc2626"/>
+              </g>
+            </svg>
+            <div class="text-[11px] font-bold text-slate-600 mt-1.5 text-center">
+              👆 數數看：紅箭頭指在第幾小格？（1小格 ＝ <b class="text-rose-600">${step} 公克</b>）
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 w-full select-none">
+          <!-- 左側：完整圓盤磅秤 SVG -->
+          <div class="flex flex-col items-center">
+            <svg width="260" height="250" viewBox="0 0 260 250" class="overflow-visible">
+              <!-- 秤盤上的物品 -->
+              <g class="trans-smooth" style="transform: translateY(${isWeightPlaced ? '0px' : '-18px'}); opacity: ${isWeightPlaced ? '1' : '0.35'};">
+                <text x="130" y="28" font-size="30" text-anchor="middle">${itemEmoji}</text>
+                <rect x="85" y="34" width="90" height="16" rx="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.2"/>
+                <text x="130" y="45" font-size="10" font-weight="900" fill="#9a3412" text-anchor="middle">${itemName}</text>
+              </g>
+
+              <!-- 金屬秤盤與支架 -->
+              <path d="M 65 48 Q 130 60 195 48 L 180 56 Q 130 64 80 56 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+              <rect x="122" y="56" width="16" height="14" fill="#94a3b8" stroke="#64748b" stroke-width="1.5"/>
+
+              <!-- 磅秤底座外殼 -->
+              <path d="M 38 232 L 52 130 L 208 130 L 222 232 Z" fill="${is1Kg ? '#f97316' : '#0284c7'}" stroke="${is1Kg ? '#c2410c' : '#0369a1'}" stroke-width="3" stroke-linejoin="round"/>
+              <rect x="30" y="228" width="200" height="12" rx="6" fill="#334155"/>
+
+              <!-- 圓形白色刻度盤 -->
+              <circle cx="${cx}" cy="${cy}" r="${r + 5}" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+              <circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+
+              <!-- 磅秤中央規格標示 -->
+              <rect x="102" y="168" width="56" height="18" rx="6" fill="${is1Kg ? '#ffedd5' : '#e0f2fe'}" stroke="${is1Kg ? '#fb923c' : '#38bdf8'}" stroke-width="1"/>
+              <text x="130" y="180" font-size="10" font-weight="900" fill="${is1Kg ? '#c2410c' : '#0369a1'}" text-anchor="middle">${is1Kg ? '1 公斤秤' : '3 公斤秤'}</text>
+
+              <!-- 刻度與數字 -->
+              ${ticksSVG}
+
+              <!-- 動態旋轉紅指針 -->
+              <g class="trans-smooth" style="transform-origin: ${cx}px ${cy}px; transform: rotate(${needleDeg}deg);">
+                <polygon points="${cx - 3.5},${cy + 12} ${cx + 3.5},${cy + 12} ${cx},${cy - r + 6}" fill="#dc2626"/>
+                <circle cx="${cx}" cy="${cy}" r="7" fill="#1e293b" stroke="#ffffff" stroke-width="2"/>
+              </g>
+            </svg>
+          </div>
+
+          <!-- 右側：放大鏡面板 -->
+          ${zoomPanelHTML}
+        </div>
+      `;
+    }
+
+    /* -------------------------------------------------------------------------
+       產生題目專屬動態 SVG / 互動展演圖形 (buildQuestionVisualHTML)
+       ------------------------------------------------------------------------- */
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      const showZoom = isInteractive ? true : true; // 預設顯示放大鏡讓學生一眼看清細格
+
+      // 1. 1 公斤秤系列 (Q1 ~ Q4)
+      if (q.visualType === 'scale_1kg') {
+        return renderCircularScaleSVG(1000, q.weightGrams, q.itemEmoji, q.itemName, showZoom, q.zoomRange);
+      }
+
+      // 2. 3 公斤秤系列 (Q5 ~ Q7)
+      if (q.visualType === 'scale_3kg') {
+        return renderCircularScaleSVG(3000, q.weightGrams, q.itemEmoji, q.itemName, showZoom, q.zoomRange);
+      }
+
+      // 3. 雙磅秤比一比 (Q8：500g 在 1kg 秤 vs 3kg 秤)
+      if (q.visualType === 'dual_scales_compare') {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl p-2 select-none">
+            <!-- 甲：1 公斤秤 (500g 在正下方 180度) -->
+            <div class="bg-orange-50/90 border-2 border-orange-300 rounded-2xl p-3 flex flex-col items-center">
+              <span class="bg-orange-600 text-white text-xs font-black px-3 py-0.5 rounded-full mb-2">甲：1 公斤（1000g）秤</span>
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="62" fill="#ffffff" stroke="#f97316" stroke-width="4"/>
+                <text x="75" y="28" font-size="11" font-weight="900" fill="#dc2626" text-anchor="middle">1kg</text>
+                <text x="122" y="79" font-size="10" font-weight="900" fill="#334155" text-anchor="middle">250</text>
+                <text x="75" y="130" font-size="12" font-weight="900" fill="#dc2626" text-anchor="middle">500g</text>
+                <text x="28" y="79" font-size="10" font-weight="900" fill="#334155" text-anchor="middle">750</text>
+                <!-- 指針指正下方 180度 -->
+                <line x1="75" y1="75" x2="75" y2="118" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="75" cy="75" r="5" fill="#0f172a"/>
+              </svg>
+              <span class="text-xs font-black text-orange-900 mt-1">500g 剛好轉【半圈（正下方）】</span>
+            </div>
+
+            <!-- 乙：3 公斤秤 (500g 只轉 60度) -->
+            <div class="bg-sky-50/90 border-2 border-sky-300 rounded-2xl p-3 flex flex-col items-center">
+              <span class="bg-sky-600 text-white text-xs font-black px-3 py-0.5 rounded-full mb-2">乙：3 公斤（3000g）秤</span>
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="62" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+                <text x="75" y="28" font-size="11" font-weight="900" fill="#0284c7" text-anchor="middle">3kg</text>
+                <text x="115" y="55" font-size="10" font-weight="900" fill="#dc2626" text-anchor="middle">500g</text>
+                <text x="115" y="102" font-size="11" font-weight="900" fill="#0f172a" text-anchor="middle">1kg</text>
+                <text x="75" y="130" font-size="10" font-weight="900" fill="#64748b" text-anchor="middle">1kg500g</text>
+                <text x="35" y="102" font-size="11" font-weight="900" fill="#0f172a" text-anchor="middle">2kg</text>
+                <!-- 指針指 60度 -->
+                <line x1="75" y1="75" x2="108" y2="55" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="75" cy="75" r="5" fill="#0f172a"/>
+              </svg>
+              <span class="text-xs font-black text-sky-900 mt-1">500g 只轉【六分之一圈】</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 補 0 大陷阱位值表 (Q9：2 公斤 50 公克 = 2050 公克)
+      if (q.visualType === 'conversion_place_value') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-white border-2 border-orange-300 rounded-2xl p-4 max-w-md w-full shadow-xs">
+              <div class="text-center text-sm font-black text-orange-950 mb-3">
+                🌟 2 公斤 50 公克 ＝ （ ？ ）公克
+              </div>
+              <div class="grid grid-cols-4 gap-2 text-center mb-3">
+                <div class="bg-orange-100 border-2 border-orange-400 rounded-xl p-2">
+                  <div class="text-[10px] font-black text-orange-800">千位 (kg)</div>
+                  <div class="text-2xl font-black text-orange-950">2</div>
+                  <div class="text-[10px] font-bold text-orange-700">2000g</div>
+                </div>
+                <div class="bg-rose-100 border-2 border-rose-500 rounded-xl p-2 animate-pulse">
+                  <div class="text-[10px] font-black text-rose-800">百位 (補0!)</div>
+                  <div class="text-2xl font-black text-rose-600">0</div>
+                  <div class="text-[10px] font-black text-rose-700">沒百公克</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-2">
+                  <div class="text-[10px] font-black text-amber-800">十位</div>
+                  <div class="text-2xl font-black text-slate-800">5</div>
+                  <div class="text-[10px] font-bold text-slate-500">50g</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-2">
+                  <div class="text-[10px] font-black text-amber-800">個位</div>
+                  <div class="text-2xl font-black text-slate-800">0</div>
+                  <div class="text-[10px] font-bold text-slate-500">0g</div>
+                </div>
+              </div>
+              <div class="text-xs font-bold text-center text-slate-700 bg-orange-50 p-2 rounded-xl border border-orange-200">
+                2 公斤 ＝ <b class="text-orange-700">2000</b> 公克 ➜ 2000 ＋ 50 ＝ <b class="text-rose-600 text-sm">2050 公克</b>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. 公克拆解成幾公斤幾公克 (Q10：4080g)
+      if (q.visualType === 'conversion_g_to_kg') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 max-w-md w-full text-center">
+              <div class="text-2xl mb-1">🐱 4080 公克</div>
+              <div class="flex items-center justify-center gap-3 my-3">
+                <div class="bg-white border-2 border-orange-400 rounded-xl px-4 py-2 shadow-xs">
+                  <div class="text-xs font-bold text-slate-500">整千公克</div>
+                  <div class="text-lg font-black text-orange-600">4000 公克</div>
+                  <div class="text-xs font-black text-emerald-700 mt-0.5">⬇ 換成 4 公斤</div>
+                </div>
+                <span class="text-xl font-black text-slate-400">＋</span>
+                <div class="bg-white border-2 border-amber-400 rounded-xl px-4 py-2 shadow-xs">
+                  <div class="text-xs font-bold text-slate-500">剩下公克</div>
+                  <div class="text-lg font-black text-amber-600">80 公克</div>
+                  <div class="text-xs font-black text-amber-800 mt-0.5">⬇ 保留 80 公克</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 6. 三個包裹比大小 (Q11)
+      if (q.visualType === 'weight_compare_three') {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-xl p-2 select-none">
+            <div class="bg-orange-50 border-2 border-orange-400 rounded-2xl p-3 text-center flex flex-col items-center shadow-xs">
+              <span class="text-2xl">📦</span>
+              <span class="text-xs font-black text-orange-900 mt-1">甲包裹</span>
+              <span class="text-sm font-black text-slate-800 mt-0.5">3 公斤 400 公克</span>
+              <span class="text-xs font-black text-emerald-700 bg-white px-2.5 py-0.5 rounded-full border border-emerald-300 mt-1.5">＝ 3400 公克</span>
+            </div>
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-3 text-center flex flex-col items-center shadow-xs">
+              <span class="text-2xl">📦</span>
+              <span class="text-xs font-black text-slate-700 mt-1">乙包裹</span>
+              <span class="text-sm font-black text-slate-800 mt-0.5">3040 公克</span>
+              <span class="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200 mt-1.5">＝ 3040 公克</span>
+            </div>
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-3 text-center flex flex-col items-center shadow-xs">
+              <span class="text-2xl">📦</span>
+              <span class="text-xs font-black text-slate-700 mt-1">丙包裹</span>
+              <span class="text-sm font-black text-slate-800 mt-0.5">3 公斤 40 公克</span>
+              <span class="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200 mt-1.5">＝ 3040 公克</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 7. 生活重量量感四格卡 (Q12)
+      if (q.visualType === 'life_sense_cards') {
+        return `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full max-w-2xl p-2 select-none">
+            <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-2.5 text-center flex flex-col items-center">
+              <span class="text-2xl">🧒</span>
+              <span class="text-xs font-black text-slate-800 mt-1">三年級學生</span>
+              <span class="text-xs font-black text-emerald-700 mt-0.5">約 30 公斤 ✅</span>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-2.5 text-center flex flex-col items-center">
+              <span class="text-2xl">🍎</span>
+              <span class="text-xs font-black text-slate-800 mt-1">一顆紅蘋果</span>
+              <span class="text-xs font-bold text-rose-600 mt-0.5">約 250 公克(g)</span>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-2.5 text-center flex flex-col items-center">
+              <span class="text-2xl">🪙</span>
+              <span class="text-xs font-black text-slate-800 mt-1">十元硬幣</span>
+              <span class="text-xs font-bold text-rose-600 mt-0.5">約 8 公克(g)</span>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-2.5 text-center flex flex-col items-center">
+              <span class="text-2xl">🌾</span>
+              <span class="text-xs font-black text-slate-800 mt-1">大包家庭白米</span>
+              <span class="text-xs font-bold text-sky-700 mt-0.5">約 3 公斤(kg)</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 8. 重量複名數直式加減表 (Q13 ~ Q15)
+      if (q.visualType === 'vertical_weight_calc') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-white border-2 border-orange-300 rounded-2xl p-4 max-w-sm w-full shadow-sm">
+              <div class="grid grid-cols-5 text-center font-black text-xs text-orange-900 bg-orange-100 py-1.5 rounded-lg mb-2">
+                <span></span>
+                <span>公斤(kg)</span>
+                <span></span>
+                <span class="col-span-2">公克(g)</span>
+              </div>
+              <div class="grid grid-cols-5 text-center font-mono text-lg font-black text-slate-800 py-1">
+                <span></span>
+                <span>${q.kg1}</span>
+                <span></span>
+                <span class="col-span-2">${q.g1}</span>
+              </div>
+              <div class="grid grid-cols-5 text-center font-mono text-lg font-black text-slate-800 py-1 border-b-2 border-slate-700">
+                <span class="text-orange-600">${q.op}</span>
+                <span>${q.kg2}</span>
+                <span></span>
+                <span class="col-span-2">${q.g2}</span>
+              </div>
+              <div class="grid grid-cols-5 text-center font-mono text-xl font-black text-emerald-700 py-1.5 bg-emerald-50 rounded-b-lg mt-1">
+                <span>＝</span>
+                <span>${q.resKg}</span>
+                <span class="text-xs font-sans self-center text-slate-500">kg</span>
+                <span class="col-span-2">${q.resG} <small class="text-xs font-sans text-slate-500">g</small></span>
+              </div>
+              <div class="mt-2.5 text-[11px] font-black text-amber-900 bg-amber-50 p-2 rounded-xl border border-amber-200 text-center">
+                💡 ${q.noteText}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 9. 扣掉空籃求水果淨重 (Q16)
+      if (q.visualType === 'basket_net_weight') {
+        return `
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xl p-2 select-none">
+            <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 text-center flex-1">
+              <div class="text-2xl">🍒＋🧺</div>
+              <div class="text-xs font-black text-rose-900 mt-1">櫻桃＋竹籃總重</div>
+              <div class="text-base font-black text-rose-700">2 公斤 450 公克</div>
+            </div>
+            <div class="text-2xl font-black text-slate-400">－</div>
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-center flex-1">
+              <div class="text-2xl">🧺</div>
+              <div class="text-xs font-black text-amber-900 mt-1">空竹籃重量</div>
+              <div class="text-base font-black text-amber-700">350 公克</div>
+            </div>
+            <div class="text-2xl font-black text-slate-400">＝</div>
+            <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-3 text-center flex-1">
+              <div class="text-2xl">🍒</div>
+              <div class="text-xs font-black text-emerald-900 mt-1">櫻桃真正淨重</div>
+              <div class="text-base font-black text-emerald-700">2 公斤 100 公克</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 10. 等臂天平砝碼推理 (Q17)
+      if (q.visualType === 'balance_scale_weights') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <svg width="340" height="165" viewBox="0 0 340 165" class="overflow-visible">
+              <!-- 天平底座與立柱 -->
+              <polygon points="140,155 200,155 175,90 165,90" fill="#475569"/>
+              <rect x="120" y="152" width="100" height="10" rx="5" fill="#1e293b"/>
+              <!-- 水平橫桿 -->
+              <line x1="55" y1="90" x2="285" y2="90" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="170" cy="90" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+
+              <!-- 左盤：玩具熊 -->
+              <line x1="75" y1="90" x2="75" y2="68" stroke="#64748b" stroke-width="3"/>
+              <rect x="30" y="62" width="90" height="8" rx="4" fill="#94a3b8"/>
+              <text x="75" y="52" font-size="32" text-anchor="middle">🧸</text>
+              <text x="75" y="112" font-size="11" font-weight="900" fill="#0f172a" text-anchor="middle">玩具熊 ( ? g )</text>
+
+              <!-- 右盤：4個砝碼 (500g, 200g, 50g, 10g) -->
+              <line x1="265" y1="90" x2="265" y2="68" stroke="#64748b" stroke-width="3"/>
+              <rect x="200" y="62" width="130" height="8" rx="4" fill="#94a3b8"/>
+              <!-- 500g -->
+              <rect x="205" y="32" width="34" height="30" rx="4" fill="#facc15" stroke="#b45309" stroke-width="1.5"/>
+              <text x="222" y="51" font-size="9.5" font-weight="900" fill="#78350f" text-anchor="middle">500g</text>
+              <!-- 200g -->
+              <rect x="243" y="38" width="30" height="24" rx="4" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>
+              <text x="258" y="54" font-size="9" font-weight="900" fill="#78350f" text-anchor="middle">200g</text>
+              <!-- 50g -->
+              <rect x="277" y="44" width="24" height="18" rx="3" fill="#fde047" stroke="#b45309" stroke-width="1.5"/>
+              <text x="289" y="56" font-size="8.5" font-weight="900" fill="#78350f" text-anchor="middle">50g</text>
+              <!-- 10g -->
+              <rect x="304" y="48" width="20" height="14" rx="3" fill="#fef08a" stroke="#b45309" stroke-width="1.5"/>
+              <text x="314" y="58" font-size="8" font-weight="900" fill="#78350f" text-anchor="middle">10g</text>
+
+              <text x="265" y="112" font-size="11" font-weight="900" fill="#b45309" text-anchor="middle">500 + 200 + 50 + 10 = 760g</text>
+            </svg>
+          </div>
+        `;
+      }
+
+      // 11. 天平兩側都有砝碼 (Q18：字典 + 100g = 1000g)
+      if (q.visualType === 'balance_scale_both_sides') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <svg width="340" height="165" viewBox="0 0 340 165" class="overflow-visible">
+              <polygon points="140,155 200,155 175,90 165,90" fill="#475569"/>
+              <rect x="120" y="152" width="100" height="10" rx="5" fill="#1e293b"/>
+              <line x1="55" y1="90" x2="285" y2="90" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="170" cy="90" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+
+              <!-- 左盤：字典 + 100g -->
+              <line x1="80" y1="90" x2="80" y2="68" stroke="#64748b" stroke-width="3"/>
+              <rect x="25" y="62" width="110" height="8" rx="4" fill="#94a3b8"/>
+              <text x="58" y="54" font-size="28" text-anchor="middle">📙</text>
+              <rect x="85" y="40" width="32" height="22" rx="4" fill="#fde047" stroke="#b45309" stroke-width="1.5"/>
+              <text x="101" y="54" font-size="9.5" font-weight="900" fill="#78350f" text-anchor="middle">100g</text>
+              <text x="80" y="112" font-size="11" font-weight="900" fill="#0f172a" text-anchor="middle">字典 ＋ 100g</text>
+
+              <!-- 右盤：1kg (1000g) -->
+              <line x1="260" y1="90" x2="260" y2="68" stroke="#64748b" stroke-width="3"/>
+              <rect x="210" y="62" width="100" height="8" rx="4" fill="#94a3b8"/>
+              <rect x="232" y="24" width="56" height="38" rx="6" fill="#facc15" stroke="#b45309" stroke-width="2"/>
+              <text x="260" y="43" font-size="11" font-weight="900" fill="#78350f" text-anchor="middle">1 kg</text>
+              <text x="260" y="55" font-size="9" font-weight="900" fill="#92400e" text-anchor="middle">(1000g)</text>
+              <text x="260" y="112" font-size="11" font-weight="900" fill="#b45309" text-anchor="middle">1000g</text>
+            </svg>
+          </div>
+        `;
+      }
+
+      // 12. 郵局便利箱限重素養題 (Q19)
+      if (q.visualType === 'shipping_box_limit') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 max-w-lg w-full">
+              <div class="flex items-center justify-between text-xs font-black text-amber-950 mb-2">
+                <span>📦 郵局便利箱（最大載重：3 公斤 ＝ 3000 公克）</span>
+                <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full border border-rose-300">目前已放 2200g</span>
+              </div>
+              <div class="w-full h-9 bg-white rounded-xl border-2 border-amber-400 flex overflow-hidden shadow-inner">
+                <div style="width: 46.6%" class="bg-orange-400 text-white text-[11px] font-black flex items-center justify-center border-r border-white">
+                  🍍鳳梨酥 1400g
+                </div>
+                <div style="width: 26.6%" class="bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center border-r border-white">
+                  🍵茶葉 800g
+                </div>
+                <div style="width: 26.8%" class="bg-amber-100 text-rose-700 text-[11px] font-black flex items-center justify-center animate-pulse">
+                  ？還能放 800g
+                </div>
+              </div>
+              <div class="text-xs font-bold text-slate-700 mt-2 text-center">
+                已放：1400g ＋ 800g ＝ 2200g ➜ 還差：3000g － 2200g ＝ <b class="text-rose-600">800 公克</b>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 13. 烘焙材料倍數素養題 (Q20)
+      if (q.visualType === 'bakery_recipe_mult') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="text-xs font-black text-orange-950 mb-2 bg-orange-100 px-3 py-1 rounded-full border border-orange-300">
+              🧀 每個重乳酪蛋糕需要 400 公克，共做 6 個
+            </div>
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 w-full max-w-lg">
+              ${[1, 2, 3, 4, 5, 6].map(n => `
+                <div class="bg-white border-2 border-orange-300 rounded-2xl p-2 text-center flex flex-col items-center shadow-xs">
+                  <span class="text-xl">🍰</span>
+                  <span class="text-[10px] font-bold text-slate-500">第 ${n} 個</span>
+                  <span class="text-xs font-black text-orange-700 mt-0.5">400g</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-2.5 text-xs font-black text-slate-800 bg-white px-4 py-1.5 rounded-xl border border-orange-200">
+              400g × 6 ＝ 2400g ＝ <span class="text-orange-600 text-sm">2 公斤 400 公克</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="text-xs text-slate-400 font-bold">公斤與公克秤重展示</div>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       渲染互動教具按鈕列 (renderActionTools)
+       ------------------------------------------------------------------------- */
+    function renderActionTools(q) {
+      const area = document.getElementById('actionToolsArea');
+      if (!area) return;
+
+      if (q.visualType === 'scale_1kg' || q.visualType === 'scale_3kg') {
+        area.innerHTML = `
+          <button onclick="toggleWeightOnPan()" class="bouncy-btn px-3 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-black shadow-xs flex items-center gap-1">
+            <span>⚖️</span>
+            <span>${isWeightPlaced ? '拿開物品 (歸零)' : '放上物品看指針轉動'}</span>
+          </button>
+          <span class="text-[11px] font-bold text-slate-500 hidden sm:inline">✨ 點擊可觀察指針從 0 轉動的過程！</span>
+        `;
+      } else {
+        area.innerHTML = `
+          <span class="text-xs font-bold text-orange-800 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">
+            ⚖️ 黃金秘訣：1 公斤 (kg) ＝ 1000 公克 (g)
+          </span>
+        `;
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       畫面渲染：頂部題號導覽、當前題目與選項
+       ------------------------------------------------------------------------- */
+    function renderTopUnitNav() {
+      const container = document.getElementById('unitQuestionNav');
+      if (!container) return;
+
+      const stages = [
+        { id: 1, name: "1. 認識1公斤秤", range: [0, 3] },
+        { id: 2, name: "2. 認識3公斤秤", range: [4, 7] },
+        { id: 3, name: "3. 換算與比大小", range: [8, 11] },
+        { id: 4, name: "4. 重量加減進退位", range: [12, 15] },
+        { id: 5, name: "5. 天平與素養應用", range: [16, 19] }
+      ];
+
+      let html = '';
+      stages.forEach(st => {
+        const isCurrentStage = (currentQIndex >= st.range[0] && currentQIndex <= st.range[1]);
+        html += `
+          <div class="bg-white/90 border ${isCurrentStage ? 'border-orange-400 ring-2 ring-orange-200' : 'border-slate-200'} rounded-xl p-1.5 flex flex-col justify-between">
+            <span class="text-[10px] font-black ${isCurrentStage ? 'text-orange-800' : 'text-slate-500'} mb-1 truncate">${st.name}</span>
+            <div class="grid grid-cols-4 gap-1">
+              ${Array.from({length: st.range[1] - st.range[0] + 1}).map((_, i) => {
+                const qIdx = st.range[0] + i;
+                const ans = userAnswers[qIdx];
+                let btnClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                if (ans !== null) {
+                  btnClass = ans.correct ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-rose-500 text-white border-rose-600';
+                }
+                if (qIdx === currentQIndex) {
+                  btnClass += ' ring-2 ring-orange-500 ring-offset-1 font-black scale-105';
+                }
+                return `
+                  <button onclick="jumpToQuestion(${qIdx})" class="bouncy-btn text-[11px] font-bold py-1 rounded-md border text-center transition ${btnClass}">
+                    ${qIdx + 1}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderCurrentQuestion() {
+      const q = QUESTIONS_DB[currentQIndex];
+      isWeightPlaced = true;
+
+      document.getElementById('questionTag').textContent = q.tag;
+      document.getElementById('stageNameTag').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('stageBadge').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('misconceptionText').textContent = q.misconception;
+      document.getElementById('qNumberPrefix').textContent = `第 ${q.id} 題.`;
+      document.getElementById('questionText').textContent = q.question;
+
+      // 渲染視覺展演舞台與教具按鈕
+      const stage = document.getElementById('interactiveStage');
+      stage.innerHTML = buildQuestionVisualHTML(q, true);
+      renderActionTools(q);
+
+      // 隱藏提示卡與作答反饋
+      document.getElementById('hintDisplayArea').classList.add('hidden');
+      document.getElementById('hintDisplayArea').textContent = '';
+      const fbBox = document.getElementById('feedbackBox');
+      fbBox.classList.add('hidden');
+
+      // 渲染選項按鈕
+      const grid = document.getElementById('optionsGrid');
+      let optionsHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const currentAns = userAnswers[currentQIndex];
+
+      q.options.forEach((opt, idx) => {
+        let optBtnClass = 'bg-white hover:bg-orange-50/80 border-slate-200 text-slate-800';
+        let checkIcon = letters[idx];
+
+        if (currentAns !== null) {
+          if (opt.correct) {
+            optBtnClass = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-black';
+            checkIcon = '✓';
+          } else if (currentAns.selectedIndex === idx) {
+            optBtnClass = 'bg-rose-50 border-rose-400 text-rose-950 font-bold';
+            checkIcon = '✗';
+          }
+        }
+
+        optionsHTML += `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between shadow-xs ${optBtnClass}">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-orange-100 text-orange-900 font-black text-xs flex items-center justify-center shrink-0 border border-orange-200">
+                ${letters[idx]}
+              </span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800 leading-snug">${opt.text}</span>
+            </div>
+            <span id="opt-check-${idx}" class="text-sm font-black px-1.5 text-orange-600">${checkIcon}</span>
+          </button>
+        `;
+      });
+      grid.innerHTML = optionsHTML;
+
+      // 如果已經作答過，重新顯示反饋資訊
+      if (currentAns !== null) {
+        showFeedback(currentAns.correct, currentAns.selected);
+      }
+
+      // 更新進度條
+      const progressPct = ((currentQIndex + 1) / QUESTIONS_DB.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPct}%`;
+      document.getElementById('progressPercentText').textContent = `進度：第 ${currentQIndex + 1} / ${QUESTIONS_DB.length} 題`;
+
+      // 更新正確率與頂部分段題號
+      updateStats();
+      renderTopUnitNav();
+    }
+
+    /* -------------------------------------------------------------------------
+       作答判斷 (selectOption)
+       ------------------------------------------------------------------------- */
+    function selectOption(optIndex) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const selected = q.options[optIndex];
+      const isFirstAttempt = (userAnswers[currentQIndex] === null);
+
+      if (isFirstAttempt) {
+        if (selected.correct) {
+          totalScore += 5;
+        }
+      }
+
+      userAnswers[currentQIndex] = {
+        selectedIndex: optIndex,
+        selected: selected,
+        correct: selected.correct
+      };
+
+      showFeedback(selected.correct, selected);
+      updateStats();
+      renderTopUnitNav();
+
+      if (selected.correct) {
+        playSound('correct');
+        confetti({
+          particleCount: 25,
+          spread: 45,
+          origin: { y: 0.7 }
+        });
+
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 font-black flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✓';
+        }
+
+        if (autoNextEnabled) {
+          setTimeout(() => {
+            nextQuestion();
+          }, 1200);
+        }
+      } else {
+        playSound('wrong');
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 text-rose-950 font-bold flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✗';
+        }
+      }
+
+      checkCompletion();
+    }
+
+    function showFeedback(isCorrect, selected) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const fbBox = document.getElementById('feedbackBox');
+      const fbIcon = document.getElementById('feedbackIcon');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbDetail = document.getElementById('feedbackDetail');
+
+      fbBox.classList.remove('hidden');
+      if (isCorrect) {
+        fbBox.className = 'rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 block transition-all duration-300';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '太棒了！回答完全正確！';
+        fbDetail.textContent = selected.note || q.explanation;
+      } else {
+        fbBox.className = 'rounded-2xl p-4 bg-amber-50 border-2 border-amber-300 text-amber-950 block transition-all duration-300';
+        fbIcon.textContent = '💡';
+        fbTitle.textContent = '差一點點！仔細看刻度與單位喔：';
+        fbDetail.textContent = selected.note || q.hint1 || '再思考一下 1 公斤 ＝ 1000 公克的關係喔！';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scoreText').textContent = `${totalScore} 分`;
+      const answeredCount = userAnswers.filter(a => a !== null).length;
+      if (answeredCount > 0) {
+        const correctCount = userAnswers.filter(a => a && a.correct).length;
+        const acc = Math.round((correctCount / answeredCount) * 100);
+        document.getElementById('accuracyText').textContent = `正確率：${acc}%`;
+      }
+    }
+
+    function checkCompletion() {
+      const allDone = userAnswers.every(a => a !== null);
+      if (allDone) {
+        setTimeout(() => {
+          showCompletionModal();
+        }, 800);
+      }
+    }
+
+    function showCompletionModal() {
+      playSound('victory');
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      const correctCount = userAnswers.filter(a => a && a.correct).length;
+      const acc = Math.round((correctCount / QUESTIONS_DB.length) * 100);
+
+      let stars = '⭐⭐⭐';
+      if (totalScore < 70) stars = '⭐☆☆';
+      else if (totalScore < 90) stars = '⭐⭐☆';
+
+      document.getElementById('endStarsDisplay').textContent = stars;
+      document.getElementById('endScoreDisplay').textContent = `最終得分：${totalScore} 分`;
+      document.getElementById('endAccDisplay').textContent = `正確率：${acc}%（${correctCount}/${QUESTIONS_DB.length}）`;
+
+      document.getElementById('completionModal').classList.remove('hidden');
+    }
+
+    function restartQuiz() {
+      document.getElementById('completionModal').classList.add('hidden');
+      currentQIndex = 0;
+      userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+      totalScore = 0;
+      updateStats();
+      renderCurrentQuestion();
+    }
+
+    /* -------------------------------------------------------------------------
+       跳題與切換
+       ------------------------------------------------------------------------- */
+    function jumpToQuestion(idx) {
+      playSound('click');
+      currentQIndex = idx;
+      if (isOverviewMode) {
+        toggleAllQuestionsView();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        playSound('click');
+        currentQIndex--;
+        renderCurrentQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < QUESTIONS_DB.length - 1) {
+        playSound('click');
+        currentQIndex++;
+        renderCurrentQuestion();
+      } else {
+        checkCompletion();
+      }
+    }
+
+    function toggleAutoNext() {
+      autoNextEnabled = !autoNextEnabled;
+      const btn = document.getElementById('autoNextBtn');
+      if (autoNextEnabled) {
+        btn.textContent = '⏭️ 自動下一題：開';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-orange-600 text-white border border-orange-500';
+      } else {
+        btn.textContent = '⏭️ 自動下一題：關';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200';
+      }
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       提示與詳解 Modal
+       ------------------------------------------------------------------------- */
+    function revealHint(num) {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      const area = document.getElementById('hintDisplayArea');
+      area.classList.remove('hidden');
+      if (num === 1) {
+        area.innerHTML = `<span class="text-orange-800 font-black">💡 提示 1：</span>${q.hint1}`;
+      } else {
+        area.innerHTML = `<span class="text-amber-800 font-black">🔍 提示 2：</span>${q.hint2}`;
+      }
+    }
+
+    function showCurrentExplanation() {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('modalExpTitle').textContent = `第 ${q.id} 題詳解：${q.tag}`;
+      document.getElementById('modalExpBody').innerHTML = `
+        <div class="p-3 bg-orange-50 rounded-xl border border-orange-200 mb-3">
+          <div class="font-black text-orange-950 text-xs mb-1">題目：${q.question}</div>
+          <div class="text-xs text-emerald-700 font-black">正確解答：${q.options.find(o => o.correct)?.text}</div>
+        </div>
+        <div class="font-bold text-slate-700 leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+          ${q.explanation}
+        </div>
+      `;
+      document.getElementById('explanationModal').classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('explanationModal').classList.add('hidden');
+    }
+
+    function toggleFormulaModal() {
+      playSound('click');
+      const modal = document.getElementById('formulaModal');
+      modal.classList.toggle('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       全題目一覽模式
+       ------------------------------------------------------------------------- */
+    function toggleAllQuestionsView() {
+      playSound('click');
+      isOverviewMode = !isOverviewMode;
+      const singleView = document.getElementById('singleQuestionView');
+      const allView = document.getElementById('allQuestionsView');
+      const singleNav = document.getElementById('singleNavControls');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        singleView.classList.add('hidden');
+        singleNav.classList.add('hidden');
+        allView.classList.remove('hidden');
+        btnText.textContent = '返回單題闖關模式';
+        renderAllQuestionsList();
+      } else {
+        singleView.classList.remove('hidden');
+        singleNav.classList.remove('hidden');
+        allView.classList.add('hidden');
+        btnText.textContent = '一次瀏覽全部題目 (含圖)';
+        renderCurrentQuestion();
+      }
+      renderTopUnitNav();
+    }
+
+    function renderAllQuestionsList() {
+      const container = document.getElementById('allQuestionsContainer');
+      if (!container) return;
+
+      isWeightPlaced = true;
+      let html = '';
+      QUESTIONS_DB.forEach(q => {
+        const visualHTML = buildQuestionVisualHTML(q, false);
+        html += `
+          <div class="scale-card rounded-3xl p-5 border-2 border-orange-200 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-orange-100 pb-2 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-orange-600 text-white text-xs px-2.5 py-0.5 rounded-lg font-black">第 ${q.id} 題</span>
+                <span class="text-xs font-black text-orange-950">${q.tag}</span>
+                <span class="bg-orange-100 text-orange-800 text-[11px] px-2 py-0.5 rounded-full font-bold">第 ${q.stage} 區・${q.stageName}</span>
+              </div>
+              <button onclick="jumpToQuestion(${q.id - 1})" class="bouncy-btn text-xs font-black text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1 rounded-xl border border-orange-200">
+                🚀 跳到這題練習
+              </button>
+            </div>
+
+            <h3 class="font-black text-base text-slate-800 leading-snug">${q.question}</h3>
+
+            <div class="w-full bg-slate-50/80 rounded-2xl border border-dashed border-orange-200 p-3 flex flex-col items-center justify-center">
+              ${visualHTML}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              ${q.options.map((opt, i) => `
+                <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${opt.correct ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black' : 'bg-white border-slate-200 text-slate-600'}">
+                  <span>${['A','B','C','D'][i]}. ${opt.text}</span>
+                  ${opt.correct ? '<span class="text-emerald-600 font-black">✓ 正確解答</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-orange-50/80 rounded-xl border border-orange-200 text-xs text-orange-950 leading-relaxed font-bold whitespace-pre-line">
+              💡 詳解：${q.explanation}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       回 3D 冒險群島地圖
+       ------------------------------------------------------------------------- */
+    function returnToMainMap(isCompleted = false) {
+      playSound('click');
+      try {
+        if (window.parent && window.parent !== window) {
+          if (isCompleted) {
+            const parentCompleteBtn = window.parent.document.getElementById('btn-complete-and-back');
+            if (parentCompleteBtn) {
+              parentCompleteBtn.click();
+              return;
+            }
+          }
+          const parentCloseBtn = window.parent.document.getElementById('btn-close-game');
+          if (parentCloseBtn) {
+            parentCloseBtn.click();
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Parent interaction restricted, falling back to direct navigation', e);
+      }
+      window.location.href = './math_island_adventure.html';
+    }
+
+    /* -------------------------------------------------------------------------
+       頁面載入初始化
+       ------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+    });
+  </script>
+</body>
+</html>

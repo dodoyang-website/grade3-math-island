@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>幾何神殿探險家：角、直角與正長方形大冒險 (三上數學第5單元)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@600;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #faf5ff;
+      color: #1e1b4b;
+      margin: 0;
+      padding: 0;
+    }
+    .font-comic { font-family: 'Fredoka', 'Noto Sans TC', sans-serif; }
+    
+    /* 捲軸美化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f3e8ff; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c084fc; }
+
+    /* 彈跳按鈕效果 */
+    .bouncy-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bouncy-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .bouncy-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* 柔和發光與卡片陰影 */
+    .temple-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.18), 0 0 0 1.5px rgba(192, 132, 252, 0.25);
+    }
+
+    /* 幾何教具平滑動畫 */
+    .trans-smooth {
+      transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  </style>
+</head>
+<body class="bg-purple-50/70 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- =========================================================================
+       1. 頂部導覽列與單元題號導航
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-purple-200 sticky top-0 z-40 px-3 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題與標籤 -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md border-2 border-purple-300">
+          📐
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm md:text-base font-black text-purple-950 flex items-center gap-1.5 leading-tight">
+              三上第 5 單元：角與形狀
+            </h1>
+            <span class="bg-purple-100 text-purple-800 text-[11px] px-2.5 py-0.5 rounded-full border border-purple-300 font-extrabold hidden sm:inline">
+              翰林版 115上
+            </span>
+          </div>
+          <span id="stageBadge" class="text-xs font-black text-purple-600 inline-block mt-0.5">
+            單元 1：認識角的構成
+          </span>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕列 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <!-- 切換模式 -->
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm flex items-center gap-1 border border-purple-400">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <!-- 看解析 -->
+        <button onclick="showCurrentExplanation()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+          <span>💡</span>
+          <span>看解析</span>
+        </button>
+
+        <!-- 自動下一題 -->
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <!-- 星星積分 -->
+        <div class="flex items-center bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs">
+          <span class="text-amber-500 text-sm mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0 分</span>
+        </div>
+
+        <!-- 音效開關 -->
+        <button id="muteBtn" onclick="toggleMute()" title="切換音效" class="bouncy-btn w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-sm shadow-xs">
+          🔊
+        </button>
+
+        <!-- 幾何秘笈重點卡 -->
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-amber-950 border border-amber-300 shadow-sm flex items-center gap-1">
+          <span>📜</span>
+          <span>重點卡</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-purple-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 上下題切換條 (單題模式時顯示) -->
+    <div id="singleNavControls" class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0 flex items-center gap-1">
+        <span>◀</span>
+        <span>上一題</span>
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-purple-700 font-bold mb-0.5 px-0.5">
+          <span id="progressPercentText">進度：第 1 / 18 題</span>
+          <span id="accuracyText">正確率：100%</span>
+        </div>
+        <div class="w-full bg-purple-100 rounded-full h-2 overflow-hidden border border-purple-200">
+          <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 5.5%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white shrink-0 shadow-xs flex items-center gap-1">
+        <span>下一題</span>
+        <span>▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. 主要內容區域：單題闖關模式 vs 全部瀏覽模式
+       ========================================================================= -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-5 flex flex-col justify-start">
+    
+    <!-- 模式 A：單題挑戰模式 -->
+    <section id="singleQuestionView" class="w-full flex flex-col gap-4">
+      
+      <!-- 題目卡片容器 -->
+      <div class="temple-card rounded-3xl p-4 sm:p-6 border-2 border-purple-200 relative overflow-hidden">
+        <!-- 頂部裝飾條 -->
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-500 via-indigo-500 to-amber-400"></div>
+
+        <!-- 題頭資訊 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 mt-1">
+          <div class="flex items-center gap-2">
+            <span id="qTagBadge" class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-xl font-black border border-purple-300 flex items-center gap-1">
+              <span>🏷️</span>
+              <span id="qTagText">Q1 角的構成要素</span>
+            </span>
+            <span id="qMisconceptionBadge" class="bg-amber-50 text-amber-800 text-xs px-2.5 py-0.5 rounded-lg border border-amber-200 font-bold hidden sm:inline">
+              💡 核心觀念：1 個頂點與 2 條直直的邊
+            </span>
+          </div>
+          <!-- 題目序號 -->
+          <span id="qNumberBadge" class="font-comic font-black text-sm text-purple-400">
+            QUESTION 01
+          </span>
+        </div>
+
+        <!-- 題目文字 -->
+        <h2 id="qTitle" class="text-base sm:text-xl font-black text-slate-800 leading-snug mb-4">
+          載入題目中...
+        </h2>
+
+        <!-- 視覺互動教具容器 (動態渲染 SVG/互動操作) -->
+        <div id="interactiveStage" class="w-full bg-slate-50/80 rounded-2xl border-2 border-dashed border-purple-200 p-3 sm:p-4 mb-5 flex flex-col items-center justify-center min-h-[220px] relative overflow-hidden">
+          <!-- 這裡會動態載入角、三角板比對、疊合動畫等教具 -->
+        </div>
+
+        <!-- 操作提示小工具 (若題目支援互動教具按鈕) -->
+        <div id="interactiveToolbar" class="w-full flex items-center justify-center gap-2 mb-4 hidden">
+          <!-- 動態按鈕 -->
+        </div>
+
+        <!-- 選項網格 -->
+        <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <!-- 動態生成選項按鈕 -->
+        </div>
+
+        <!-- 即時回饋卡片 -->
+        <div id="feedbackBox" class="rounded-2xl p-4 hidden transition-all duration-300">
+          <div class="flex items-start gap-3">
+            <span id="feedbackIcon" class="text-2xl shrink-0 mt-0.5">🎉</span>
+            <div class="flex-1">
+              <h3 id="feedbackTitle" class="font-black text-sm sm:text-base mb-1">太棒了！完全答對！</h3>
+              <p id="feedbackDetail" class="text-xs sm:text-sm leading-relaxed"></p>
+            </div>
+            <button id="feedbackNextBtn" onclick="nextQuestion()" class="bouncy-btn shrink-0 bg-purple-600 text-white font-black px-4 py-2 rounded-xl text-xs sm:text-sm shadow">
+              下一題 ▶
+            </button>
+          </div>
+        </div>
+
+        <!-- 提示收合欄 -->
+        <div class="mt-4 pt-3 border-t border-purple-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 font-bold">
+          <div class="flex items-center gap-2">
+            <button onclick="revealHint(1)" class="bouncy-btn px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center gap-1">
+              <span>💡 提示 1</span>
+            </button>
+            <button onclick="revealHint(2)" class="bouncy-btn px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center gap-1">
+              <span>🔍 提示 2</span>
+            </button>
+            <span id="hintDisplayArea" class="text-purple-700 font-bold"></span>
+          </div>
+          <span class="text-slate-400">💡 提示：點擊選項即可立即檢核答案</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 模式 B：一次瀏覽全部題目 (含圖與解析) -->
+    <section id="allQuestionsView" class="w-full flex-col gap-6 hidden">
+      <div class="bg-white rounded-3xl p-5 border-2 border-purple-300 shadow-md mb-2 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 class="text-lg font-black text-purple-950 flex items-center gap-2">
+            <span>📚</span>
+            <span>三上數學第 5 單元【角與形狀】全單元 18 題總覽</span>
+          </h2>
+          <p class="text-xs text-slate-500 font-bold mt-1">
+            包含完整視覺教具圖表、迷思引導與精闢詳解，適合課堂投影與自我檢測複習！
+          </p>
+        </div>
+        <button onclick="toggleAllQuestionsView()" class="bouncy-btn px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-black shadow flex items-center gap-1">
+          <span>🎮</span>
+          <span>返回闖關模式</span>
+        </button>
+      </div>
+
+      <!-- 全題目清單由 JS 動態生成 -->
+      <div id="allQuestionsContainer" class="flex flex-col gap-5"></div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       3. 彈出視窗：單題解析 Modal
+       ========================================================================= -->
+  <div id="explanationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-purple-300 relative">
+      <div class="flex items-center justify-between pb-3 border-b border-purple-100 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-purple-500 text-white flex items-center justify-center text-sm font-black">💡</span>
+          <h3 class="font-black text-purple-950 text-base" id="modalExpTitle">精闢觀念解析</h3>
+        </div>
+        <button onclick="closeExplanationModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-black">&times;</button>
+      </div>
+      <div id="modalExpBody" class="text-xs sm:text-sm text-slate-700 leading-relaxed mb-5">
+        解析內容載入中...
+      </div>
+      <div class="flex justify-end">
+        <button onclick="closeExplanationModal()" class="bouncy-btn px-4 py-2 bg-purple-600 text-white font-black rounded-xl text-xs shadow">
+          知道了，關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       4. 彈出視窗：幾何秘笈重點卡 Modal
+       ========================================================================= -->
+  <div id="formulaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-300 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-200 mb-4 sticky top-0 bg-white z-10">
+        <div class="flex items-center gap-2">
+          <span class="w-9 h-9 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center text-xl font-black shadow-sm">📜</span>
+          <div>
+            <h3 class="font-black text-amber-950 text-base sm:text-lg">幾何神殿特級秘笈：角與形狀重點卡</h3>
+            <span class="text-[11px] font-bold text-amber-700">翰林版三上第 5 單元考點全精華</span>
+          </div>
+        </div>
+        <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-black">&times;</button>
+      </div>
+
+      <div class="flex flex-col gap-4 text-xs sm:text-sm text-slate-700">
+        
+        <!-- 卡片 1：角的要素與構成 -->
+        <div class="bg-purple-50/80 rounded-2xl p-4 border border-purple-200">
+          <h4 class="font-black text-purple-900 text-sm mb-2 flex items-center gap-1.5">
+            <span>1️⃣</span>
+            <span>什麼是「角」？（三要素口訣）</span>
+          </h4>
+          <p class="leading-relaxed mb-2 font-bold text-purple-950">
+            由 <span class="text-purple-600 font-black">1 個頂點</span> 和 <span class="text-purple-600 font-black">2 條直直的邊</span> 所組成的圖形叫做「角」。
+          </p>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600">
+            <li>兩條邊必須是筆直的射線或線段；如果有彎曲的曲線，就<b>不是角</b>！</li>
+            <li>兩條邊若沒有交接在同一個頂點上，也<b>不是角</b>！</li>
+            <li>圖形尖尖交會的點叫做<b>頂點</b>。</li>
+          </ul>
+        </div>
+
+        <!-- 卡片 2：角的大小比較迷思 -->
+        <div class="bg-amber-50/80 rounded-2xl p-4 border border-amber-200">
+          <h4 class="font-black text-amber-900 text-sm mb-2 flex items-center gap-1.5">
+            <span>2️⃣</span>
+            <span>角的大小是比什麼？（常考大陷阱）</span>
+          </h4>
+          <div class="p-3 bg-amber-100/70 rounded-xl font-black text-amber-900 mb-2">
+            ⭐ 核心鐵律：角的大小只看「張開的程度」，跟「邊畫得有多長」完全沒有關係！
+          </div>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600">
+            <li>張開得越大，角就越大；張開得越小，角就越小。</li>
+            <li>就算邊畫得很長，如果張開程度小，它依然是比較小的角！</li>
+            <li>比較方法：把兩個角的頂點對齊、一條邊重疊，看另一條邊誰張得開！</li>
+          </ul>
+        </div>
+
+        <!-- 卡片 3：直角的認識與三角板檢驗法 -->
+        <div class="bg-emerald-50/80 rounded-2xl p-4 border border-emerald-200">
+          <h4 class="font-black text-emerald-900 text-sm mb-2 flex items-center gap-1.5">
+            <span>3️⃣</span>
+            <span>直角與三角板檢驗法</span>
+          </h4>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600">
+            <li>正方形或長方形紙對折再對折，會折出<b>直角</b>。</li>
+            <li>直角的專屬記號是 <b>「∟」</b>。</li>
+            <li>三角板上有一個角是直角。檢驗時將三角板的直角頂點和一邊對齊待測角：
+              <div class="grid grid-cols-3 gap-2 mt-2 font-bold text-center text-xs">
+                <div class="p-2 rounded-xl bg-white border border-emerald-300 text-emerald-800">
+                  完全吻合<br><span class="text-emerald-600 font-black">等於直角 (∟)</span>
+                </div>
+                <div class="p-2 rounded-xl bg-white border border-blue-300 text-blue-800">
+                  藏在三角板內<br><span class="text-blue-600 font-black">比直角小</span>
+                </div>
+                <div class="p-2 rounded-xl bg-white border border-rose-300 text-rose-800">
+                  超出三角板外<br><span class="text-rose-600 font-black">比直角大</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 卡片 4：正方形 vs 長方形特徵比較 -->
+        <div class="bg-sky-50/80 rounded-2xl p-4 border border-sky-200">
+          <h4 class="font-black text-sky-900 text-sm mb-2 flex items-center gap-1.5">
+            <span>4️⃣</span>
+            <span>正方形 與 長方形 終極對照表</span>
+          </h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-center border-collapse bg-white rounded-xl overflow-hidden shadow-xs">
+              <thead class="bg-sky-200/70 text-sky-950 font-black">
+                <tr>
+                  <th class="p-2 border border-sky-300">形狀名稱</th>
+                  <th class="p-2 border border-sky-300">邊的特性</th>
+                  <th class="p-2 border border-sky-300">角的特性</th>
+                  <th class="p-2 border border-sky-300">相同點</th>
+                </tr>
+              </thead>
+              <tbody class="font-bold text-slate-700">
+                <tr>
+                  <td class="p-2.5 border border-sky-200 text-purple-700 font-black">正方形</td>
+                  <td class="p-2.5 border border-sky-200 text-purple-900 font-black">4 條邊都一樣長</td>
+                  <td class="p-2.5 border border-sky-200">4 個角都是直角</td>
+                  <td class="p-2.5 border border-sky-200 rowspan-2" rowspan="2">
+                    都有 4 條邊、<br>4 個直角！
+                  </td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 border border-sky-200 text-indigo-700 font-black">長方形</td>
+                  <td class="p-2.5 border border-sky-200 text-indigo-900 font-black">上下對邊等長<br>左右對邊等長</td>
+                  <td class="p-2.5 border border-sky-200">4 個角都是直角</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-5 flex justify-end">
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-xs shadow">
+          收起秘笈
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 頁尾宣告 -->
+  <footer class="bg-white/80 border-t border-purple-200 text-center py-2 text-[11px] text-purple-900 font-bold">
+    🌟 翰林版 115 上學期國小三年級數學・第 5 單元【角與形狀】視覺教具互動系統・單元 05 專用闖關網
+  </footer>
+
+  <!-- =========================================================================
+       5. JavaScript 遊戲邏輯與題庫
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       Web Audio API 音效引擎 (原生免外部檔案，相容任何離線環境)
+       ------------------------------------------------------------------------- */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'correct') {
+          // 雙音高頻叮咚
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.setValueAtTime(880, now + 0.12); // A5
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'wrong') {
+          // 低頻溫和咚
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(164.81, now + 0.1);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'click') {
+          // 清脆點擊
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(700, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'overlap') {
+          // 機械滑動/旋轉
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.25);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now);
+          osc.stop(now + 0.28);
+        } else if (type === 'cheer') {
+          // 勝利琶音
+          const freqs = [523.25, 659.25, 783.99, 1046.50];
+          freqs.forEach((f, i) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(f, now + i * 0.09);
+            g.gain.setValueAtTime(0.18, now + i * 0.09);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.35);
+            o.connect(g);
+            g.connect(ctx.destination);
+            o.start(now + i * 0.09);
+            o.stop(now + i * 0.09 + 0.35);
+          });
+        }
+      } catch (e) {
+        console.warn('Audio not allowed yet:', e);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+    }
+
+    /* -------------------------------------------------------------------------
+       關卡階段劃分 (STAGE_META)
+       ------------------------------------------------------------------------- */
+    const STAGE_META = [
+      { stage: 1, title: "單元1：認識角的構成", range: [1, 2, 3] },
+      { stage: 2, title: "單元2：角的大小與張開度", range: [4, 5, 6, 7] },
+      { stage: 3, title: "單元3：直角與三角板檢驗", range: [8, 9, 10, 11] },
+      { stage: 4, title: "單元4：正方形與長方形特徵", range: [12, 13, 14, 15] },
+      { stage: 5, title: "單元5：幾何神殿終極解謎", range: [16, 17, 18] }
+    ];
+
+    /* -------------------------------------------------------------------------
+       精選 18 題題庫 (包含 SVG 視覺教具、動態比對、直角標記、選項與精準解析)
+       ------------------------------------------------------------------------- */
+    const QUESTIONS_DB = [
+      // ================= 單元 1：認識角的構成 (Q1 ~ Q3) =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "認識角的構成",
+        tag: "Q1 角的三要素",
+        misconception: "辨認頂點與兩條筆直的邊",
+        visualType: "angle_elements",
+        question: "觀察右上方圖形，箭頭所指的紅色圓點是這個角的什麼部位？",
+        options: [
+          { text: "頂點", correct: true },
+          { text: "邊", correct: false, note: "兩條筆直的線才是邊喔！" },
+          { text: "直角", correct: false, note: "這是一個角，而尖尖交會的點是頂點。" },
+          { text: "中心點", correct: false, note: "數學上兩條射線交接的點稱為頂點。" }
+        ],
+        hint1: "角是由 1 個頂點和 2 條直直的邊組成的。",
+        hint2: "尖尖交接在一起的點就是「頂點」。",
+        explanation: "角由 1 個「頂點」和 2 條筆直的「邊」組成。兩條邊相交的尖尖位置就是這個角的頂點。"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "認識角的構成",
+        tag: "Q2 判定是不是角",
+        misconception: "彎曲線條或未相交不能算作角",
+        visualType: "is_it_angle_grid",
+        question: "下圖有甲、乙、丙、丁四個圖案，哪一個「是角」？",
+        options: [
+          { text: "只有甲是角", correct: true },
+          { text: "只有乙是角", correct: false, note: "乙的邊是彎彎的曲線，不是筆直的線，所以不是角！" },
+          { text: "只有丙是角", correct: false, note: "丙的兩條線沒有連在同一個頂點，所以不是角！" },
+          { text: "全部都是角", correct: false, note: "角的邊必須是「筆直的線」，且必須相交在「同一個頂點」。" }
+        ],
+        hint1: "角的邊一定要是「直直的線」，不能彎曲。",
+        hint2: "兩條直邊必須在「同一個頂點」接在一起。",
+        explanation: "甲由 1 個頂點和 2 條直直的邊組成，是角；乙有一條邊是彎曲的弧線，不是角；丙兩條線沒有相交在頂點，不是角；丁頂端是圓弧，不是角。"
+      },
+      {
+        id: 3,
+        stage: 1,
+        stageName: "認識角的構成",
+        tag: "Q3 數數多邊形的角",
+        misconception: "五邊形有幾個頂點就有幾個角",
+        visualType: "polygon_count_angles",
+        question: "看圖中這個美麗的五角星徽章底座（五邊形），它一共有幾個角、幾個頂點？",
+        options: [
+          { text: "5 個角、5 個頂點", correct: true },
+          { text: "4 個角、4 個頂點", correct: false, note: "數數看外圈尖尖的頂點，一共有 5 個喔！" },
+          { text: "5 個角、6 個頂點", correct: false, note: "多邊形的角和頂點數量是一樣多的！" },
+          { text: "6 個角、5 個頂點", correct: false, note: "五邊形剛好有 5 個角和 5 個頂點。" }
+        ],
+        hint1: "數數看這個圖形有幾條邊？五邊形有 5 條邊。",
+        hint2: "每兩條邊相交就會形成 1 個角和 1 個頂點。",
+        explanation: "五邊形由 5 條邊圍成，相交形成 5 個頂點和 5 個角。幾邊形就有幾個頂點和幾個角。"
+      },
+
+      // ================= 單元 2：角的大小與張開度 (Q4 ~ Q7) =================
+      {
+        id: 4,
+        stage: 2,
+        stageName: "角的大小與張開度",
+        tag: "Q4 邊長與角大小迷思",
+        misconception: "角的大小只看張口，跟邊畫多長無關！",
+        visualType: "interactive_overlap",
+        question: "比較藍角（邊很長）和紅角（邊較短），哪一個角比較大？（可點擊「📐 疊合比對」驗證）",
+        options: [
+          { text: "紅角比較大（因為張開程度較大）", correct: true },
+          { text: "藍角比較大（因為邊畫得比較長）", correct: false, note: "小心陷阱！角的大小只看張開的程度，跟邊畫得多長完全沒有關係！" },
+          { text: "兩個角一樣大", correct: false, note: "按下上方「📐 疊合比對」按鈕，看看誰張得比較開！" },
+          { text: "無法比較", correct: false, note: "只要把頂點和一條邊重疊，就能清楚比出大小喔！" }
+        ],
+        hint1: "角的大小是指兩條邊「張開的程度」，不是比邊的長度。",
+        hint2: "點擊教具中的「📐 疊合比對」按鈕，紅角比藍角張開得更開！",
+        explanation: "★ 經典常考觀念：角的大小只由「兩邊張開的程度」決定！藍角的邊雖然畫得很長，但張開的角度小；紅角的邊雖然短，但張開的角度大，所以紅角比較大。"
+      },
+      {
+        id: 5,
+        stage: 2,
+        stageName: "角的大小與張開度",
+        tag: "Q5 扇子張開度比較",
+        misconception: "生活中的角：扇子打開越開，角越大",
+        visualType: "fan_angles_compare",
+        question: "看圖中三把摺扇打開的樣子：甲扇、乙扇、丙扇，哪一把扇子形成的角最大？",
+        options: [
+          { text: "丙扇最大", correct: true },
+          { text: "甲扇最大", correct: false, note: "甲扇才微微打開一點點，是三個裡面最小的喔！" },
+          { text: "乙扇最大", correct: false, note: "丙扇張開的開口比乙扇還要大喔！" },
+          { text: "三把扇子一樣大", correct: false, note: "扇子張開的程度不同，形成的角大小也不同。" }
+        ],
+        hint1: "扇骨張開得越開，形成的角就越大。",
+        hint2: "甲張開最小，乙次之，丙張開得最開。",
+        explanation: "扇子打開的程度代表角的大小。丙扇張開的幅度最大，所以丙扇形成的角最大；甲扇最小。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "角的大小與張開度",
+        tag: "Q6 時鐘指針張角",
+        misconception: "鐘面指針形成的開口大小比較",
+        visualType: "clock_angles_compare",
+        question: "觀察圖中兩個時鐘，甲鐘（2點鐘）與乙鐘（4點鐘），哪一個鐘面上時針與分針張開的角比較大？",
+        options: [
+          { text: "乙鐘比較大 (相隔4大格)", correct: true },
+          { text: "甲鐘比較大 (相隔2大格)", correct: false, note: "2 大格比 4 大格張開得更小喔！" },
+          { text: "兩個時鐘一樣大", correct: false, note: "乙鐘的分針與時針距離更遠、張口更大！" },
+          { text: "因為分針都在12，所以一樣大", correct: false, note: "要看時針與分針之間的張開夾角喔！" }
+        ],
+        hint1: "鐘面上 1 大格代表 30 度。2點鐘相差 2 大格，4點鐘相差 4 大格。",
+        hint2: "相差越多大格，兩根指針張開的角就越大。",
+        explanation: "甲鐘（2點整）指針相距 2 大格；乙鐘（4點整）指針相距 4 大格。乙鐘的指針張開幅度更大，所以乙鐘形成的角比較大。"
+      },
+      {
+        id: 7,
+        stage: 2,
+        stageName: "角的大小與張開度",
+        tag: "Q7 三角由小到大排序",
+        misconception: "綜合比較三個不同方向與大小的角",
+        visualType: "three_angles_sort",
+        question: "將圖中的角①、角②、角③，按照「角的大小」由小到大排列，正確的順序是？",
+        options: [
+          { text: "角② ＜ 角① ＜ 角③", correct: true },
+          { text: "角① ＜ 角② ＜ 角③", correct: false, note: "看清楚：角②張開得最窄最小喔！" },
+          { text: "角③ ＜ 角① ＜ 角②", correct: false, note: "角③張開得最開，是最大的角！" },
+          { text: "角② ＜ 角③ ＜ 角①", correct: false, note: "角①比角②大，但比角③小。" }
+        ],
+        hint1: "先找出張開得最窄（最小）的是哪一個？是角②。",
+        hint2: "張開得最寬（最大）的是角③。",
+        explanation: "觀察三角的張開程度：角②最窄（約 30°），角①中等（約 60°），角③最寬（約 110°）。由小到大是：角② ＜ 角① ＜ 角③。"
+      },
+
+      // ================= 單元 3：直角與三角板檢驗 (Q8 ~ Q11) =================
+      {
+        id: 8,
+        stage: 3,
+        stageName: "直角與三角板檢驗",
+        tag: "Q8 認識三角板上的直角",
+        misconception: "三角板有三個角，其中只有一個是直角",
+        visualType: "setsquare_intro",
+        question: "圖中這塊常用的直角三角板，上面標有 A、B、C 三個角，哪一個是「直角」？",
+        options: [
+          { text: "角 A 是直角 (記號為 ∟)", correct: true },
+          { text: "角 B 是直角", correct: false, note: "角 B 比較尖，比直角小！" },
+          { text: "角 C 是直角", correct: false, note: "角 C 也比直角小！" },
+          { text: "A、B、C 三個角都是直角", correct: false, note: "三角板只有一個角是直角喔！" }
+        ],
+        hint1: "直角就是方方正正、像正方形角落一樣的角。",
+        hint2: "角 A 有方正的直角符號 ∟。",
+        explanation: "三角板中有一個方方正正的角就是「直角」，通常用「∟」來標示。另外兩個角都比直角小。"
+      },
+      {
+        id: 9,
+        stage: 3,
+        stageName: "直角與三角板檢驗",
+        tag: "Q9 互動三角板檢驗直角",
+        misconception: "用三角板比對：吻合是直角、在內比直角小、在外比直角大",
+        visualType: "interactive_setsquare_test",
+        question: "圖中這個角正在用三角板比對檢驗，角的另一條邊落在三角板直角的「外面」，這個角是？",
+        options: [
+          { text: "比直角大", correct: true },
+          { text: "等於直角", correct: false, note: "如果等於直角，會剛好跟三角板邊緣完全吻合喔！" },
+          { text: "比直角小", correct: false, note: "若落在三角板裡面才是比直角小。" },
+          { text: "無法用三角板判斷", correct: false, note: "用三角板直角就能精準比對大小。" }
+        ],
+        hint1: "邊若和三角板完全貼合，就是直角。",
+        hint2: "如果開口張得比三角板的直角還要開（超出外面），就是比直角大。",
+        explanation: "用三角板檢驗時：若另一條邊落在三角板直角外面，表示它比直角張開得更開，所以是「比直角大」的角（高年級稱鈍角）。"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "直角與三角板檢驗",
+        tag: "Q10 鐘面上的直角時刻",
+        misconception: "3點整與9點整時，時針與分針成直角",
+        visualType: "clock_right_angle",
+        question: "時鐘在下列哪一個整點時刻，時針和分針剛好會形成一個「直角」？",
+        options: [
+          { text: "3 點整 (或 9 點整)", correct: true },
+          { text: "6 點整", correct: false, note: "6 點整時針指 6、分針指 12，連成一條直線，不是直角！" },
+          { text: "12 點整", correct: false, note: "12 點整兩根指針重疊，角是 0 度。" },
+          { text: "1 點整", correct: false, note: "1 點整只相差 1 大格，比直角小很多。" }
+        ],
+        hint1: "直角在鐘面上剛好相隔 3 個大格（3 × 30° = 90°）。",
+        hint2: "分針指在 12，時針指在 3 或 9 時，正好是直角！",
+        explanation: "在 3 點整或 9 點整時，時針與分針剛好相隔 3 個大格，夾角形成一個方正的「直角 (90°)」。"
+      },
+      {
+        id: 11,
+        stage: 3,
+        stageName: "直角與三角板檢驗",
+        tag: "Q11 摺紙做直角",
+        misconception: "任意形狀紙張對折再對折必產生直角",
+        visualType: "paper_fold_right_angle",
+        question: "小明拿一張隨意撕下來的紙，先對折一次，再沿著折痕對折第二次（如圖），折出來的角是什麼角？",
+        options: [
+          { text: "一定是直角", correct: true },
+          { text: "一定是比直角大的角", correct: false, note: "對折再對折剛好把一條直線平分成兩半，是直角！" },
+          { text: "一定是比直角小的角", correct: false, note: "拿三角板比比看，折出來的角剛好吻合直角喔！" },
+          { text: "不一定，要看原本紙的形狀", correct: false, note: "不管紙原本長怎樣，只要對折再對折，折角就一定是直角！" }
+        ],
+        hint1: "第一次對折產生一條筆直的折線。",
+        hint2: "沿著折線再對折一次，把平角一分為二，剛好就是直角。",
+        explanation: "不管原本紙張是什麼形狀，對折一次產生直邊，第二次對折把直邊完全重疊，夾角就一定是「直角」。這是課本製作直角教具的經典方法。"
+      },
+
+      // ================= 單元 4：正方形與長方形特徵 (Q12 ~ Q15) =================
+      {
+        id: 12,
+        stage: 4,
+        stageName: "正方形與長方形特徵",
+        tag: "Q12 正方形邊角特徵",
+        misconception: "正方形 4 邊等長且 4 個角都是直角",
+        visualType: "square_properties",
+        question: "關於圖中的「正方形」，下列哪一個敘述是完全正確的？",
+        options: [
+          { text: "4 條邊都一樣長，4 個角都是直角", correct: true },
+          { text: "只有對邊一樣長，4 個角都是直角", correct: false, note: "正方形是「4 條邊全部都一樣長」喔！" },
+          { text: "4 條邊一樣長，但只有 2 個直角", correct: false, note: "正方形的 4 個角全部都是直角。" },
+          { text: "4 條邊都不一樣長", correct: false, note: "正方形的特徵就是四邊等長。" }
+        ],
+        hint1: "用尺量量看正方形的四個邊，長度都一樣。",
+        hint2: "拿三角板比比看四個角，每一個都是直角。",
+        explanation: "正方形的兩大鐵律：① 4 條邊都一樣長（四邊等長）；② 4 個角都是直角 (∟)。"
+      },
+      {
+        id: 13,
+        stage: 4,
+        stageName: "正方形與長方形特徵",
+        tag: "Q13 長方形對邊與直角",
+        misconception: "長方形上下對邊等長、左右對邊等長",
+        visualType: "rectangle_properties",
+        question: "圖中這個長方形長邊是 8 公分，寬邊是 5 公分，請問它的「對邊」長度分別是多少？",
+        options: [
+          { text: "上邊 8 公分，左邊 5 公分", correct: true },
+          { text: "上邊 5 公分，左邊 8 公分", correct: false, note: "上下的長邊要對應相等喔！" },
+          { text: "全部邊長都是 8 公分", correct: false, note: "長方形只有對邊等長，四邊等長的是正方形！" },
+          { text: "上邊 13 公分，左邊 3 公分", correct: false, note: "對面的邊長度會完全一樣。" }
+        ],
+        hint1: "長方形具有「對邊等長」的特性：上面的邊等於下面的邊，左邊等於右邊。",
+        hint2: "下邊是 8 公分，所以上邊也是 8 公分；右邊是 5 公分，左邊也是 5 公分。",
+        explanation: "長方形的特徵是：4 個角都是直角，且「對邊一樣長」。下面是 8cm 則上面也是 8cm；右邊是 5cm 則左邊也是 5cm。"
+      },
+      {
+        id: 14,
+        stage: 4,
+        stageName: "正方形與長方形特徵",
+        tag: "Q14 正方形與長方形異同辨析",
+        misconception: "兩者相同處是4直角與4條邊，相異處是邊長關係",
+        visualType: "compare_square_rect_venn",
+        question: "「正方形」和「長方形」有哪些共同的相同特徵？",
+        options: [
+          { text: "都有 4 條邊，且 4 個角都是直角", correct: true },
+          { text: "四條邊都一樣長", correct: false, note: "長方形只有對邊一樣長，四邊沒有全部一樣長！" },
+          { text: "都有 3 個頂點和 3 個角", correct: false, note: "它們都是四邊形，有 4 個頂點和 4 個角。" },
+          { text: "角的大小都不相同", correct: false, note: "它們的角全都是直角，角的大小都一樣大。" }
+        ],
+        hint1: "想想看它們的名字都有「方形」，角都是什麼角？",
+        hint2: "正方形與長方形都有 4 條邊、4 個頂點、4 個直角。",
+        explanation: "正方形與長方形的「相同點」：都有 4 條邊、4 個頂點，且 4 個角都是直角；「相異點」：正方形 4 邊都等長，長方形只有對邊等長。"
+      },
+      {
+        id: 15,
+        stage: 4,
+        stageName: "正方形與長方形特徵",
+        tag: "Q15 正方形邊長推算",
+        misconception: "正方形邊長一致，知道一邊就能知道全部邊長",
+        visualType: "square_perimeter_math",
+        question: "探險家在神殿發現一塊正方形石板，量得其中一條邊長是 6 公分，這塊石板「四條邊的長度加起來」一共是多少公分？",
+        options: [
+          { text: "24 公分 (6 × 4 = 24)", correct: true },
+          { text: "12 公分 (6 + 6)", correct: false, note: "正方形有 4 條邊，不是只有 2 條邊喔！" },
+          { text: "18 公分 (6 × 3)", correct: false, note: "正方形有 4 條等長的邊。" },
+          { text: "36 公分 (6 × 6)", correct: false, note: "小心！題目問的是四條邊長加起來，不是面積喔！" }
+        ],
+        hint1: "正方形的 4 條邊都一樣長，每條邊都是 6 公分。",
+        hint2: "6 + 6 + 6 + 6 ＝ 24 公分，或者 6 × 4 ＝ 24 公分。",
+        explanation: "因為正方形 4 條邊都一樣長，已知一條邊是 6 公分，四條邊總長就是 6 × 4 ＝ 24 公分（這也是周長概念）。"
+      },
+
+      // ================= 單元 5：幾何神殿終極解謎 (Q16 ~ Q18) =================
+      {
+        id: 16,
+        stage: 5,
+        stageName: "幾何神殿終極解謎",
+        tag: "Q16 數數複合圖形中的直角",
+        misconception: "階梯形/十字形圖形中的內外直角判斷",
+        visualType: "count_right_angles_complex",
+        question: "觀察右方神殿階梯圖形（如圖），這個多邊形內部一共有幾個「直角 (∟)」？",
+        options: [
+          { text: "6 個直角", correct: true },
+          { text: "4 個直角", correct: false, note: "連內凹的角落也是直角喔，仔細數數看！" },
+          { text: "5 個直角", correct: false, note: "再數一次：每個橫豎轉折處都是直角。" },
+          { text: "8 個直角", correct: false, note: "多數了喔！一共有 6 個頂點直角。" }
+        ],
+        hint1: "只要橫線與直線垂直相交，就會形成一個直角。",
+        hint2: "階梯凸出的角有 3 個，內凹的拐角有 1 個，底角有 2 個，總共 6 個。",
+        explanation: "這個階梯六邊形的所有邊都是水平線與垂直線相交，每一個頂點處都互相垂直，因此全部 6 個角都是直角。"
+      },
+      {
+        id: 17,
+        stage: 5,
+        stageName: "幾何神殿終極解謎",
+        tag: "Q17 圖形拼貼推理",
+        misconception: "兩個邊長3cm的正方形拼在一起變長方形",
+        visualType: "combine_two_squares",
+        question: "用兩個邊長為 3 公分的「正方形」緊緊拼在一起（如圖），拼出來的新圖形是什麼形狀？它的長和寬各是多少？",
+        options: [
+          { text: "長方形，長 6 公分、寬 3 公分", correct: true },
+          { text: "正方形，邊長 6 公分", correct: false, note: "四條邊不一樣長，拼出來的是長方形喔！" },
+          { text: "長方形，長 3 公分、寬 3 公分", correct: false, note: "兩個 3 公分連起來，長度變成 3 + 3 = 6 公分！" },
+          { text: "正方形，邊長 3 公分", correct: false, note: "面積變大了，不會是原來的邊長。" }
+        ],
+        hint1: "兩個邊長 3 公分的正方形並排，長邊變成 3 + 3 = 6 公分。",
+        hint2: "寬度依然是原來的 3 公分，長和寬不同，是長方形！",
+        explanation: "兩個邊長 3cm 的正方形並排拼合，長邊變成 3 + 3 ＝ 6cm，寬邊依然是 3cm。四角皆為直角且對邊等長，拼出的是長 6 公分、寬 3 公分的「長方形」。"
+      },
+      {
+        id: 18,
+        stage: 5,
+        stageName: "幾何神殿終極解謎",
+        tag: "Q18 生活幾何大偵探",
+        misconception: "連結生活物品：桌面、黑板、國旗都有直角",
+        visualType: "life_geometry_detective",
+        question: "探險家回到教室準備記錄探險成果，下列哪一個生活中的物品表面「四個角都是直角」？",
+        options: [
+          { text: "數學課本的封面", correct: true },
+          { text: "掛在牆上的圓形時鐘面", correct: false, note: "圓形沒有頂點，也沒有直角喔！" },
+          { text: "少先隊三角形紅領巾", correct: false, note: "三角巾只有三個角，且通常不是四角皆直角！" },
+          { text: "硬幣的邊緣", correct: false, note: "硬幣是圓形的，沒有角。" }
+        ],
+        hint1: "找找看哪一個物品是長方形或正方形？",
+        hint2: "課本封面是長方形，四個角都方方正正的。",
+        explanation: "數學課本封面是標準的「長方形」，具有 4 條邊與 4 個直角。圓鐘與硬幣沒有角，三角巾只有三個角且不是長方形。"
+      }
+    ];
+
+    /* -------------------------------------------------------------------------
+       遊戲狀態管理
+       ------------------------------------------------------------------------- */
+    let currentQIndex = 0;
+    let completedQuestionIds = new Set();
+    let score = 0;
+    let autoNextEnabled = false;
+    let isOverviewMode = false;
+    let answeredCurrent = false;
+
+    // 互動教具狀態 (疊合比對/三角板旋轉貼齊)
+    let isOverlapped = false;
+    let isSetsquareAttached = false;
+
+    /* -------------------------------------------------------------------------
+       SVG 幾何教具動態生成器
+       ------------------------------------------------------------------------- */
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      // 1. 角的三要素 (頂點、邊)
+      if (q.visualType === 'angle_elements') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 select-none">
+            <svg width="280" height="170" viewBox="0 0 280 170" class="overflow-visible">
+              <!-- 底下張角陰影/扇形弧 -->
+              <path d="M 60 130 L 120 130 A 60 60 0 0 0 102.4 87.6 Z" fill="rgba(168, 85, 247, 0.22)" stroke="#a855f7" stroke-width="2"/>
+              <text x="110" y="122" font-size="12" font-weight="900" fill="#7e22ce">角</text>
+
+              <!-- 兩條筆直的邊 (射線) -->
+              <line x1="60" y1="130" x2="250" y2="130" stroke="#6b21a8" stroke-width="4.5" stroke-linecap="round"/>
+              <line x1="60" y1="130" x2="200" y2="25" stroke="#6b21a8" stroke-width="4.5" stroke-linecap="round"/>
+
+              <!-- 邊標籤 -->
+              <g transform="translate(160, 150)">
+                <rect x="-24" y="-14" width="48" height="22" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+                <text x="0" y="2" font-size="12" font-weight="900" fill="#6b21a8" text-anchor="middle">邊</text>
+              </g>
+              <g transform="translate(125, 60)">
+                <rect x="-24" y="-14" width="48" height="22" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+                <text x="0" y="2" font-size="12" font-weight="900" fill="#6b21a8" text-anchor="middle">邊</text>
+              </g>
+
+              <!-- 頂點紅色發光圓點 -->
+              <circle cx="60" cy="130" r="9" fill="#ef4444" stroke="#ffffff" stroke-width="3" filter="drop-shadow(0 2px 4px rgba(239,68,68,0.5))"/>
+              
+              <!-- 頂點指引箭頭與標籤 -->
+              <path d="M 60 70 L 60 115" stroke="#ef4444" stroke-width="3" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+              <g transform="translate(60, 52)">
+                <rect x="-38" y="-16" width="76" height="26" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+                <text x="0" y="2" font-size="12" font-weight="900" fill="#b91c1c" text-anchor="middle">❓ 這是什麼？</text>
+              </g>
+            </svg>
+            <div class="mt-2 text-xs font-black text-purple-900 bg-purple-100/80 px-3 py-1 rounded-full border border-purple-300">
+              提示：觀察紅色圓圈標示的部位是尖尖交會點！
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. 判定是不是角 (四格對比)
+      if (q.visualType === 'is_it_angle_grid') {
+        return `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl select-none">
+            <!-- 甲：標準角 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-purple-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">圖形 甲</span>
+              <svg width="100" height="90" viewBox="0 0 100 90">
+                <path d="M 20 70 L 50 70 A 30 30 0 0 0 41 49 Z" fill="rgba(168,85,247,0.2)"/>
+                <line x1="20" y1="70" x2="85" y2="70" stroke="#7e22ce" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="20" y1="70" x2="70" y2="20" stroke="#7e22ce" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="20" cy="70" r="5" fill="#a855f7"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">直邊＋同頂點</span>
+            </div>
+
+            <!-- 乙：曲線邊 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-slate-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 mb-1">圖形 乙</span>
+              <svg width="100" height="90" viewBox="0 0 100 90">
+                <line x1="20" y1="70" x2="85" y2="70" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 20 70 Q 35 25, 75 25" fill="none" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="20" cy="70" r="5" fill="#94a3b8"/>
+              </svg>
+              <span class="text-[11px] font-bold text-rose-500">❌ 上面是彎曲邊</span>
+            </div>
+
+            <!-- 丙：未相交 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-slate-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 mb-1">圖形 丙</span>
+              <svg width="100" height="90" viewBox="0 0 100 90">
+                <line x1="35" y1="70" x2="85" y2="70" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="20" y1="58" x2="68" y2="18" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+              </svg>
+              <span class="text-[11px] font-bold text-rose-500">❌ 兩線未相交</span>
+            </div>
+
+            <!-- 丁：圓弧頭 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-slate-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 mb-1">圖形 丁</span>
+              <svg width="100" height="90" viewBox="0 0 100 90">
+                <line x1="28" y1="70" x2="85" y2="70" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="20" y1="58" x2="65" y2="20" stroke="#64748b" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 28 70 A 10 10 0 0 1 20 58" fill="none" stroke="#64748b" stroke-width="3.5"/>
+              </svg>
+              <span class="text-[11px] font-bold text-rose-500">❌ 頂點是圓角</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. 數五邊形的頂點與角
+      if (q.visualType === 'polygon_count_angles') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="240" height="200" viewBox="0 0 240 200" class="overflow-visible">
+              <!-- 五邊形本體 -->
+              <polygon points="120,25 210,85 180,175 60,175 30,85" fill="#f3e8ff" stroke="#7e22ce" stroke-width="4" stroke-linejoin="round"/>
+              <!-- 五個頂點圓點與直角扇形標記 -->
+              <circle cx="120" cy="25" r="7" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="210" cy="85" r="7" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="180" cy="175" r="7" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="60" cy="175" r="7" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="30" cy="85" r="7" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+
+              <!-- 標註 1~5 -->
+              <text x="120" y="48" font-size="12" font-weight="900" fill="#7e22ce" text-anchor="middle">①</text>
+              <text x="190" y="93" font-size="12" font-weight="900" fill="#7e22ce" text-anchor="middle">②</text>
+              <text x="165" y="165" font-size="12" font-weight="900" fill="#7e22ce" text-anchor="middle">③</text>
+              <text x="75" y="165" font-size="12" font-weight="900" fill="#7e22ce" text-anchor="middle">④</text>
+              <text x="50" y="93" font-size="12" font-weight="900" fill="#7e22ce" text-anchor="middle">⑤</text>
+            </svg>
+            <div class="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full border border-purple-300 mt-1">
+              ✨ 數數看：粉紅色的圓圈頂點與內部的角共有幾個？
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 動態角疊合教具 (破除邊長迷思)
+      if (q.visualType === 'interactive_overlap') {
+        const overlapped = isInteractive ? isOverlapped : true;
+        return `
+          <div class="w-full flex flex-col items-center p-2 select-none">
+            <div class="relative w-full max-w-md h-52 bg-white rounded-2xl border border-purple-200 overflow-hidden flex items-center justify-center p-2 shadow-xs">
+              <svg width="380" height="190" viewBox="0 0 380 190" class="overflow-visible">
+                <!-- 藍角 (邊長 170px，張角 30°) -->
+                <!-- 位置：如果未疊合在左邊，疊合時移動到右邊紅角位置 (200, 150) -->
+                <g class="trans-smooth" style="transform: translate(${overlapped ? '110px, 0px' : '0px, 0px'});">
+                  <!-- 扇形開口 -->
+                  <path d="M 90 150 L 220 150 A 130 130 0 0 0 202.6 85 Z" fill="rgba(59, 130, 246, 0.22)"/>
+                  <line x1="90" y1="150" x2="250" y2="150" stroke="#2563eb" stroke-width="4.5" stroke-linecap="round"/>
+                  <line x1="90" y1="150" x2="228" y2="70" stroke="#2563eb" stroke-width="4.5" stroke-linecap="round"/>
+                  <circle cx="90" cy="150" r="6" fill="#1d4ed8"/>
+                  <text x="90" y="172" font-size="12" font-weight="900" fill="#1d4ed8" text-anchor="middle">藍角 (邊很長・張口窄)</text>
+                </g>
+
+                <!-- 紅角 (邊長 95px，張角 55°) -->
+                <!-- 位置：基準點 (200, 150) -->
+                <g class="trans-smooth" style="opacity: ${overlapped ? '0.9' : '1'};">
+                  <!-- 扇形開口 -->
+                  <path d="M 200 150 L 290 150 A 90 90 0 0 0 251.6 76.3 Z" fill="rgba(239, 68, 68, 0.28)"/>
+                  <line x1="200" y1="150" x2="295" y2="150" stroke="#dc2626" stroke-width="4.5" stroke-linecap="round"/>
+                  <line x1="200" y1="150" x2="254" y2="72" stroke="#dc2626" stroke-width="4.5" stroke-linecap="round"/>
+                  <circle cx="200" cy="150" r="6" fill="#b91c1c"/>
+                  <text x="240" y="172" font-size="12" font-weight="900" fill="#dc2626" text-anchor="middle">紅角 (邊較短・張口開)</text>
+                </g>
+              </svg>
+            </div>
+            
+            ${isInteractive ? `
+            <div class="mt-3 flex items-center gap-2">
+              <button onclick="toggleOverlapAnimation()" class="bouncy-btn px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs shadow flex items-center gap-1.5">
+                <span>📐</span>
+                <span>${overlapped ? '分開兩角' : '動態疊合比對 (頂點與一邊對齊)'}</span>
+              </button>
+            </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 5. 扇子張開度
+      if (q.visualType === 'fan_angles_compare') {
+        return `
+          <div class="grid grid-cols-3 gap-2 w-full max-w-lg select-none">
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">甲扇 (微開)</span>
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <path d="M 45 80 L 52 20 A 60 60 0 0 0 38 20 Z" fill="#fed7aa" stroke="#f97316" stroke-width="2"/>
+                <line x1="45" y1="80" x2="52" y2="20" stroke="#ea580c" stroke-width="2.5"/>
+                <line x1="45" y1="80" x2="38" y2="20" stroke="#ea580c" stroke-width="2.5"/>
+                <circle cx="45" cy="80" r="4" fill="#c2410c"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">張開幅度小</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">乙扇 (半開)</span>
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <path d="M 45 80 L 78 35 A 60 60 0 0 0 12 35 Z" fill="#fed7aa" stroke="#f97316" stroke-width="2"/>
+                <line x1="45" y1="80" x2="78" y2="35" stroke="#ea580c" stroke-width="2.5"/>
+                <line x1="45" y1="80" x2="12" y2="35" stroke="#ea580c" stroke-width="2.5"/>
+                <circle cx="45" cy="80" r="4" fill="#c2410c"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">張開幅度中</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-300 bg-purple-50/50 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-600 text-white mb-1">丙扇 (大開)</span>
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <path d="M 45 80 L 85 55 A 60 60 0 0 0 5 55 Z" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
+                <line x1="45" y1="80" x2="85" y2="55" stroke="#b45309" stroke-width="2.5"/>
+                <line x1="45" y1="80" x2="5" y2="55" stroke="#b45309" stroke-width="2.5"/>
+                <circle cx="45" cy="80" r="4" fill="#92400e"/>
+              </svg>
+              <span class="text-[11px] font-black text-amber-700">張開幅度最大</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 6. 時鐘指針角 (甲 2點 vs 乙 4點)
+      if (q.visualType === 'clock_angles_compare') {
+        return `
+          <div class="grid grid-cols-2 gap-4 w-full max-w-md select-none">
+            <div class="bg-white rounded-2xl p-3 border-2 border-purple-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 mb-2">甲鐘 (2:00)</span>
+              <svg width="110" height="110" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="#eff6ff" stroke="#3b82f6" stroke-width="3.5"/>
+                <!-- 刻度 12, 3, 6, 9 -->
+                <text x="60" y="24" font-size="11" font-weight="900" fill="#1e3a8a" text-anchor="middle">12</text>
+                <text x="100" y="64" font-size="11" font-weight="900" fill="#1e3a8a" text-anchor="middle">3</text>
+                <text x="60" y="104" font-size="11" font-weight="900" fill="#1e3a8a" text-anchor="middle">6</text>
+                <text x="20" y="64" font-size="11" font-weight="900" fill="#1e3a8a" text-anchor="middle">9</text>
+                <!-- 分針 (12) -->
+                <line x1="60" y1="60" x2="60" y2="28" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round"/>
+                <!-- 時針 (2) 60度 -->
+                <line x1="60" y1="60" x2="88" y2="44" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round"/>
+                <!-- 夾角圓弧 -->
+                <path d="M 60 42 A 18 18 0 0 1 75 51" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+                <circle cx="60" cy="60" r="4.5" fill="#1e293b"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-600 mt-1">夾角相差 2 大格</span>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3 border-2 border-purple-200 flex flex-col items-center shadow-xs">
+              <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-2">乙鐘 (4:00)</span>
+              <svg width="110" height="110" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="#faf5ff" stroke="#8b5cf6" stroke-width="3.5"/>
+                <text x="60" y="24" font-size="11" font-weight="900" fill="#581c87" text-anchor="middle">12</text>
+                <text x="100" y="64" font-size="11" font-weight="900" fill="#581c87" text-anchor="middle">3</text>
+                <text x="60" y="104" font-size="11" font-weight="900" fill="#581c87" text-anchor="middle">6</text>
+                <text x="20" y="64" font-size="11" font-weight="900" fill="#581c87" text-anchor="middle">9</text>
+                <!-- 分針 (12) -->
+                <line x1="60" y1="60" x2="60" y2="28" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round"/>
+                <!-- 時針 (4) 120度 -->
+                <line x1="60" y1="60" x2="88" y2="76" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round"/>
+                <!-- 夾角圓弧 -->
+                <path d="M 60 42 A 18 18 0 0 1 75 69" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+                <circle cx="60" cy="60" r="4.5" fill="#1e293b"/>
+              </svg>
+              <span class="text-[11px] font-black text-purple-700 mt-1">夾角相差 4 大格 (更開)</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 7. 三個角排序
+      if (q.visualType === 'three_angles_sort') {
+        return `
+          <div class="grid grid-cols-3 gap-3 w-full max-w-lg select-none">
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-200 flex flex-col items-center">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">角 ①</span>
+              <svg width="90" height="80" viewBox="0 0 90 80">
+                <line x1="15" y1="65" x2="80" y2="65" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <line x1="15" y1="65" x2="60" y2="20" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <path d="M 15 65 L 45 65 A 30 30 0 0 0 36 44 Z" fill="rgba(168,85,247,0.2)"/>
+                <circle cx="15" cy="65" r="4" fill="#a855f7"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">中等 (約60°)</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-200 flex flex-col items-center">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">角 ②</span>
+              <svg width="90" height="80" viewBox="0 0 90 80">
+                <line x1="15" y1="65" x2="80" y2="65" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <line x1="15" y1="65" x2="72" y2="40" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <path d="M 15 65 L 45 65 A 30 30 0 0 0 42 53 Z" fill="rgba(168,85,247,0.2)"/>
+                <circle cx="15" cy="65" r="4" fill="#a855f7"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">最窄 (約25°)</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-200 flex flex-col items-center">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 mb-1">角 ③</span>
+              <svg width="90" height="80" viewBox="0 0 90 80">
+                <line x1="30" y1="65" x2="85" y2="65" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <line x1="30" y1="65" x2="10" y2="20" stroke="#7e22ce" stroke-width="3" stroke-linecap="round"/>
+                <path d="M 30 65 L 60 65 A 30 30 0 0 0 17 38 Z" fill="rgba(168,85,247,0.2)"/>
+                <circle cx="30" cy="65" r="4" fill="#a855f7"/>
+              </svg>
+              <span class="text-[11px] font-bold text-slate-500">最寬 (約115°)</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 8. 認識三角板上的直角
+      if (q.visualType === 'setsquare_intro') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="270" height="170" viewBox="0 0 270 170" class="overflow-visible">
+              <!-- 直角三角板透明本體 -->
+              <polygon points="40,140 230,140 40,25" fill="rgba(254, 240, 138, 0.55)" stroke="#eab308" stroke-width="3.5" stroke-linejoin="round"/>
+              <!-- 內部空心鏤空三角 -->
+              <polygon points="65,125 170,125 65,60" fill="#faf5ff" stroke="#facc15" stroke-width="2"/>
+
+              <!-- 直角標記 ∟ (角 A) -->
+              <polyline points="40,122 58,122 58,140" fill="none" stroke="#b45309" stroke-width="2.5"/>
+              <text x="49" y="134" font-size="10" font-weight="900" fill="#b45309" text-anchor="middle">∟</text>
+
+              <!-- 三個角標籤 -->
+              <!-- 角 A -->
+              <g transform="translate(25, 148)">
+                <circle cx="0" cy="0" r="12" fill="#ef4444"/>
+                <text x="0" y="4" font-size="11" font-weight="900" fill="#ffffff" text-anchor="middle">A</text>
+              </g>
+              <!-- 角 B -->
+              <g transform="translate(242, 142)">
+                <circle cx="0" cy="0" r="11" fill="#3b82f6"/>
+                <text x="0" y="4" font-size="11" font-weight="900" fill="#ffffff" text-anchor="middle">B</text>
+              </g>
+              <!-- 角 C -->
+              <g transform="translate(35, 15)">
+                <circle cx="0" cy="0" r="11" fill="#10b981"/>
+                <text x="0" y="4" font-size="11" font-weight="900" fill="#ffffff" text-anchor="middle">C</text>
+              </g>
+            </svg>
+            <div class="mt-2 text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+              提示：角 A 帶有方正的「∟」直角符號！
+            </div>
+          </div>
+        `;
+      }
+
+      // 9. 互動三角板檢驗 (比直角大)
+      if (q.visualType === 'interactive_setsquare_test') {
+        const attached = isInteractive ? isSetsquareAttached : true;
+        return `
+          <div class="w-full flex flex-col items-center p-2 select-none">
+            <div class="relative w-full max-w-md h-52 bg-white rounded-2xl border border-purple-200 overflow-hidden flex items-center justify-center p-2 shadow-xs">
+              <svg width="340" height="190" viewBox="0 0 340 190" class="overflow-visible">
+                <!-- 待測鈍角 (底邊水平向右，另一邊往左上 125度) -->
+                <!-- 頂點在 (160, 140) -->
+                <path d="M 160 140 L 250 140 A 90 90 0 0 0 108.4 66.3 Z" fill="rgba(168, 85, 247, 0.18)"/>
+                <line x1="160" y1="140" x2="270" y2="140" stroke="#7e22ce" stroke-width="4.5" stroke-linecap="round"/>
+                <line x1="160" y1="140" x2="85" y2="58" stroke="#7e22ce" stroke-width="4.5" stroke-linecap="round"/>
+                <circle cx="160" cy="140" r="6" fill="#6b21a8"/>
+
+                <!-- 三角板：平滑滑入貼齊 (160, 140) -->
+                <g class="trans-smooth" style="transform: translate(${attached ? '0px, 0px' : '-70px, -20px'}); opacity: ${attached ? '0.92' : '0.45'};">
+                  <!-- 直角三角板：直角頂點在 (160, 140)，底邊沿水平 (160,140)->(250,140)，豎邊沿 (160,140)->(160,40) -->
+                  <polygon points="160,140 250,140 160,40" fill="rgba(254, 240, 138, 0.72)" stroke="#ca8a04" stroke-width="3" stroke-linejoin="round"/>
+                  <!-- 標示三角板直角符號 ∟ -->
+                  <polyline points="160,125 175,125 175,140" fill="none" stroke="#b45309" stroke-width="2.5"/>
+                  <text x="195" y="105" font-size="11" font-weight="900" fill="#92400e">三角板直角</text>
+                </g>
+
+                <!-- 超出三角板外的警示標記 -->
+                ${attached ? `
+                <g transform="translate(110, 85)">
+                  <rect x="-35" y="-14" width="70" height="22" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+                  <text x="0" y="2" font-size="10" font-weight="900" fill="#dc2626" text-anchor="middle">超出外面！</text>
+                </g>
+                ` : ''}
+              </svg>
+            </div>
+            
+            ${isInteractive ? `
+            <div class="mt-3 flex items-center gap-2">
+              <button onclick="toggleSetsquareAnimation()" class="bouncy-btn px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-amber-950 font-black text-xs shadow flex items-center gap-1.5">
+                <span>📐</span>
+                <span>${attached ? '移開三角板' : '將三角板直角靠上比對'}</span>
+              </button>
+            </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 10. 鐘面直角 (3點整)
+      if (q.visualType === 'clock_right_angle') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="150" height="150" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="62" fill="#eff6ff" stroke="#3b82f6" stroke-width="4"/>
+              <text x="70" y="26" font-size="13" font-weight="900" fill="#1e3a8a" text-anchor="middle">12</text>
+              <text x="116" y="74" font-size="13" font-weight="900" fill="#1e3a8a" text-anchor="middle">3</text>
+              <text x="70" y="122" font-size="13" font-weight="900" fill="#1e3a8a" text-anchor="middle">6</text>
+              <text x="24" y="74" font-size="13" font-weight="900" fill="#1e3a8a" text-anchor="middle">9</text>
+              
+              <!-- 直角符號 ∟ -->
+              <polyline points="70,52 88,52 88,70" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+              <text x="80" y="63" font-size="10" font-weight="900" fill="#d97706" text-anchor="middle">∟</text>
+
+              <!-- 分針 (12) -->
+              <line x1="70" y1="70" x2="70" y2="30" stroke="#1d4ed8" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- 時針 (3) -->
+              <line x1="70" y1="70" x2="105" y2="70" stroke="#ef4444" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="70" cy="70" r="5" fill="#1e293b"/>
+            </svg>
+            <div class="mt-2 text-xs font-black text-blue-900 bg-blue-100 px-3 py-1 rounded-full border border-blue-300">
+              分針指在 12、時針指在 3，兩針剛好夾成一個 ∟ 直角！
+            </div>
+          </div>
+        `;
+      }
+
+      // 11. 摺紙做直角
+      if (q.visualType === 'paper_fold_right_angle') {
+        return `
+          <div class="grid grid-cols-3 gap-2 w-full max-w-md select-none">
+            <div class="bg-white rounded-2xl p-2 border border-purple-200 flex flex-col items-center">
+              <span class="text-[11px] font-black text-purple-800 mb-1">步驟 ①</span>
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <polygon points="10,15 60,10 55,60 15,55" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+              </svg>
+              <span class="text-[10px] font-bold text-slate-500">任意形狀紙片</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2 border border-purple-200 flex flex-col items-center">
+              <span class="text-[11px] font-black text-purple-800 mb-1">步驟 ②</span>
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <path d="M 10 50 Q 35 20, 60 45 Z" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
+                <line x1="10" y1="50" x2="60" y2="45" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="3 2"/>
+              </svg>
+              <span class="text-[10px] font-bold text-slate-500">對折出一直邊</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2 border-2 border-emerald-300 bg-emerald-50/50 flex flex-col items-center">
+              <span class="text-[11px] font-black text-emerald-800 mb-1">步驟 ③</span>
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <polygon points="20,55 55,55 20,20" fill="#86efac" stroke="#16a34a" stroke-width="2"/>
+                <polyline points="20,43 32,43 32,55" fill="none" stroke="#15803d" stroke-width="2"/>
+                <text x="27" y="51" font-size="8" font-weight="900" fill="#15803d">∟</text>
+              </svg>
+              <span class="text-[10px] font-black text-emerald-700">折角必為直角！</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 12. 正方形邊角特徵
+      if (q.visualType === 'square_properties') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="200" height="180" viewBox="0 0 200 180" class="overflow-visible">
+              <!-- 正方形 (邊長 110px) (45, 35) 到 (155, 145) -->
+              <rect x="45" y="35" width="110" height="110" rx="3" fill="#f3e8ff" stroke="#7e22ce" stroke-width="3.5"/>
+              
+              <!-- 四個角的直角符號 ∟ -->
+              <polyline points="45,49 59,49 59,35" fill="none" stroke="#a855f7" stroke-width="2"/>
+              <polyline points="141,35 141,49 155,49" fill="none" stroke="#a855f7" stroke-width="2"/>
+              <polyline points="155,131 141,131 141,145" fill="none" stroke="#a855f7" stroke-width="2"/>
+              <polyline points="59,145 59,131 45,131" fill="none" stroke="#a855f7" stroke-width="2"/>
+
+              <!-- 四邊等長標記 (單紅線) -->
+              <line x1="100" y1="30" x2="100" y2="40" stroke="#ef4444" stroke-width="2.5"/>
+              <line x1="100" y1="140" x2="100" y2="150" stroke="#ef4444" stroke-width="2.5"/>
+              <line x1="40" y1="90" x2="50" y2="90" stroke="#ef4444" stroke-width="2.5"/>
+              <line x1="150" y1="90" x2="160" y2="90" stroke="#ef4444" stroke-width="2.5"/>
+
+              <!-- 標籤 -->
+              <text x="100" y="24" font-size="11" font-weight="900" fill="#7e22ce" text-anchor="middle">等長</text>
+              <text x="100" y="166" font-size="11" font-weight="900" fill="#7e22ce" text-anchor="middle">等長</text>
+              <text x="22" y="94" font-size="11" font-weight="900" fill="#7e22ce" text-anchor="middle">等長</text>
+              <text x="178" y="94" font-size="11" font-weight="900" fill="#7e22ce" text-anchor="middle">等長</text>
+            </svg>
+            <div class="mt-1 text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full border border-purple-300">
+              正方形：4 條邊都一樣長，4 個角都是直角 (∟)！
+            </div>
+          </div>
+        `;
+      }
+
+      // 13. 長方形對邊與直角
+      if (q.visualType === 'rectangle_properties') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="260" height="160" viewBox="0 0 260 160" class="overflow-visible">
+              <!-- 長方形 (寬 180, 高 90) (40, 35) 到 (220, 125) -->
+              <rect x="40" y="35" width="180" height="90" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="3.5"/>
+              
+              <!-- 4 個直角 ∟ -->
+              <polyline points="40,49 54,49 54,35" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              <polyline points="206,35 206,49 220,49" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              <polyline points="220,111 206,111 206,125" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              <polyline points="54,125 54,111 40,111" fill="none" stroke="#3b82f6" stroke-width="2"/>
+
+              <!-- 下邊 8cm、右邊 5cm -->
+              <text x="130" y="145" font-size="13" font-weight="900" fill="#1d4ed8" text-anchor="middle">長 8 公分</text>
+              <text x="245" y="84" font-size="12" font-weight="900" fill="#1d4ed8" text-anchor="middle">寬 5cm</text>
+
+              <!-- 上邊與左邊未知問號 -->
+              <g transform="translate(130, 22)">
+                <rect x="-30" y="-12" width="60" height="20" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="0" y="2" font-size="11" font-weight="900" fill="#dc2626" text-anchor="middle">上邊 ？cm</text>
+              </g>
+              <g transform="translate(18, 80)">
+                <rect x="-18" y="-12" width="36" height="20" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="0" y="2" font-size="11" font-weight="900" fill="#dc2626" text-anchor="middle">？cm</text>
+              </g>
+            </svg>
+            <div class="mt-1 text-xs font-black text-blue-900 bg-blue-100 px-3 py-1 rounded-full border border-blue-300">
+              長方形核心特性：上下對邊等長、左右對邊等長！
+            </div>
+          </div>
+        `;
+      }
+
+      // 14. 正方形與長方形韋恩圖/對照
+      if (q.visualType === 'compare_square_rect_venn') {
+        return `
+          <div class="grid grid-cols-2 gap-3 w-full max-w-md select-none">
+            <div class="bg-white rounded-2xl p-3 border-2 border-purple-200 flex flex-col items-center">
+              <span class="text-xs font-black text-purple-900 mb-1">正方形</span>
+              <div class="w-16 h-16 rounded-md bg-purple-100 border-2 border-purple-500 flex items-center justify-center font-black text-xs text-purple-700 shadow-xs mb-1">
+                4邊等長
+              </div>
+              <ul class="text-[11px] font-bold text-slate-600 list-disc pl-4 space-y-0.5">
+                <li>4 條邊都一樣長</li>
+                <li>4 個角都是直角</li>
+              </ul>
+            </div>
+            <div class="bg-white rounded-2xl p-3 border-2 border-indigo-200 flex flex-col items-center">
+              <span class="text-xs font-black text-indigo-900 mb-1">長方形</span>
+              <div class="w-24 h-16 rounded-md bg-indigo-100 border-2 border-indigo-500 flex items-center justify-center font-black text-xs text-indigo-700 shadow-xs mb-1">
+                對邊等長
+              </div>
+              <ul class="text-[11px] font-bold text-slate-600 list-disc pl-4 space-y-0.5">
+                <li>只有對邊一樣長</li>
+                <li>4 個角都是直角</li>
+              </ul>
+            </div>
+          </div>
+        `;
+      }
+
+      // 15. 正方形邊長推算周長
+      if (q.visualType === 'square_perimeter_math') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="180" height="170" viewBox="0 0 180 170" class="overflow-visible">
+              <rect x="40" y="30" width="100" height="100" rx="3" fill="#fef3c7" stroke="#d97706" stroke-width="3.5"/>
+              <text x="90" y="20" font-size="12" font-weight="900" fill="#b45309" text-anchor="middle">6 公分</text>
+              <text x="90" y="148" font-size="12" font-weight="900" fill="#b45309" text-anchor="middle">6 公分</text>
+              <text x="22" y="85" font-size="12" font-weight="900" fill="#b45309" text-anchor="middle">6cm</text>
+              <text x="158" y="85" font-size="12" font-weight="900" fill="#b45309" text-anchor="middle">6cm</text>
+              <text x="90" y="85" font-size="13" font-weight="900" fill="#78350f" text-anchor="middle">四邊皆 6cm</text>
+            </svg>
+            <div class="mt-1 text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+              算式：6 ＋ 6 ＋ 6 ＋ 6 ＝ 24 公分（或 6 × 4 ＝ 24）
+            </div>
+          </div>
+        `;
+      }
+
+      // 16. 數階梯圖形內部直角
+      if (q.visualType === 'count_right_angles_complex') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="220" height="170" viewBox="0 0 220 170" class="overflow-visible">
+              <!-- 階梯六邊形：(40,140)->(180,140)->(180,100)->(120,100)->(120,50)->(40,50)->(40,140) -->
+              <polygon points="40,140 180,140 180,100 120,100 120,50 40,50" fill="#f5f3ff" stroke="#7c3aed" stroke-width="4" stroke-linejoin="miter"/>
+              
+              <!-- 6 個直角符號 ∟ -->
+              <!-- 1. 左下 (40,140) -->
+              <polyline points="40,126 54,126 54,140" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- 2. 右下 (180,140) -->
+              <polyline points="166,140 166,126 180,126" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- 3. 右階梯 (180,100) -->
+              <polyline points="180,114 166,114 166,100" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- 4. 內凹拐角 (120,100) -->
+              <polyline points="120,114 134,114 134,100" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- 5. 上階梯 (120,50) -->
+              <polyline points="134,50 134,64 120,64" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- 6. 左上 (40,50) -->
+              <polyline points="40,64 54,64 54,50" fill="none" stroke="#ec4899" stroke-width="2.5"/>
+
+              <!-- 數字標示 -->
+              <circle cx="34" cy="146" r="8" fill="#ec4899"/>
+              <text x="34" y="150" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">1</text>
+              
+              <circle cx="186" cy="146" r="8" fill="#ec4899"/>
+              <text x="186" y="150" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">2</text>
+
+              <circle cx="188" cy="94" r="8" fill="#ec4899"/>
+              <text x="188" y="98" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">3</text>
+
+              <circle cx="112" cy="108" r="8" fill="#ec4899"/>
+              <text x="112" y="112" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">4</text>
+
+              <circle cx="126" cy="42" r="8" fill="#ec4899"/>
+              <text x="126" y="46" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">5</text>
+
+              <circle cx="34" cy="44" r="8" fill="#ec4899"/>
+              <text x="34" y="48" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">6</text>
+            </svg>
+            <div class="mt-1 text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full border border-purple-300">
+              連內凹的折角也是直角！共有 6 個粉紅色圓點標示的直角。
+            </div>
+          </div>
+        `;
+      }
+
+      // 17. 兩個正方形拼合
+      if (q.visualType === 'combine_two_squares') {
+        return `
+          <div class="flex flex-col items-center p-2 select-none">
+            <svg width="250" height="150" viewBox="0 0 250 150" class="overflow-visible">
+              <!-- 左正方形 -->
+              <rect x="30" y="40" width="80" height="80" rx="2" fill="#fed7aa" stroke="#ea580c" stroke-width="3"/>
+              <text x="70" y="85" font-size="11" font-weight="900" fill="#9a3412" text-anchor="middle">正方形 3cm</text>
+              <text x="70" y="32" font-size="11" font-weight="900" fill="#ea580c" text-anchor="middle">3cm</text>
+
+              <!-- 右正方形 -->
+              <rect x="110" y="40" width="80" height="80" rx="2" fill="#fed7aa" stroke="#ea580c" stroke-width="3"/>
+              <text x="150" y="85" font-size="11" font-weight="900" fill="#9a3412" text-anchor="middle">正方形 3cm</text>
+              <text x="150" y="32" font-size="11" font-weight="900" fill="#ea580c" text-anchor="middle">3cm</text>
+
+              <!-- 拼合後整體標示 -->
+              <text x="110" y="140" font-size="12" font-weight="900" fill="#c2410c" text-anchor="middle">
+                長 ＝ 3 ＋ 3 ＝ 6 公分
+              </text>
+              <text x="210" y="84" font-size="11" font-weight="900" fill="#ea580c" text-anchor="middle">寬 3cm</text>
+            </svg>
+            <div class="mt-1 text-xs font-black text-orange-950 bg-orange-100 px-3 py-1 rounded-full border border-orange-300">
+              拼成的新圖形長 6cm、寬 3cm，四角都是直角，是「長方形」！
+            </div>
+          </div>
+        `;
+      }
+
+      // 18. 生活幾何大偵探
+      if (q.visualType === 'life_geometry_detective') {
+        return `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full max-w-xl select-none">
+            <div class="bg-white rounded-2xl p-2.5 border-2 border-purple-300 bg-purple-50/50 flex flex-col items-center">
+              <span class="text-2xl mb-1">📕</span>
+              <span class="text-xs font-black text-purple-900">數學課本封面</span>
+              <span class="text-[10px] font-black text-emerald-600 mt-0.5">長方形 (4個直角)</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border border-slate-200 flex flex-col items-center">
+              <span class="text-2xl mb-1">⏰</span>
+              <span class="text-xs font-black text-slate-700">圓形時鐘</span>
+              <span class="text-[10px] font-bold text-slate-400 mt-0.5">圓形無直角</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border border-slate-200 flex flex-col items-center">
+              <span class="text-2xl mb-1">🧣</span>
+              <span class="text-xs font-black text-slate-700">三角巾</span>
+              <span class="text-[10px] font-bold text-slate-400 mt-0.5">三角形 (只有3角)</span>
+            </div>
+            <div class="bg-white rounded-2xl p-2.5 border border-slate-200 flex flex-col items-center">
+              <span class="text-2xl mb-1">🪙</span>
+              <span class="text-xs font-black text-slate-700">十元硬幣</span>
+              <span class="text-[10px] font-bold text-slate-400 mt-0.5">圓形無角</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="text-slate-400 text-xs">圖形載入中...</div>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       互動按鈕動畫觸發器
+       ------------------------------------------------------------------------- */
+    function toggleOverlapAnimation() {
+      isOverlapped = !isOverlapped;
+      playSound('overlap');
+      const stage = document.getElementById('interactiveStage');
+      if (stage) {
+        stage.innerHTML = buildQuestionVisualHTML(QUESTIONS_DB[currentQIndex], true);
+      }
+    }
+
+    function toggleSetsquareAnimation() {
+      isSetsquareAttached = !isSetsquareAttached;
+      playSound('overlap');
+      const stage = document.getElementById('interactiveStage');
+      if (stage) {
+        stage.innerHTML = buildQuestionVisualHTML(QUESTIONS_DB[currentQIndex], true);
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       頂部導航與題號列渲染
+       ------------------------------------------------------------------------- */
+    function renderTopUnitNav() {
+      const container = document.getElementById('unitQuestionNav');
+      if (!container) return;
+      const activeQ = QUESTIONS_DB[currentQIndex];
+      const activeQId = activeQ ? activeQ.id : 1;
+
+      let html = '';
+      STAGE_META.forEach(meta => {
+        const isCurrentStage = activeQ && activeQ.stage === meta.stage && !isOverviewMode;
+        const stageBorder = isCurrentStage ? 'border-purple-400 bg-purple-50/90 shadow-sm' : 'border-slate-200 bg-slate-50/70';
+
+        const qButtons = meta.range.map(qId => {
+          const isCurrent = (activeQId === qId) && !isOverviewMode;
+          const isDone = completedQuestionIds.has(qId);
+          let btnClass = 'bg-white text-slate-700 border-slate-300 hover:bg-purple-100 hover:border-purple-400';
+          if (isCurrent) {
+            btnClass = 'bg-purple-600 text-white border-purple-700 shadow ring-2 ring-purple-300';
+          } else if (isDone) {
+            btnClass = 'bg-emerald-100 text-emerald-800 border-emerald-400 font-black';
+          }
+
+          return `
+            <button onclick="jumpToQuestion(${qId - 1})" class="w-6 h-6 rounded-lg text-[11px] font-black border transition flex items-center justify-center ${btnClass}">
+              ${qId}
+            </button>
+          `;
+        }).join('');
+
+        html += `
+          <div class="flex items-center justify-between px-2 py-1 rounded-xl border text-xs ${stageBorder}">
+            <span class="truncate font-black ${isCurrentStage ? 'text-purple-900' : 'text-slate-600'} text-[11px] mr-1">
+              ${meta.title.replace('單元', '')}
+            </span>
+            <div class="flex items-center gap-1 shrink-0">
+              ${qButtons}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       跳題與單題切換邏輯
+       ------------------------------------------------------------------------- */
+    function jumpToQuestion(idx) {
+      if (idx < 0 || idx >= QUESTIONS_DB.length) return;
+      currentQIndex = idx;
+      answeredCurrent = false;
+      isOverlapped = false;
+      isSetsquareAttached = false;
+      if (isOverviewMode) toggleAllQuestionsView();
+      renderCurrentQuestion();
+      playSound('click');
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) jumpToQuestion(currentQIndex - 1);
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < QUESTIONS_DB.length - 1) {
+        jumpToQuestion(currentQIndex + 1);
+      } else {
+        // 完成所有題目
+        playSound('cheer');
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 } });
+        alert('🎉 太厲害了！你已經完成了【單元 05：角與形狀】的所有幾何挑戰！可以點擊右上角重點卡複習，或返回冒險群島領取星星！');
+      }
+    }
+
+    function toggleAutoNext() {
+      autoNextEnabled = !autoNextEnabled;
+      const btn = document.getElementById('autoNextBtn');
+      if (btn) {
+        btn.textContent = autoNextEnabled ? '⏭️ 自動下一題：開' : '⏭️ 自動下一題：關';
+        btn.className = autoNextEnabled 
+          ? 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-purple-600 text-white shadow-xs'
+          : 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200';
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       渲染當前題目
+       ------------------------------------------------------------------------- */
+    function renderCurrentQuestion() {
+      const q = QUESTIONS_DB[currentQIndex];
+      if (!q) return;
+
+      // 頂部進度條與標題
+      document.getElementById('stageBadge').textContent = `${q.stageName} (第 ${q.stage} 關)`;
+      document.getElementById('qTagText').textContent = q.tag;
+      document.getElementById('qMisconceptionBadge').textContent = `💡 核心觀念：${q.misconception}`;
+      document.getElementById('qNumberBadge').textContent = `QUESTION ${q.id < 10 ? '0' + q.id : q.id} / ${QUESTIONS_DB.length}`;
+      document.getElementById('qTitle').textContent = q.question;
+      document.getElementById('progressPercentText').textContent = `進度：第 ${q.id} / ${QUESTIONS_DB.length} 題`;
+
+      const pct = Math.round((completedQuestionIds.size / QUESTIONS_DB.length) * 100);
+      document.getElementById('progressBar').style.width = `${Math.max(pct, (q.id / QUESTIONS_DB.length) * 100)}%`;
+      document.getElementById('accuracyText').textContent = `已完成：${completedQuestionIds.size} 題 (${pct}%)`;
+
+      // 隱藏提示
+      document.getElementById('hintDisplayArea').textContent = '';
+
+      // 渲染視覺教具
+      const stage = document.getElementById('interactiveStage');
+      stage.innerHTML = buildQuestionVisualHTML(q, true);
+
+      // 隱藏回饋卡片
+      const fbBox = document.getElementById('feedbackBox');
+      fbBox.classList.add('hidden');
+
+      // 渲染選項
+      const grid = document.getElementById('optionsGrid');
+      let optionsHTML = '';
+      q.options.forEach((opt, idx) => {
+        const letters = ['A', 'B', 'C', 'D'];
+        optionsHTML += `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="bouncy-btn w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 border-purple-100 bg-white hover:bg-purple-50/80 hover:border-purple-300 transition shadow-xs flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-xl bg-purple-100 group-hover:bg-purple-600 group-hover:text-white text-purple-700 flex items-center justify-center font-black text-xs shrink-0 transition">
+                ${letters[idx]}
+              </span>
+              <span class="text-xs sm:text-sm font-bold text-slate-800 leading-snug">
+                ${opt.text}
+              </span>
+            </div>
+            <span id="opt-check-${idx}" class="text-sm shrink-0"></span>
+          </button>
+        `;
+      });
+      grid.innerHTML = optionsHTML;
+
+      renderTopUnitNav();
+    }
+
+    /* -------------------------------------------------------------------------
+       選擇答案與即時檢驗
+       ------------------------------------------------------------------------- */
+    function selectOption(optIndex) {
+      if (answeredCurrent) return;
+      const q = QUESTIONS_DB[currentQIndex];
+      const selected = q.options[optIndex];
+      const fbBox = document.getElementById('feedbackBox');
+      const fbIcon = document.getElementById('feedbackIcon');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbDetail = document.getElementById('feedbackDetail');
+
+      if (selected.correct) {
+        answeredCurrent = true;
+        completedQuestionIds.add(q.id);
+        score += 10;
+        document.getElementById('scoreText').textContent = `${score} 分`;
+        playSound('correct');
+
+        // 選項樣式
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 font-black shadow-sm flex items-center justify-between';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✅';
+        }
+
+        // 回饋卡片
+        fbBox.className = 'rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 block transition-all duration-300';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '太棒了！答對了！';
+        fbDetail.textContent = q.explanation;
+
+        renderTopUnitNav();
+
+        if (autoNextEnabled) {
+          setTimeout(() => {
+            nextQuestion();
+          }, 1200);
+        }
+      } else {
+        playSound('wrong');
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 border-rose-300 bg-rose-50 text-rose-950 font-bold flex items-center justify-between';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '❌';
+        }
+
+        fbBox.className = 'rounded-2xl p-4 bg-amber-50 border-2 border-amber-300 text-amber-950 block transition-all duration-300';
+        fbIcon.textContent = '💡';
+        fbTitle.textContent = '差一點點！再想一下喔～';
+        fbDetail.textContent = selected.note || q.hint1 || '仔細比對一下幾何圖形的特徵喔！';
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       提示功能
+       ------------------------------------------------------------------------- */
+    function revealHint(num) {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      const area = document.getElementById('hintDisplayArea');
+      if (num === 1) {
+        area.textContent = `💡 提示 1：${q.hint1}`;
+      } else {
+        area.textContent = `🔍 提示 2：${q.hint2}`;
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       單題解析 Modal
+       ------------------------------------------------------------------------- */
+    function showCurrentExplanation() {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('modalExpTitle').textContent = `第 ${q.id} 題觀念詳解：${q.tag}`;
+      document.getElementById('modalExpBody').innerHTML = `
+        <div class="p-3 bg-purple-50 rounded-xl border border-purple-200 mb-3">
+          <div class="font-black text-purple-900 text-xs mb-1">題目：${q.question}</div>
+          <div class="text-[11px] text-purple-700 font-bold">正確解答：${q.options.find(o => o.correct)?.text}</div>
+        </div>
+        <div class="font-bold text-slate-700 leading-relaxed">
+          ${q.explanation}
+        </div>
+      `;
+      document.getElementById('explanationModal').classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('explanationModal').classList.add('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       重點卡 Modal
+       ------------------------------------------------------------------------- */
+    function toggleFormulaModal() {
+      playSound('click');
+      const modal = document.getElementById('formulaModal');
+      modal.classList.toggle('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       切換全題瀏覽模式 (一次看全部題目 + 圖 + 解析)
+       ------------------------------------------------------------------------- */
+    function toggleAllQuestionsView() {
+      playSound('click');
+      isOverviewMode = !isOverviewMode;
+      const singleView = document.getElementById('singleQuestionView');
+      const allView = document.getElementById('allQuestionsView');
+      const singleNav = document.getElementById('singleNavControls');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        singleView.classList.add('hidden');
+        singleNav.classList.add('hidden');
+        allView.classList.remove('hidden');
+        btnText.textContent = '返回單題闖關模式';
+        renderAllQuestionsList();
+      } else {
+        singleView.classList.remove('hidden');
+        singleNav.classList.remove('hidden');
+        allView.classList.add('hidden');
+        btnText.textContent = '一次瀏覽全部題目 (含圖)';
+        renderCurrentQuestion();
+      }
+      renderTopUnitNav();
+    }
+
+    function renderAllQuestionsList() {
+      const container = document.getElementById('allQuestionsContainer');
+      if (!container) return;
+
+      let html = '';
+      QUESTIONS_DB.forEach(q => {
+        const visualHTML = buildQuestionVisualHTML(q, false);
+        const correctOpt = q.options.find(o => o.correct);
+
+        html += `
+          <div class="temple-card rounded-3xl p-5 border-2 border-purple-200 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-purple-100 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-purple-600 text-white text-xs px-2.5 py-0.5 rounded-lg font-black">第 ${q.id} 題</span>
+                <span class="text-xs font-black text-purple-900">${q.tag}</span>
+                <span class="bg-purple-100 text-purple-800 text-[11px] px-2 py-0.5 rounded-full font-bold">${q.stageName}</span>
+              </div>
+              <button onclick="jumpToQuestion(${q.id - 1})" class="bouncy-btn text-xs font-black text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1 rounded-xl border border-purple-200">
+                🎮 跳到此題挑戰
+              </button>
+            </div>
+
+            <h3 class="font-black text-base text-slate-800 leading-snug">${q.question}</h3>
+
+            <div class="w-full bg-slate-50/80 rounded-2xl border border-dashed border-purple-200 p-3 flex flex-col items-center justify-center">
+              ${visualHTML}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              ${q.options.map((opt, i) => `
+                <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${opt.correct ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black' : 'bg-white border-slate-200 text-slate-600'}">
+                  <span>${['A','B','C','D'][i]}. ${opt.text}</span>
+                  ${opt.correct ? '<span class="text-emerald-600 font-black">✓ 正解</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-purple-50/80 rounded-xl border border-purple-200 text-xs text-purple-950 leading-relaxed font-bold">
+              💡 詳解：${q.explanation}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       初始化啟動
+       ------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="morning">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f6f0e4">
+  <title>三年級數學夢幻群島（翰林版 115上）｜中山國小慧秀老師</title>
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- 手寫楷體與圓潤字型：霞鶩文楷 (LXGW WenKai TC) + Klee One + Zen Maru Gothic -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.0.0/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================================
+       1. 莫蘭迪柔和粉彩主題變數 (晨光 Morning / 海霧 Mist / 夜海 Night)
+       ========================================================================= */
+    :root {
+      --bg: #f6f0e4;
+      --surface: #fffdf8;
+      --surface-soft: #f9f4ea;
+      --ink: #1f3a38;
+      --muted: #5b726d;
+      --line: #dcded2;
+      --primary: #2f7a6b;
+      --primary-light: #e3f1ed;
+      --accent: #c86432;
+      --accent-light: #faece5;
+      --water-css: #dcd5e8;
+      --shadow: 0 14px 42px rgba(25, 60, 59, 0.11);
+      --font-hand: "LXGW WenKai TC", "Klee One", "DFKai-SB", "KaiTi", serif;
+      --font-round: "Zen Maru Gothic", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    html[data-theme="mist"] {
+      --bg: #dfecee;
+      --surface: #f7fcfc;
+      --surface-soft: #eef6f7;
+      --ink: #183b42;
+      --muted: #4d6a70;
+      --line: #c2d6da;
+      --primary: #2b7079;
+      --primary-light: #dff0f2;
+      --accent: #b85d2b;
+      --accent-light: #f8e8df;
+      --water-css: #bed4d8;
+    }
+
+    html[data-theme="night"] {
+      --bg: #172230;
+      --surface: #223244;
+      --surface-soft: #1c2a3a;
+      --ink: #f3f1e8;
+      --muted: #b8c7ce;
+      --line: #3b5064;
+      --primary: #9ed8c6;
+      --primary-light: #264446;
+      --accent: #ffbd81;
+      --accent-light: #44352b;
+      --water-css: #192a42;
+      --shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-round);
+      font-size: 15px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    /* 手寫文青字體專用類別 */
+    .hand-font {
+      font-family: var(--font-hand);
+      letter-spacing: 0.03em;
+    }
+
+    /* =========================================================================
+       2. 頂部文青導航列 (Header) 與顯示控制列 (Dock)
+       ========================================================================= */
+    .header {
+      height: 68px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      z-index: 30;
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #efb77e 0%, #d9792f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(217, 121, 47, 0.25);
+    }
+    .brand-title {
+      font-family: var(--font-hand);
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+    .brand-sub {
+      display: block;
+      font-family: var(--font-round);
+      font-size: 10px;
+      letter-spacing: 1.8px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .edition-pill {
+      font-family: var(--font-hand);
+      font-size: 14px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      padding: 6px 14px;
+      border-radius: 999px;
+      display: none;
+    }
+    @media (min-width: 900px) {
+      .edition-pill { display: inline-flex; align-items: center; gap: 6px; }
+    }
+    .edition-pill b {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .teacher-badge {
+      font-family: var(--font-hand);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid rgba(169, 82, 30, 0.25);
+      padding: 6px 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 8px rgba(169, 82, 30, 0.08);
+    }
+
+    .rail-author-footer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line-strong);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-hand);
+      font-size: 13.5px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .rail-author-footer strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .soft-btn {
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-family: var(--font-round);
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .soft-btn:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 5px 14px rgba(25, 60, 59, 0.1);
+      background: var(--surface-soft);
+    }
+    .soft-btn.primary {
+      background: var(--primary);
+      color: #fffdf8;
+      border-color: transparent;
+    }
+    html[data-theme="night"] .soft-btn.primary {
+      color: #16222e;
+    }
+
+    /* 背景音樂與音量控制樣式 */
+    .btn-music-toggle {
+      border-color: rgba(169, 82, 30, 0.3);
+      color: var(--accent);
+      background: var(--surface);
+    }
+    .btn-music-toggle.music-playing {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 2px 10px rgba(169, 82, 30, 0.12);
+    }
+    .music-note-icon {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .music-playing .music-note-icon {
+      animation: musicBeat 1.4s ease-in-out infinite;
+    }
+    @keyframes musicBeat {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      30% { transform: scale(1.22) rotate(-8deg); }
+      70% { transform: scale(1.15) rotate(8deg); }
+    }
+    .volume-slider-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-hand);
+      font-size: 13px;
+      color: var(--muted);
+      background: var(--surface);
+      padding: 5px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+    .volume-slider-box input[type="range"] {
+      width: 70px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* 次級控制列 (晨光/海霧/夜海切換) */
+    .dock {
+      padding: 7px 24px;
+      background: var(--surface-soft);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 25;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .dock[hidden] { display: none !important; }
+
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+    .theme-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s;
+    }
+    .theme-btn i {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+    .theme-btn[aria-pressed="true"] {
+      background: var(--bg);
+      color: var(--ink);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    /* =========================================================================
+       3. 主工作區：左側文青說明導覽欄 (Rail) + 右側 3D 群島地圖 (Map)
+       ========================================================================= */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      min-height: 0;
+      position: relative;
+      transition: grid-template-columns 0.3s ease;
+    }
+    .workspace.rail-collapsed {
+      grid-template-columns: 0px minmax(0, 1fr);
+    }
+    @media (max-width: 820px) {
+      .workspace {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .rail {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 320px;
+        box-shadow: var(--shadow);
+      }
+      .workspace.rail-collapsed .rail {
+        transform: translateX(-105%);
+      }
+    }
+
+    .rail {
+      background: var(--bg);
+      border-right: 1px solid var(--line);
+      padding: 22px 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 20;
+      transition: transform 0.3s ease;
+    }
+    .workspace.rail-collapsed .rail {
+      overflow: hidden;
+      padding-left: 0;
+      padding-right: 0;
+      border-right: 0;
+    }
+
+    .rail::-webkit-scrollbar, #course-list::-webkit-scrollbar, .panel-body::-webkit-scrollbar {
+      width: 5px;
+    }
+    .rail::-webkit-scrollbar-thumb, #course-list::-webkit-scrollbar-thumb, .panel-body::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 99px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .eyebrow-dot {
+      width: 7px;
+      height: 7px;
+      background: #d9792f;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .rail-hero-title {
+      font-family: var(--font-hand);
+      font-size: 30px;
+      line-height: 1.32;
+      margin: 12px 0 8px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .rail-hero-title span {
+      color: var(--primary);
+    }
+
+    .rail-intro {
+      font-family: var(--font-hand);
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+
+    .center-entry {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      padding: 11px 13px;
+      border-radius: 16px;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .center-entry:hover {
+      border-color: var(--accent);
+      background: var(--surface-soft);
+      transform: translateY(-1px);
+    }
+    .entry-symbol {
+      font-size: 22px;
+      color: var(--accent);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .center-entry-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .center-entry-text strong {
+      display: block;
+      font-family: var(--font-hand);
+      font-size: 15px;
+      color: var(--ink);
+    }
+    .center-entry-text small {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .rail-progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .progress-track {
+      height: 6px;
+      background: var(--line);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .progress-fill {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #d9792f);
+      width: 18%;
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 10px;
+      gap: 6px;
+    }
+    .search-box input {
+      border: 0;
+      background: transparent;
+      width: 100%;
+      height: 36px;
+      font-size: 12.5px;
+      color: var(--ink);
+      outline: none;
+    }
+    .group-select {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 0 10px;
+      font-size: 12px;
+      height: 38px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* 單元卡片清單 */
+    #course-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 3px;
+    }
+
+    .course-entry {
+      width: 100%;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .course-entry:hover {
+      border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(25, 60, 59, 0.08);
+      transform: translateY(-1px);
+    }
+    .course-entry.active-island {
+      border: 2px solid var(--accent);
+      background: var(--surface-soft);
+    }
+    .course-num {
+      font-family: var(--font-hand);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 10px;
+      color: #fffdf8;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .course-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .course-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .course-name {
+      font-family: var(--font-hand);
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .game-ready-tag {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1.5px 7px;
+      border-radius: 99px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    .course-summary {
+      display: block;
+      font-family: var(--font-hand);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-top: 3px;
+    }
+    .course-star {
+      font-size: 12px;
+      font-weight: 800;
+      color: #d9792f;
+      flex-shrink: 0;
+    }
+
+    /* =========================================================================
+       4. 右側 3D 群島畫布區與圓潤手寫浮動標籤
+       ========================================================================= */
+    .map-section {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--water-css);
+    }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #labels-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* 地圖左上角文青浮水印標題 */
+    .map-heading {
+      position: absolute;
+      top: 18px;
+      left: 22px;
+      z-index: 12;
+      pointer-events: none;
+      background: rgba(255, 253, 248, 0.84);
+      backdrop-filter: blur(8px);
+      padding: 10px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    html[data-theme="night"] .map-heading {
+      background: rgba(34, 50, 68, 0.85);
+    }
+    .map-heading p {
+      font-family: var(--font-hand);
+      font-size: 19px;
+      font-weight: 700;
+      margin: 3px 0 0;
+      color: var(--ink);
+    }
+    .map-heading small {
+      font-family: var(--font-hand);
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* 3D 島嶼上方的圓潤文青標籤 */
+    .island-label {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      pointer-events: auto;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 253, 248, 0.94);
+      backdrop-filter: blur(6px);
+      border: 2px solid var(--badge-color, #d9792f);
+      box-shadow: 0 8px 20px rgba(25, 60, 59, 0.14);
+      font-family: var(--font-hand);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #1f3a38;
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+    }
+    .island-label:hover {
+      transform: translate(-50%, -112%) scale(1.08);
+      z-index: 60 !important;
+      box-shadow: 0 12px 26px rgba(25, 60, 59, 0.24);
+    }
+    .island-label.is-hub {
+      background: #fff8e6;
+      border-width: 2.5px;
+      border-color: #c86432;
+      font-size: 15.5px;
+      padding: 6px 15px;
+    }
+    .island-label.is-current {
+      box-shadow: 0 0 0 5px rgba(200, 100, 50, 0.28), 0 8px 20px rgba(25, 60, 59, 0.18);
+    }
+
+    /* 地圖底部狀態膠囊 */
+    .map-footer-bar {
+      position: absolute;
+      bottom: 16px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 12;
+      gap: 10px;
+    }
+    .toast-pill {
+      pointer-events: auto;
+      background: rgba(255, 253, 248, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+      padding: 9px 18px;
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      font-family: var(--font-hand);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    html[data-theme="night"] .toast-pill {
+      background: rgba(34, 50, 68, 0.92);
+    }
+
+    /* =========================================================================
+       5. 右側滑出式「教材單元重點統整 ＆ 闖關面板」 (Literary Study Panel)
+       ========================================================================= */
+    .panel-scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 35, 34, 0.32);
+      backdrop-filter: blur(3px);
+      z-index: 40;
+    }
+    .panel-scrim[hidden] { display: none !important; }
+
+    .study-panel {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      bottom: 14px;
+      width: min(480px, calc(100vw - 28px));
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 26px;
+      box-shadow: 0 24px 60px rgba(20, 35, 34, 0.22);
+      z-index: 45;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideInRight 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .study-panel[hidden] { display: none !important; }
+
+    @keyframes slideInRight {
+      from { transform: translateX(40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .panel-header {
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel-title {
+      font-family: var(--font-hand);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 4px 0 0;
+    }
+    .close-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-intro-box {
+      font-family: var(--font-hand);
+      font-size: 15.5px;
+      line-height: 1.7;
+      color: var(--ink);
+      background: var(--surface-soft);
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+    }
+
+    .keypoints-card {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 20px;
+      padding: 16px 18px;
+    }
+    .keypoints-card h3 {
+      font-family: var(--font-hand);
+      font-size: 18px;
+      color: var(--primary);
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .keypoint-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .keypoint-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-family: var(--font-hand);
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--ink);
+      background: var(--surface-soft);
+      padding: 10px 13px;
+      border-radius: 14px;
+    }
+    .keypoint-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-family: var(--font-round);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* 遊戲啟動卡片 */
+    .game-launch-card {
+      background: var(--primary-light);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 16px 18px;
+    }
+    .game-launch-card[hidden] { display: none !important; }
+
+    .panel-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--line);
+      background: var(--bg);
+      display: flex;
+      gap: 10px;
+    }
+
+    /* 內嵌全螢幕遊戲彈窗 */
+    .game-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.9);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    .game-overlay[hidden] { display: none !important; }
+    .game-overlay-bar {
+      height: 56px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 頂部文青導航列 -->
+  <header class="header">
+    <a class="brand" href="#" id="brand-home">
+      <div class="brand-icon">🏝️</div>
+      <div>
+        <span class="brand-title">三年級數學夢幻群島</span>
+        <small class="brand-sub">HANLIN MATH · 中山國小慧秀老師</small>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <span class="teacher-badge">🌸 中山國小慧秀老師</span>
+      <span class="edition-pill">📖 翰林版 115上 · 九大單元與複習島 <b>01—09 + 加油讚</b></span>
+      <button id="btn-bgm" class="soft-btn btn-music-toggle" title="切換背景輕音樂（點擊切換 播放 / 暫停）">
+        <span class="music-note-icon">🎵</span>
+        <span id="btn-bgm-text">輕音樂：開啟中</span>
+      </button>
+      <div class="soft-btn" style="cursor:default; background:var(--surface-soft);">
+        <span>⭐</span>
+        <span id="star-counter" class="hand-font" style="font-size:15px;">0 / 33 星</span>
+      </div>
+      <button id="btn-rail-toggle" class="soft-btn" aria-expanded="true">◧ 收合導覽</button>
+      <button id="btn-dock-toggle" class="soft-btn" aria-expanded="true">☷ 氛圍設定</button>
+    </div>
+  </header>
+
+  <!-- 2. 氛圍與光線設定列 (晨光 / 海霧 / 夜海) -->
+  <div id="display-controls" class="dock">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="hand-font" style="font-weight:700; color:var(--muted);">🎨 群島底色：</span>
+      <div class="theme-switch" role="group" aria-label="底色主題">
+        <button class="theme-btn" data-theme="morning" aria-pressed="true"><i style="background:#f6f0e4"></i>晨光米白</button>
+        <button class="theme-btn" data-theme="mist" aria-pressed="false"><i style="background:#dcebee"></i>海霧莫蘭迪</button>
+        <button class="theme-btn" data-theme="night" aria-pressed="false"><i style="background:#1e293b"></i>靜謐夜海</button>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button id="btn-bgm-dock" class="soft-btn btn-music-toggle">
+        <span class="music-note-icon">🎵</span>
+        <span id="btn-bgm-dock-text">輕音樂：開啟中</span>
+      </button>
+      <label class="volume-slider-box" title="背景音樂音量調節">
+        <span style="font-size:12px;">🔈</span>
+        <input id="bgm-volume-slider" type="range" min="0" max="0.5" step="0.02" value="0.22" aria-label="音樂音量">
+        <span style="font-size:12px;">🔊</span>
+      </label>
+      <button id="btn-go-hub" class="soft-btn">⚓ 回中央起點港</button>
+      <button id="btn-overview" class="soft-btn">⌖ 回到全景</button>
+      <button id="btn-sound" class="soft-btn">🔔 點擊音效開</button>
+    </div>
+  </div>
+
+  <!-- 3. 主工作區：左欄教材導覽 + 右欄 3D 群島 -->
+  <main class="workspace" id="workspace">
+    <!-- 左側文青教材導覽欄 -->
+    <aside class="rail" id="island-navigation">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> 讓數學思維，在這裡發芽。</div>
+      <h1 class="rail-hero-title">下一站，<br>你的數學<span>新發現。</span></h1>
+      <p class="rail-intro">
+        從生活情境出發，一步步解開數字的祕密。<br>
+        點選任一座課程島，閱讀單元重點統整或開始闖關。
+      </p>
+
+      <button class="center-entry" id="btn-rail-hub">
+        <span class="entry-symbol">✦</span>
+        <span class="center-entry-text">
+          <strong>前往中央起點港 · 領航廣場</strong>
+          <small>紅白大風車 · 全島放射木橋出發點</small>
+        </span>
+        <b style="color:var(--accent); font-size:18px;">↗</b>
+      </button>
+
+      <div class="rail-progress-header">
+        <span class="hand-font" style="font-weight:700; font-size:14px; color:var(--ink);">📚 課程單元重點與闖關</span>
+        <span id="explored-count" class="hand-font">0 / 11 已複習</span>
+      </div>
+      <div class="progress-track">
+        <span class="progress-fill" id="progress-fill" style="width: 0%;"></span>
+      </div>
+
+      <div class="filter-row">
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="search-input" type="search" placeholder="搜尋單元、乘法、毫米、分數…" autocomplete="off">
+        </div>
+        <select id="group-select" class="group-select" aria-label="篩選航線">
+          <option value="">全部單元</option>
+          <option value="期中航線">期中 (1~4單元)</option>
+          <option value="期末航線">期末 (5~9單元)</option>
+        </select>
+      </div>
+
+      <nav id="course-list" aria-label="課程單元清單"></nav>
+
+      <div class="rail-author-footer">
+        <span>✨ 數位教學島嶼設計</span>
+        <strong>中山國小慧秀老師</strong>
+      </div>
+    </aside>
+
+    <!-- 右側 3D 互動群島區 -->
+    <section class="map-section" aria-label="互動 3D 數學群島">
+      <div class="map-heading">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> GRADE 3 MATH · 中山國小慧秀老師</span>
+        <p id="map-focus-title">十一座課程島，一段溫柔的數學旅程</p>
+        <small id="map-focus-sub">點選島嶼可讓小探險家跑過木橋，並閱讀該單元的課本重點統整</small>
+      </div>
+
+      <div id="canvas-container"></div>
+      <div id="labels-container"></div>
+
+      <div class="map-footer-bar">
+        <div class="toast-pill">
+          <span>🐋</span>
+          <span id="status-toast">點選任一座島嶼或左側清單，小探險家就會從中心起點港出發喔！</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 4. 右側滑出式「單元重點統整 ＆ 互動遊戲面板」 -->
+  <div id="panel-scrim" class="panel-scrim" hidden></div>
+  <section id="study-panel" class="study-panel" role="dialog" aria-modal="true" hidden>
+    <header class="panel-header">
+      <div>
+        <span id="panel-kicker" class="eyebrow"><span class="eyebrow-dot"></span> UNIT 01 · 期中航線</span>
+        <h2 id="panel-title" class="panel-title">10000以內的數</h2>
+      </div>
+      <button id="btn-close-panel" class="close-circle" aria-label="關閉面板">✕</button>
+    </header>
+
+    <div class="panel-body">
+      <!-- 單元導讀 -->
+      <div id="panel-intro" class="panel-intro-box"></div>
+
+      <!-- 互動遊戲啟動卡片 (僅在有遊戲的單元顯示) -->
+      <div id="panel-game-card" class="game-launch-card" hidden>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <span class="eyebrow" style="color:var(--primary);">🎮 INTERACTIVE GAME · 互動闖關遊戲</span>
+            <h4 id="panel-game-title" class="hand-font" style="margin:3px 0 0; font-size:17px; color:var(--ink);">萬能百貨大富翁</h4>
+          </div>
+          <span id="panel-game-emoji" style="font-size:28px;">🏬</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btn-instant-game" class="soft-btn primary" style="flex:1; justify-content:center;">
+            ⚡ 立即打開互動遊戲
+          </button>
+          <button id="btn-walk-and-game" class="soft-btn" style="flex:1; justify-content:center;">
+            🚶 小人跑到島上再玩
+          </button>
+        </div>
+      </div>
+
+      <!-- 課本單元重點統整筆記 -->
+      <div class="keypoints-card">
+        <h3>📖 課本單元核心重點統整</h3>
+        <ul id="panel-keypoints" class="keypoint-list"></ul>
+      </div>
+
+      <!-- 島嶼地標小介紹 -->
+      <div class="keypoints-card" style="background:var(--surface-soft);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:11px; font-weight:800; color:var(--muted);">✨ 島嶼 3D 主題地標</div>
+            <div id="panel-landmark" class="hand-font" style="font-size:15px; font-weight:700; margin-top:2px;">萬能百貨與千位積木</div>
+          </div>
+          <div id="panel-stars" style="font-size:16px; color:#d9792f; font-weight:800;">⭐⭐⭐</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="panel-footer">
+      <button id="btn-walk-only" class="soft-btn" style="flex:1; justify-content:center;">
+        🚶 帶小探險家散步過去
+      </button>
+      <button id="btn-mark-read" class="soft-btn primary" style="flex:1.3; justify-content:center;">
+        ✓ 完成重點複習 (領取 3 星)
+      </button>
+    </footer>
+  </section>
+
+  <!-- 5. 內嵌全螢幕互動遊戲視窗 -->
+  <div id="game-overlay" class="game-overlay" hidden>
+    <div class="game-overlay-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">🎮</span>
+        <strong id="game-overlay-title" class="hand-font" style="font-size:18px;">單元挑戰進行中</strong>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="btn-complete-game" class="soft-btn primary">🏆 完成挑戰領取 3 星並返回</button>
+        <button id="btn-close-game" class="soft-btn">✕ 返回群島</button>
+      </div>
+    </div>
+    <iframe id="game-iframe" style="width:100%; flex:1; border:0; background:#fff;" src="about:blank"></iframe>
+  </div>
+
+  <script>
+    /* =========================================================================
+       0. 頂層狀態與 DOM 元素綁定
+       ========================================================================= */
+    const container = document.getElementById('canvas-container');
+    const labelsContainer = document.getElementById('labels-container');
+    const courseListEl = document.getElementById('course-list');
+    const searchInput = document.getElementById('search-input');
+    const groupSelect = document.getElementById('group-select');
+    const panelEl = document.getElementById('study-panel');
+    const panelScrim = document.getElementById('panel-scrim');
+    const gameOverlay = document.getElementById('game-overlay');
+    const gameIframe = document.getElementById('game-iframe');
+
+    const animCallbacks = [];
+    const islandGroups = {};
+    const pickMeshes = [];
+    const labelElements = {};
+    let currentIslandId = 'hub';
+    let selectedIsland = null;
+    let isWalking = false;
+
+    /* =========================================================================
+       1. 翰林三上數學 11 座單元島嶼完整教材重點資料庫 (溫潤高辨識度繪本配色)
+       ========================================================================= */
+    const RING_RADIUS_X = 36;
+    const RING_RADIUS_Z = 33;
+
+    const ISLANDS = [
+      {
+        id: 'hub',
+        code: '起點港',
+        title: '中央領航廣場',
+        group: '中央樞紐',
+        summary: '紅白迎賓大風車與領航燈塔，連接全島 11 座數學單元的出發中心。',
+        intro: '歡迎來到三年級數學夢幻群島的中央起點港！這裡有隨風旋轉的奶油紅白大風車與木造拱門。你可以隨時點選外圈任一座課程島，看著小探險家踏上拱橋出發！',
+        landmark: '奶油紅白大風車・溫暖小路燈與迎賓拱門',
+        keypoints: [
+          '全冊共包含 9 個核心數學單元與 2 座期中、期末「學習加油讚」複習島。',
+          '採用自由跳島設計：不必照順序，點選任一島嶼即可經由中心放射木橋前往。',
+          '標有「🎮 遊戲」的島嶼可直接啟動全班互動闖關遊戲！'
+        ],
+        emoji: '⚓',
+        color: '#d9792f',
+        hexColor: 0xe68a4d,
+        stars: 0,
+        maxStars: 0,
+        read: true,
+        isHub: true,
+        gameUrl: null,
+        x: 0,
+        z: 0
+      },
+      {
+        id: 'u1',
+        code: '01',
+        title: '10000以內的數',
+        group: '期中航線',
+        summary: '認識萬位與千位、位值換算、錢幣點數與四位數比大小。',
+        intro: '走進萬能百貨小鎮，認識 10 個一千合起來是 10000，並學會用千、百、十、個位積木與錢幣解決採購問題！',
+        landmark: '萬能百貨繪本小屋 ＆ 1000 千位暖金積木',
+        keypoints: [
+          '【認識一萬】9999 再加 1 是 10000；10 個一千合起來也是 10000（讀作一萬）。',
+          '【位值拆解】例如 4308 是由「4個千、3個百、0個十、8個一」合起來的，中間的 0 要記得讀出來。',
+          '【點數錢幣】先數幾張千元鈔、幾個百元、幾個十元與一元，若滿 10 個就往上一位進位換算。',
+          '【比大小秘訣】比較四位數大小時，永遠從最高位「千位」開始比；千位相同再比百位、十位、個位。'
+        ],
+        emoji: '🏬',
+        color: '#c86432',
+        hexColor: 0xe88348,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit01_10000_game.html',
+        gameTitle: '萬能百貨大富翁：紅藍小店長採購 PK 賽（20題完整版）'
+      },
+      {
+        id: 'u2',
+        code: '02',
+        title: '10000以內的加減',
+        group: '期中航線',
+        summary: '四位數直式加法進位、直式減法退位與加減估算應用。',
+        intro: '在加減法魔法石島上，練習將個位、十位、百位、千位整齊對齊，解開進位與連續退位的挑戰！',
+        landmark: '漂浮粉彩 ＋ － 立體符號 ＆ 木造珠算架',
+        keypoints: [
+          '【直式對齊】寫直式時，務必將「個位對個位、十位對十位、百位對百位、千位對千位」。',
+          '【加法進位】哪一位相加滿 10，就向前一位「進 1」，記得在橫線上方寫小 1 提醒自己。',
+          '【減法退位】不夠減時向前一位「借 1 當 10」；遇到中間有 0（如 3005 減 1248），先從千位退到百位再退到十位。',
+          '【加減估算】想快速知道大約多少元時，可先將數字估成最接近的「整百」或「整千」再計算。'
+        ],
+        emoji: '➕',
+        color: '#2f7a6b',
+        hexColor: 0x52a892,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit02_add_sub_game.html',
+        gameTitle: '星際救援：10000以內的加減大作戰（20題完整版）'
+      },
+      {
+        id: 'u3',
+        code: '03',
+        title: '毫米與數線',
+        group: '期中航線',
+        summary: '認識毫米 (mm)、公分與毫米換算，以及數線上的刻度與跳躍。',
+        intro: '尺上一小格就是 1 毫米！跟著數線跳跳蛙一起測量精細的小物品，並在數線上左右跳躍吧！',
+        landmark: '奶油黃刻度尺拱門 ＆ 數線跳躍小青蛙',
+        keypoints: [
+          '【認識毫米】尺上 1 公分中間平分成 10 小格，每一小格就是「1 毫米」，國際通用符號寫作「mm」。',
+          '【單位換算】1 公分 ＝ 10 毫米；例如 5 公分 4 毫米 ＝ 54 毫米，83 毫米 ＝ 8 公分 3 毫米。',
+          '【複名數加減】公分加公分、毫米加毫米；當毫米相加滿 10 毫米時，就換算成 1 公分進位。',
+          '【認識數線】數線有原點 0、向右遞增的箭頭與固定間隔的刻度；往右跳是「加」，往左跳是「減」。'
+        ],
+        emoji: '📏',
+        color: '#4a7c89',
+        hexColor: 0x5b9dc2,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit03_mm_game.html',
+        gameTitle: '量尺神探與刻度精靈：毫米與數線大冒險（20題完整版）'
+      },
+      {
+        id: 'u4',
+        code: '04',
+        title: '乘法',
+        group: '期中航線',
+        summary: '二、三位數乘以一位數直式計算、0的乘法與兩步驟乘法應用。',
+        intro: '轉動九九乘法金色風車，把一位數分別乘以個位、十位與百位，解決生活王國裡的各種倍數問題！',
+        landmark: '溫潤白點數大骰子 ＆ ✖️ 乘法金色風車',
+        keypoints: [
+          '【整十整百乘法】例如 30 × 4，先想 3 個十乘以 4 是 12 個十，也就是 120；300 × 4 則是 1200。',
+          '【直式乘法順序】從最右邊「個位」開始乘，再乘「十位」、最後乘「百位」；進位的數字要等乘完再加進去。',
+          '【有 0 的乘法】0 乘以任何數都是 0！計算如 208 × 3 時，十位的 0 乘以 3 得 0，再加上個位進上來的 2。',
+          '【兩步驟情境題】先看題目問什麼，分兩步驟列出「先算什麼、再算什麼」，就能輕鬆破關！'
+        ],
+        emoji: '🎲',
+        color: '#b55d7a',
+        hexColor: 0xd97398,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './math_game.html',
+        gameTitle: '乘法王國生活大冒險：三年級數學情境闖關（翰林L04）'
+      },
+      {
+        id: 'mid',
+        code: '加油讚一',
+        title: '期中考總複習 (1~4單元)',
+        group: '期中航線',
+        summary: '統整第 1 至第 4 單元：萬以內的數、加減、毫米數線與乘法綜合應用。',
+        intro: '歡迎光臨期中星光童話城堡！在這裡把前四個單元的觀念串聯起來，為期中考做好最棒的準備！',
+        landmark: '期中星光繪本城堡 ＆ 暖金旋轉星芒',
+        keypoints: [
+          '【大數與加減】檢查四位數讀寫是否漏掉「零」，加減法直式做完可用逆運算（減法用加法）驗算。',
+          '【長度單位注意】看清題目問的是「幾公分幾毫米」還是「幾毫米」，注意單位有沒有統一。',
+          '【乘法進位檢查】二、三位數乘以一位數時，記得「先乘再加進位」，千萬別先把進位加到被乘數上喔！'
+        ],
+        emoji: '🏰',
+        color: '#c87d28',
+        hexColor: 0xe6a83a,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        isSpecial: true,
+        gameUrl: './三上數學期中總複習_運動會大闖關.html',
+        gameTitle: '三上數學期中總複習（1～4單元）活力運動會大闖關'
+      },
+      {
+        id: 'u5',
+        code: '05',
+        title: '角與形狀',
+        group: '期末航線',
+        summary: '認識角的頂點與邊、比較角的大小、認識直角與長方形正方形。',
+        intro: '用三角板的直角來當小偵探，找出生活物品中的直角、比直角大的鈍角，以及比直角小的銳角！',
+        landmark: '粉綠直角三角尺拱門 ＆ 幾何積木塔',
+        keypoints: [
+          '【角的構造】一個角是由「1 個頂點」和「2 條直線邊」組成的。',
+          '【角的大小】角張開得越大，角就越大；角的大小和「邊畫得長或短」完全沒有關係喔！',
+          '【認識直角】和三角板最大的那個角一樣大的角叫做「直角」，我們會在角落畫上「∟」符號標記。',
+          '【正方形與長方形】正方形有 4 個直角且「4 條邊一樣長」；長方形有 4 個直角且「上下對邊一樣長、左右對邊一樣長」。'
+        ],
+        emoji: '📐',
+        color: '#7a6299',
+        hexColor: 0x9472c8,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit05_angles_shapes_game.html',
+        gameTitle: '幾何神殿探險家：角、直角與正長方形大冒險（20題完整版）'
+      },
+      {
+        id: 'u6',
+        code: '06',
+        title: '除法',
+        group: '期末航線',
+        summary: '認識平分與包含除、直式除法（商、餘數）與奇數偶數。',
+        intro: '把籃子裡的紅蘋果公平分給大家！學會用九九乘法快速找出除法的商，並檢查餘數有沒有比除數小！',
+        landmark: '暖金立體 ➗ 除號碑 ＆ 平分紅蘋果木籃',
+        keypoints: [
+          '【除法算式】「被除數 ÷ 除數 ＝ 商 … 餘數」；沒分完剩下的數叫做「餘數」。',
+          '【黃金鐵則】分東西一定要分到不能再分為止，所以「餘數一定要比除數小」！',
+          '【直式四步驟】寫出除法直式「厂」，按照「商 ➔ 乘 ➔ 減 ➔ 檢查餘數」四個步驟計算。',
+          '【奇數與偶數】除以 2 餘數是 0（可以平分給2人）的是「偶數」；除以 2 餘數是 1 的是「奇數」。'
+        ],
+        emoji: '➗',
+        color: '#3b7d7a',
+        hexColor: 0x5aa882,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit06_division_game.html',
+        gameTitle: '王國果園除法大作戰：平分、包含除與直式挑戰（20題完整版）'
+      },
+      {
+        id: 'u7',
+        code: '07',
+        title: '公斤與公克',
+        group: '期末航線',
+        summary: '認識重量單位公斤 (kg) 與公克 (g)、報讀秤面刻度與重量換算。',
+        intro: '放上金砝碼，觀察圓盤指針指到哪一格！學會看懂 1 公斤秤與 3 公斤秤的每一小格代表幾公克。',
+        landmark: '指針擺動復古小磅秤 ＆ 1kg 暖金砝碼',
+        keypoints: [
+          '【重量單位換算】1 公斤 ＝ 1000 公克（1 kg ＝ 1000 g）；例如 2 公斤 50 公克 ＝ 2050 公克（注意補 0）。',
+          '【報讀秤面】1 公斤的秤上，一大格是 100 公克、一小格是 50 公克或 10 公克，看指針前先數清楚一格代表多少。',
+          '【重量的加減】公斤和公斤算、公克和公克算；公克滿 1000 公克就換成 1 公斤。'
+        ],
+        emoji: '⚖️',
+        color: '#c86432',
+        hexColor: 0xe6854a,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit07_kg_g_game.html',
+        gameTitle: '黃金磅秤王國：公斤與公克刻度神探大冒險（20題完整版）'
+      },
+      {
+        id: 'u8',
+        code: '08',
+        title: '分數',
+        group: '期末航線',
+        summary: '認識平分與幾分之幾、分子與分母、分數與 1 的關係及同分母比大小。',
+        intro: '把香噴噴的披薩「平分」成一樣大的切片，認識分母代表平分成幾份、分子代表拿了幾份！',
+        landmark: '木托盤切片大披薩 (1/4 動態懸浮切片)',
+        keypoints: [
+          '【平分才算分數】一定要「平分」（每一份一樣大）才能用分數表示！',
+          '【分母與分子】分數線下面的數叫「分母」（平分成幾份），上面的數叫「分子」（其中的幾份）。',
+          '【和 1 一樣大】當分子和分母一樣大時（例如 4/4 個披薩、8/8 條緞帶），合起來剛好就是完整的「1」！',
+          '【同分母比大小】分母相同時，每一小份一樣大，所以「分子越大，分數就越大」（如 5/8 ＞ 3/8）。'
+        ],
+        emoji: '🍕',
+        color: '#b85a6c',
+        hexColor: 0xde6e85,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit08_fraction_game.html',
+        gameTitle: '披薩烘焙王國：平分與分數切片大冒險（20題完整版）'
+      },
+      {
+        id: 'u9',
+        code: '09',
+        title: '列表與規律',
+        group: '期末航線',
+        summary: '報讀一維與二維生活表格（火車時刻表、價目表）、探索圖形與數字規律。',
+        intro: '順著橫列與直欄的交會點，像偵探一樣從表格、地磚花紋與數字階梯中找出隱藏的排列規律！',
+        landmark: '粉彩律動階梯積木塔 ＆ 閱讀小書桌',
+        keypoints: [
+          '【報讀二維表格】先找「橫列」項目，再找「直欄」項目，兩條線交叉的那一格就是答案（例如票價表、課表）。',
+          '【圖案排列規律】觀察顏色或形狀是幾個一組重複出現（如：紅、黃、藍、紅、黃、藍，每 3 個一循環）。',
+          '【數字規律】觀察相鄰兩個數字之間是「每次加幾」或「每次減幾」，就能算出下一格藏著什麼數字！'
+        ],
+        emoji: '📊',
+        color: '#4a6fa5',
+        hexColor: 0x628ec9,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        gameUrl: './unit09_tables_patterns_game.html',
+        gameTitle: '規律神探事務所：生活表格與密碼規律大冒險（20題完整版）'
+      },
+      {
+        id: 'fin',
+        code: '加油讚二',
+        title: '期末考大挑戰 (5~9單元)',
+        group: '期末航線',
+        summary: '統整第 5 至第 9 單元：角與形狀、除法、公斤公克、分數與規律總複習。',
+        intro: '歡迎來到中山國小冬季歡樂園遊會！打開溫潤發光的智慧寶箱，將後半學期五個單元的數學能力完美融會貫通！',
+        landmark: '歡樂園遊會金牌總召神殿 ＆ 璀璨寶石寶箱',
+        keypoints: [
+          '【除法與分數連結】「平分」既是除法的核心，也是分數的基礎：把 1 個披薩平分成 6 塊，每塊是 1/6 個。',
+          '【單位與刻度報讀】無論是「毫米數線」還是「公斤公克秤面」，先確認「每一小格代表多少」就絕不會看錯！',
+          '【幾何與規律】善用三角板檢查直角，並用有條理的表格整理生活資訊。'
+        ],
+        emoji: '🎪',
+        color: '#b87d1e',
+        hexColor: 0xe3a83b,
+        stars: 0,
+        maxStars: 3,
+        read: false,
+        isSpecial: true,
+        gameUrl: './三上數學期末總複習_園遊會大闖關.html',
+        gameTitle: '三上數學期末總複習（5～9單元）歡樂園遊會大闖關'
+      }
+    ];
+
+    // 計算外圍 11 座島嶼的順時鐘鐘面座標（略呈寬橢圓以避開上方標籤重疊）
+    const outerIslands = ISLANDS.slice(1);
+    outerIslands.forEach((isl, idx) => {
+      const angle = (-Math.PI / 2) + (idx / outerIslands.length) * Math.PI * 2;
+      isl.angleRad = angle;
+      isl.x = Math.cos(angle) * RING_RADIUS_X;
+      isl.z = Math.sin(angle) * RING_RADIUS_Z;
+    });
+
+    /* =========================================================================
+       2. 溫柔木琴與清亮微風背景音樂系統 (Web Audio API)
+       ========================================================================= */
+    let sharedAudioCtx = null;
+    function getAudioContext() {
+      if (!sharedAudioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) sharedAudioCtx = new AudioCtx();
+      }
+      if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+        sharedAudioCtx.resume();
+      }
+      return sharedAudioCtx;
+    }
+
+    class SoundSystem {
+      constructor() {
+        this.enabled = true;
+      }
+      playStep() {
+        if (!this.enabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        const f = 330 + Math.random() * 60;
+        osc.frequency.setValueAtTime(f, t);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.6, t + 0.055);
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.065);
+      }
+      playPop() {
+        if (!this.enabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, t);
+        osc.frequency.exponentialRampToValueAtTime(720, t + 0.08);
+        gain.gain.setValueAtTime(0.11, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.095);
+      }
+      playCheer() {
+        if (!this.enabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((n, i) => {
+          setTimeout(() => {
+            if (!this.enabled) return;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(n, t);
+            gain.gain.setValueAtTime(0.13, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.36);
+          }, i * 105);
+        });
+      }
+    }
+    const sfx = new SoundSystem();
+
+    // 溫暖輕快純自研島嶼背景音樂引擎 (純 Web Audio API 合成，無任何外部檔案依賴與斷線風險)
+    class BgmEngine {
+      constructor() {
+        this.enabled = true;
+        this.isPlaying = false;
+        this.wasPlayingBeforeGame = false;
+        this.wasPlayingBeforeHidden = false;
+        this.volume = 0.20;
+        this.tempo = 104; // 舒適散步輕快拍速 (BPM)
+        this.timerId = null;
+        this.currentStep = 0; // 0..255 (共 16 小節，每小節 16 步十六分音符)
+        this.nextNoteTime = 0;
+        this.masterGain = null;
+
+        // 音高頻率表
+        this.noteFreqs = {
+          F2: 87.31, G2: 98.00, A2: 110.00, Bb2: 116.54, B2: 123.47, C3: 130.81, D3: 146.83, E3: 164.81,
+          F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, C4: 261.63, D4: 293.66, E4: 329.63,
+          F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88, C5: 523.25, D5: 587.33,
+          E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00
+        };
+
+        // 16 小節和弦低音 (第 1 拍與第 3 拍)
+        this.bassByBar = [
+          'F2', 'E3', 'D3', 'A2', 'Bb2', 'A2', 'G2', 'C3',
+          'Bb2', 'Bb2', 'A2', 'D3', 'G2', 'C3', 'F2', 'C3'
+        ];
+
+        // 16 小節烏克麗麗/木琴琶音伴奏
+        this.chordPlucks = [
+          ['A3', 'C4', 'E4'], ['G3', 'C4', 'E4'], ['F3', 'A3', 'C4'], ['E3', 'G3', 'C4'],
+          ['D3', 'F3', 'A3'], ['C3', 'F3', 'A3'], ['Bb2', 'D3', 'F3'], ['Bb2', 'E3', 'G3'],
+          ['D3', 'F3', 'A3'], ['E3', 'G3', 'C4'], ['C3', 'E3', 'G3'], ['F3', 'A3', 'C4'],
+          ['Bb2', 'D3', 'F3'], ['Bb2', 'E3', 'G3'], ['A3', 'C4', 'F4'], ['A3', 'C4', 'E4']
+        ];
+
+        // 16 小節卡林巴木質琴 / 柔和鐵琴主旋律 (可愛輕快島嶼冒險風)
+        this.melodyLookup = {};
+        const melodyBars = [
+          [{s:0,n:'C5',d:0.42},{s:4,n:'A4',d:0.35},{s:8,n:'G4',d:0.2},{s:10,n:'A4',d:0.2},{s:12,n:'C5',d:0.42}],
+          [{s:0,n:'G4',d:0.75},{s:8,n:'E4',d:0.35},{s:12,n:'G4',d:0.35}],
+          [{s:0,n:'F4',d:0.42},{s:4,n:'D4',d:0.35},{s:8,n:'C4',d:0.2},{s:10,n:'D4',d:0.2},{s:12,n:'F4',d:0.42}],
+          [{s:0,n:'E4',d:0.85},{s:10,n:'G4',d:0.22},{s:12,n:'A4',d:0.35}],
+          [{s:0,n:'D4',d:0.35},{s:4,n:'F4',d:0.35},{s:8,n:'A4',d:0.35},{s:12,n:'C5',d:0.38}],
+          [{s:0,n:'A4',d:0.75},{s:8,n:'F4',d:0.35},{s:12,n:'A4',d:0.35}],
+          [{s:0,n:'G4',d:0.35},{s:4,n:'Bb4',d:0.35},{s:8,n:'A4',d:0.35},{s:12,n:'F4',d:0.35}],
+          [{s:0,n:'G4',d:0.95},{s:12,n:'C4',d:0.35}],
+          [{s:0,n:'A4',d:0.35},{s:4,n:'Bb4',d:0.35},{s:8,n:'C5',d:0.35},{s:12,n:'D5',d:0.42}],
+          [{s:0,n:'E5',d:0.75},{s:8,n:'C5',d:0.35},{s:12,n:'G4',d:0.35}],
+          [{s:0,n:'C5',d:0.35},{s:6,n:'B4',d:0.2},{s:8,n:'C5',d:0.25},{s:10,n:'D5',d:0.25},{s:12,n:'C5',d:0.42}],
+          [{s:0,n:'A4',d:0.85},{s:10,n:'F4',d:0.22},{s:12,n:'A4',d:0.35}],
+          [{s:0,n:'Bb4',d:0.35},{s:4,n:'D5',d:0.42},{s:8,n:'C5',d:0.35},{s:12,n:'Bb4',d:0.35}],
+          [{s:0,n:'A4',d:0.35},{s:4,n:'G4',d:0.35},{s:8,n:'A4',d:0.35},{s:12,n:'G4',d:0.35}],
+          [{s:0,n:'F4',d:0.95},{s:10,n:'G4',d:0.22},{s:12,n:'A4',d:0.25}],
+          [{s:0,n:'F4',d:1.3}]
+        ];
+        melodyBars.forEach((barNotes, barIdx) => {
+          barNotes.forEach(item => {
+            const totalStep = barIdx * 16 + item.s;
+            this.melodyLookup[totalStep] = { note: item.n, freq: this.noteFreqs[item.n], dur: item.d };
+          });
+        });
+      }
+
+      initMaster() {
+        const ctx = getAudioContext();
+        if (!ctx) return false;
+        if (!this.masterGain) {
+          this.masterGain = ctx.createGain();
+          this.masterGain.gain.setValueAtTime(this.volume, ctx.currentTime);
+          this.masterGain.connect(ctx.destination);
+        }
+        return true;
+      }
+
+      setVolume(val) {
+        this.volume = Math.max(0, Math.min(1, val));
+        if (this.masterGain) {
+          const ctx = getAudioContext();
+          if (ctx) {
+            this.masterGain.gain.setTargetAtTime(this.volume, ctx.currentTime, 0.05);
+          }
+        }
+      }
+
+      start() {
+        if (this.isPlaying) return;
+        if (!this.initMaster()) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+
+        this.isPlaying = true;
+        this.nextNoteTime = ctx.currentTime + 0.06;
+        this.scheduler();
+        this.updateUI();
+      }
+
+      pause() {
+        if (!this.isPlaying) return;
+        this.isPlaying = false;
+        if (this.timerId) {
+          clearTimeout(this.timerId);
+          this.timerId = null;
+        }
+        this.updateUI();
+      }
+
+      toggle() {
+        if (this.isPlaying) {
+          this.enabled = false;
+          this.pause();
+        } else {
+          this.enabled = true;
+          this.start();
+        }
+      }
+
+      // 切換至其他頁面或彈出遊戲時，自動暫停
+      pauseForGame() {
+        if (this.isPlaying) {
+          this.wasPlayingBeforeGame = true;
+          this.pause();
+        } else {
+          this.wasPlayingBeforeGame = false;
+        }
+      }
+
+      // 關閉遊戲視窗回到首頁時，自動恢復播放
+      resumeFromGame() {
+        if (this.wasPlayingBeforeGame && this.enabled) {
+          this.wasPlayingBeforeGame = false;
+          this.start();
+        }
+      }
+
+      // 切換瀏覽器分頁或視窗縮小時，自動暫停
+      pauseForVisibility() {
+        if (this.isPlaying) {
+          this.wasPlayingBeforeHidden = true;
+          this.pause();
+        }
+      }
+
+      // 回到此分頁時，自動恢復播放
+      resumeFromVisibility() {
+        if (this.wasPlayingBeforeHidden && this.enabled) {
+          this.wasPlayingBeforeHidden = false;
+          this.start();
+        }
+      }
+
+      scheduler() {
+        if (!this.isPlaying) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const scheduleAhead = 0.22;
+        while (this.nextNoteTime < ctx.currentTime + scheduleAhead) {
+          this.scheduleStep(this.currentStep, this.nextNoteTime, ctx);
+          const secondsPerStep = (60.0 / this.tempo) / 4.0;
+          this.nextNoteTime += secondsPerStep;
+          this.currentStep = (this.currentStep + 1) % 256;
+        }
+        this.timerId = setTimeout(() => this.scheduler(), 45);
+      }
+
+      scheduleStep(step, time, ctx) {
+        const barIdx = Math.floor(step / 16);
+        const stepInBar = step % 16;
+
+        // 1. 溫暖木質低音提琴 (Pillow Bass，第 1 拍與第 3 拍)
+        if (stepInBar === 0 || stepInBar === 8) {
+          const noteName = this.bassByBar[barIdx];
+          const freq = this.noteFreqs[noteName];
+          if (freq) this.playBass(freq, time, stepInBar === 0 ? 0.65 : 0.48, ctx);
+        }
+
+        // 2. 烏克麗麗/木琴柔和伴奏琶音
+        const chord = this.chordPlucks[barIdx];
+        if (chord) {
+          let pluckNote = null;
+          if (stepInBar === 4) pluckNote = chord[0];
+          else if (stepInBar === 6) pluckNote = chord[1];
+          else if (stepInBar === 8) pluckNote = chord[2];
+          else if (stepInBar === 12) pluckNote = chord[1];
+          else if (stepInBar === 14) pluckNote = chord[0];
+          if (pluckNote && this.noteFreqs[pluckNote]) {
+            this.playPluck(this.noteFreqs[pluckNote], time, 0.26, ctx);
+          }
+        }
+
+        // 3. 卡林巴木質琴清亮主旋律
+        const mel = this.melodyLookup[step];
+        if (mel && mel.freq) {
+          this.playKalimba(mel.freq, time, mel.dur, ctx);
+        }
+
+        // 4. 微風沙錘氣氛節奏 (Soft Breeze Shaker，輕柔反拍)
+        if (stepInBar % 4 === 2) {
+          this.playShaker(time, ctx);
+        }
+      }
+
+      playKalimba(freq, time, dur, ctx) {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const g1 = ctx.createGain();
+        const g2 = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2600, time);
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(freq, time);
+
+        // 高八度微量泛音，模擬木琴/八音盒輕敲的金屬叮咚聲
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq * 3, time);
+
+        g1.gain.setValueAtTime(0.001, time);
+        g1.gain.linearRampToValueAtTime(0.18, time + 0.008);
+        g1.gain.exponentialRampToValueAtTime(0.0005, time + dur);
+
+        g2.gain.setValueAtTime(0.001, time);
+        g2.gain.linearRampToValueAtTime(0.045, time + 0.005);
+        g2.gain.exponentialRampToValueAtTime(0.0005, time + 0.07);
+
+        osc1.connect(g1);
+        osc2.connect(g2);
+        g1.connect(filter);
+        g2.connect(filter);
+        filter.connect(this.masterGain);
+
+        osc1.start(time);
+        osc2.start(time);
+        osc1.stop(time + dur + 0.03);
+        osc2.stop(time + 0.08);
+      }
+
+      playPluck(freq, time, dur, ctx) {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1500, time);
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, time);
+
+        g.gain.setValueAtTime(0.001, time);
+        g.gain.linearRampToValueAtTime(0.065, time + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0005, time + dur);
+
+        osc.connect(g);
+        g.connect(filter);
+        filter.connect(this.masterGain);
+
+        osc.start(time);
+        osc.stop(time + dur + 0.02);
+      }
+
+      playBass(freq, time, dur, ctx) {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(170, time);
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, time);
+
+        g.gain.setValueAtTime(0.001, time);
+        g.gain.linearRampToValueAtTime(0.12, time + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0005, time + dur);
+
+        osc.connect(g);
+        g.connect(filter);
+        filter.connect(this.masterGain);
+
+        osc.start(time);
+        osc.stop(time + dur + 0.02);
+      }
+
+      playShaker(time, ctx) {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(4500, time);
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(220 + Math.random() * 80, time);
+
+        g.gain.setValueAtTime(0.001, time);
+        g.gain.linearRampToValueAtTime(0.014, time + 0.003);
+        g.gain.exponentialRampToValueAtTime(0.0002, time + 0.035);
+
+        osc.connect(g);
+        g.connect(filter);
+        filter.connect(this.masterGain);
+
+        osc.start(time);
+        osc.stop(time + 0.04);
+      }
+
+      updateUI() {
+        const btnHeader = document.getElementById('btn-bgm');
+        const textHeader = document.getElementById('btn-bgm-text');
+        const btnDock = document.getElementById('btn-bgm-dock');
+        const textDock = document.getElementById('btn-bgm-dock-text');
+
+        if (this.isPlaying) {
+          if (btnHeader) btnHeader.classList.add('music-playing');
+          if (textHeader) textHeader.textContent = '輕音樂：播放中';
+          if (btnDock) btnDock.classList.add('music-playing');
+          if (textDock) textDock.textContent = '輕音樂：播放中';
+        } else {
+          if (btnHeader) btnHeader.classList.remove('music-playing');
+          if (textHeader) textHeader.textContent = '輕音樂：已暫停';
+          if (btnDock) btnDock.classList.remove('music-playing');
+          if (textDock) textDock.textContent = '輕音樂：已暫停';
+        }
+      }
+    }
+    const bgm = new BgmEngine();
+
+    /* =========================================================================
+       3. Three.js 柔和繪本風 3D 場景與光影架設（針對 Three.js r128 精準校準曝光度）
+       ========================================================================= */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xcce6f0);
+    scene.fog = new THREE.Fog(0xcce6f0, 82, 190);
+
+    const camera = new THREE.PerspectiveCamera(38, container.clientWidth / container.clientHeight, 0.5, 400);
+    camera.position.set(0, 56, 62);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI / 2.35;
+    controls.minDistance = 16;
+    controls.maxDistance = 125;
+    controls.target.set(0, 0, 1);
+
+    // Three.js r128 傳統光照強度校準（避免 >1.0 導致淺色模型過曝泛白）
+    const hemiLight = new THREE.HemisphereLight(0xfff6e8, 0x6b8c85, 0.58);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 0.54);
+    sunLight.position.set(-34, 58, 30);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    const d = 58;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 5;
+    sunLight.shadow.camera.far = 180;
+    scene.add(sunLight);
+
+    /* =========================================================================
+       4. 溫潤高辨識度繪本材質庫與圓潤建模工具
+       ========================================================================= */
+    const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.85,
+      metalness: 0.02,
+      flatShading: true,
+      ...extra
+    });
+
+    // 溫暖清晰繪本色票材質（飽滿柔和、不刺眼且層次分明）
+    const PALETTE = {
+      cream: 0xf5dfb8,   // 暖奶油沙灘夾層
+      rock: 0x8e7c8c,    // 可可紫灰島礁岩壁
+      grass: 0x78be6a,   // 清新抹茶草原頂面
+      matcha: 0x469652,  // 飽滿森林綠樹冠
+      green2: 0x6cb858,  // 嫩芽綠樹冠
+      wood: 0xa86b3e,    // 溫潤烤橡木（木橋與樹幹）
+      rail: 0xdba060,    // 蜂蜜淺木色（木橋交錯板）
+      pink: 0xe07594,    // 櫻花粉圓樹
+      white: 0xfaf2e4,   // 暖象牙白建築
+      dark: 0x43384d,    // 深梅炭灰路燈與底座
+      teal: 0x2f8a80,    // 湖水青綠屋頂與符號
+      orange: 0xe36d36,  // 暖柿橘屋頂與金幣
+      purple: 0x7d5cb8,  // 鳶尾紫幾何地標
+      warmGlow: new THREE.MeshStandardMaterial({ color: 0xffdf80, emissive: 0xffb830, emissiveIntensity: 0.45 })
+    };
+
+    function makeMesh(geo, color, x = 0, y = 0, z = 0, opts = {}) {
+      const material = color instanceof THREE.Material ? color : mat(color, opts);
+      const m = new THREE.Mesh(geo, material);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      return m;
+    }
+
+    const box = (w, h, d, c, x = 0, y = 0, z = 0, o) => makeMesh(new THREE.BoxGeometry(w, h, d), c, x, y + h / 2, z, o);
+    const cyl = (rTop, rBot, h, c, x = 0, y = 0, z = 0, seg = 12, o) => makeMesh(new THREE.CylinderGeometry(rTop, rBot, h, seg), c, x, y + h / 2, z, o);
+    const cone = (r, h, c, x = 0, y = 0, z = 0, seg = 10, o) => makeMesh(new THREE.ConeGeometry(r, h, seg), c, x, y + h / 2, z, o);
+    const sphere = (r, c, x = 0, y = 0, z = 0, detail = 1, o) => makeMesh(new THREE.IcosahedronGeometry(r, detail), c, x, y, z, o);
+
+    // 繪本風小道具：溫暖小路燈、木長椅、立體課本、搖曳椰子樹、粉彩圓球樹
+    function addLamp(parent, x, z) {
+      parent.add(cyl(0.06, 0.08, 1.8, PALETTE.dark, x, 0, z, 8));
+      parent.add(cyl(0.2, 0.12, 0.15, PALETTE.wood, x, 1.8, z, 8));
+      parent.add(sphere(0.18, PALETTE.warmGlow, x, 2.05, z, 1));
+    }
+
+    function addBench(parent, x, z, rotY = 0) {
+      const b = new THREE.Group();
+      b.position.set(x, 0, z);
+      b.rotation.y = rotY;
+      b.add(box(1.2, 0.12, 0.42, PALETTE.wood, 0, 0.35, 0));
+      b.add(box(1.2, 0.38, 0.1, PALETTE.wood, 0, 0.48, -0.16));
+      b.add(box(0.1, 0.35, 0.3, PALETTE.dark, -0.42, 0, 0));
+      b.add(box(0.1, 0.35, 0.3, PALETTE.dark, 0.42, 0, 0));
+      parent.add(b);
+    }
+
+    function addBookProp(parent, x, y, z, coverColor = PALETTE.orange) {
+      const bk = new THREE.Group();
+      bk.position.set(x, y, z);
+      bk.rotation.y = 0.3;
+      bk.add(box(0.95, 0.14, 0.72, coverColor, 0, 0, 0));
+      bk.add(box(0.84, 0.1, 0.68, PALETTE.white, 0, 0.1, 0));
+      bk.add(box(0.95, 0.06, 0.72, coverColor, 0, 0.18, 0));
+      parent.add(bk);
+    }
+
+    function createPalmTree(x, z, scale = 1, leanAngle = 0.22) {
+      const palm = new THREE.Group();
+      palm.position.set(x, 0, z);
+      palm.scale.setScalar(scale);
+
+      let curX = 0, curY = 0;
+      for (let i = 0; i < 4; i++) {
+        const segH = 0.6;
+        const r1 = 0.2 - i * 0.025;
+        const r2 = 0.23 - i * 0.025;
+        const trunkSeg = cyl(r1, r2, segH, PALETTE.wood, curX, curY, 0, 8);
+        trunkSeg.rotation.z = -leanAngle * (i + 1) * 0.32;
+        palm.add(trunkSeg);
+        curX += Math.sin(leanAngle * (i + 1) * 0.32) * segH;
+        curY += Math.cos(leanAngle * (i + 1) * 0.32) * segH * 0.92;
+      }
+
+      const crown = new THREE.Group();
+      crown.position.set(curX, curY + 0.08, 0);
+      for (let c = 0; c < 3; c++) {
+        const a = (c / 3) * Math.PI * 2;
+        crown.add(sphere(0.16, 0x9c7a54, Math.cos(a) * 0.18, -0.05, Math.sin(a) * 0.18, 0));
+      }
+      for (let f = 0; f < 6; f++) {
+        const leafGroup = new THREE.Group();
+        leafGroup.rotation.y = (f / 6) * Math.PI * 2;
+        const blade1 = box(1.0, 0.07, 0.35, PALETTE.matcha, 0.5, 0, 0);
+        blade1.rotation.z = -0.16;
+        const blade2 = box(0.85, 0.06, 0.26, PALETTE.grass, 1.3, -0.25, 0);
+        blade2.rotation.z = -0.45;
+        leafGroup.add(blade1, blade2);
+        crown.add(leafGroup);
+      }
+      palm.add(crown);
+      const phase = Math.random() * 6.28;
+      animCallbacks.push(t => {
+        crown.rotation.z = Math.sin(t * 1.8 + phase) * 0.06;
+      });
+      return palm;
+    }
+
+    function createSoftTree(x, z, style = 0) {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.add(cyl(0.12, 0.18, 0.95, PALETTE.wood, 0, 0, 0, 8));
+      const c1 = style === 1 ? PALETTE.pink : PALETTE.matcha;
+      const c2 = style === 1 ? PALETTE.cream : PALETTE.green2;
+      g.add(sphere(0.72, c1, 0, 1.25, 0, 1));
+      g.add(sphere(0.52, c2, 0.35, 1.5, 0.15, 1));
+      return g;
+    }
+
+    /* =========================================================================
+       5. 柔和粉彩海面 (支援晨光/海霧/夜海三種色調)
+       ========================================================================= */
+    const waterGeo = new THREE.PlaneGeometry(360, 360, 55, 55);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterBasePos = Float32Array.from(waterGeo.attributes.position.array);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x5fb0c4,
+      roughness: 0.72,
+      metalness: 0.02,
+      flatShading: true
+    });
+    const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+    waterMesh.position.y = -0.85;
+    waterMesh.receiveShadow = true;
+    scene.add(waterMesh);
+
+    /* =========================================================================
+       6. 各島嶼的圓潤繪本風數學地標 (LANDMARK_BUILDERS)
+       ========================================================================= */
+    const LANDMARK_BUILDERS = {
+      hub(g) {
+        g.add(cyl(3.2, 3.5, 0.22, PALETTE.cream, 0, 0, 0, 12));
+        g.add(cyl(1.0, 1.45, 4.0, PALETTE.white, 0, 0.2, -0.7, 12));
+        for (const y of [1.1, 2.5]) {
+          g.add(cyl(1.28, 1.32, 0.28, PALETTE.orange, 0, y, -0.7, 12));
+        }
+        g.add(cone(1.45, 1.3, PALETTE.teal, 0, 4.2, -0.7, 12));
+
+        const blades = new THREE.Group();
+        blades.position.set(0, 3.4, 0.5);
+        blades.add(sphere(0.3, PALETTE.orange, 0, 0, 0.08, 1));
+        for (let i = 0; i < 4; i++) {
+          const bGroup = new THREE.Group();
+          bGroup.rotation.z = (i / 4) * Math.PI * 2;
+          bGroup.add(box(0.26, 2.0, 0.07, PALETTE.rail, 0, 1.0, 0));
+          bGroup.add(box(0.5, 1.4, 0.04, PALETTE.white, 0.18, 1.2, 0.03));
+          blades.add(bGroup);
+        }
+        g.add(blades);
+        animCallbacks.push(t => { blades.rotation.z = -t * 0.9; });
+
+        addBench(g, -2.0, 1.8, 0.3);
+        addBench(g, 2.0, 1.8, -0.3);
+        addLamp(g, -3.1, 1.8);
+        addLamp(g, 3.1, 1.8);
+      },
+
+      u1(g) {
+        g.add(box(2.7, 1.9, 2.2, PALETTE.cream, -1.0, 0, -0.3));
+        const roof = cone(2.2, 1.15, PALETTE.orange, -1.0, 1.9, -0.3, 4);
+        roof.rotation.y = Math.PI / 4;
+        g.add(roof);
+        g.add(box(0.7, 1.1, 0.08, PALETTE.wood, -1.0, 0, 0.82));
+        g.add(box(1.5, 1.5, 1.5, PALETTE.rail, 1.5, 0, 0.3));
+        const coin = cyl(0.6, 0.6, 0.16, PALETTE.orange, 1.5, 2.1, 0.3, 16);
+        coin.rotation.x = Math.PI / 2;
+        g.add(coin);
+        addBookProp(g, 1.4, 0, -1.3, PALETTE.teal);
+        animCallbacks.push(t => {
+          coin.rotation.z = t * 1.8;
+          coin.position.y = 2.15 + Math.sin(t * 2.5) * 0.2;
+        });
+      },
+
+      u2(g) {
+        g.add(cyl(2.2, 2.5, 0.28, PALETTE.cream, 0, 0, 0, 12));
+        const plusGroup = new THREE.Group();
+        plusGroup.position.set(-1.2, 1.7, 0.2);
+        plusGroup.add(box(1.75, 0.5, 0.5, PALETTE.orange, 0, -0.25, 0));
+        plusGroup.add(box(0.5, 1.75, 0.5, PALETTE.orange, 0, -0.88, 0));
+        g.add(plusGroup);
+
+        const minusGroup = new THREE.Group();
+        minusGroup.position.set(1.3, 1.5, 0.2);
+        minusGroup.add(box(1.75, 0.5, 0.5, PALETTE.teal, 0, -0.25, 0));
+        g.add(minusGroup);
+
+        addBookProp(g, 0, 0.28, 1.5, PALETTE.purple);
+        animCallbacks.push(t => {
+          plusGroup.position.y = 1.75 + Math.sin(t * 2.2) * 0.18;
+          minusGroup.position.y = 1.5 + Math.cos(t * 2.2) * 0.18;
+        });
+      },
+
+      u3(g) {
+        g.add(box(0.6, 2.6, 0.48, PALETTE.rail, -1.7, 0, 0));
+        g.add(box(0.6, 2.6, 0.48, PALETTE.rail, 1.7, 0, 0));
+        g.add(box(4.5, 0.85, 0.52, PALETTE.orange, 0, 2.4, 0));
+        for (let i = -4; i <= 4; i++) {
+          const tickH = i % 2 === 0 ? 0.38 : 0.22;
+          g.add(box(0.08, tickH, 0.56, PALETTE.dark, i * 0.42, 2.4, 0));
+        }
+        const frog = new THREE.Group();
+        frog.add(sphere(0.4, PALETTE.matcha, 0, 0.38, 0, 1));
+        g.add(frog);
+        animCallbacks.push(t => {
+          const cycle = (t * 1.4) % 2;
+          frog.position.set((cycle - 1) * 1.4, Math.abs(Math.sin(t * 2.8)) * 0.8, 1.2);
+        });
+      },
+
+      u4(g) {
+        const dice = new THREE.Group();
+        dice.position.set(-1.0, 1.0, 0.2);
+        dice.add(box(2.0, 2.0, 2.0, PALETTE.white, 0, -1.0, 0));
+        dice.add(cyl(0.3, 0.3, 0.08, PALETTE.orange, 0, 0.98, 0, 12));
+        dice.rotation.y = 0.35;
+        g.add(dice);
+
+        g.add(cyl(0.2, 0.28, 2.4, PALETTE.wood, 1.4, 0, -0.3, 10));
+        const multCross = new THREE.Group();
+        multCross.position.set(1.4, 2.4, 0.1);
+        const bar1 = box(1.9, 0.44, 0.44, PALETTE.orange, 0, -0.22, 0);
+        bar1.rotation.z = Math.PI / 4;
+        const bar2 = box(1.9, 0.44, 0.44, PALETTE.orange, 0, -0.22, 0);
+        bar2.rotation.z = -Math.PI / 4;
+        multCross.add(bar1, bar2);
+        g.add(multCross);
+        animCallbacks.push(t => { multCross.rotation.z = t * 1.2; });
+      },
+
+      mid(g) {
+        g.add(box(3.0, 2.0, 2.4, PALETTE.cream, 0, 0, 0));
+        for (const [tx, tz] of [[-1.5, -1.2], [1.5, -1.2], [-1.5, 1.2], [1.5, 1.2]]) {
+          g.add(cyl(0.52, 0.6, 2.6, PALETTE.white, tx, 0, tz, 10));
+          g.add(cone(0.7, 1.1, PALETTE.orange, tx, 2.6, tz, 10));
+        }
+        g.add(cyl(0.85, 0.95, 3.5, PALETTE.rail, 0, 0, 0, 10));
+        g.add(cone(1.15, 1.35, PALETTE.teal, 0, 3.5, 0, 10));
+        const star = sphere(0.45, PALETTE.warmGlow, 0, 5.4, 0, 1);
+        g.add(star);
+        animCallbacks.push(t => {
+          star.rotation.y = t * 2.0;
+          star.position.y = 5.4 + Math.sin(t * 2.6) * 0.18;
+        });
+      },
+
+      u5(g) {
+        g.add(box(2.6, 0.42, 0.42, PALETTE.teal, -0.3, 0, 0.3));
+        g.add(box(0.42, 2.6, 0.42, PALETTE.teal, -1.4, 0, 0.3));
+        const hyp = box(3.4, 0.38, 0.38, PALETTE.matcha, -0.3, 1.0, 0.3);
+        hyp.rotation.z = -Math.PI / 4;
+        g.add(hyp);
+        g.add(cone(1.05, 2.0, PALETTE.purple, 1.5, 0, -0.4, 6));
+      },
+
+      u6(g) {
+        g.add(cyl(1.7, 2.0, 0.35, PALETTE.cream, -0.5, 0, 0, 10));
+        const divGroup = new THREE.Group();
+        divGroup.position.set(-0.5, 1.9, 0);
+        divGroup.add(box(2.2, 0.48, 0.48, PALETTE.orange, 0, -0.24, 0));
+        divGroup.add(sphere(0.42, PALETTE.teal, 0, 0.8, 0, 1));
+        divGroup.add(sphere(0.42, PALETTE.teal, 0, -0.8, 0, 1));
+        g.add(divGroup);
+        g.add(cyl(0.75, 0.58, 0.75, PALETTE.wood, 1.5, 0, 0.5, 10));
+        g.add(sphere(0.28, PALETTE.orange, 1.5, 0.9, 0.5, 1));
+        animCallbacks.push(t => { divGroup.rotation.y = Math.sin(t * 1.4) * 0.4; });
+      },
+
+      u7(g) {
+        g.add(box(2.2, 1.3, 1.5, PALETTE.orange, -0.6, 0, 0));
+        const dial = cyl(0.7, 0.7, 0.14, PALETTE.white, -0.6, 0.7, 0.78, 16);
+        dial.rotation.x = Math.PI / 2;
+        g.add(dial);
+        const needle = new THREE.Group();
+        needle.position.set(-0.6, 0.7, 0.88);
+        needle.add(box(0.08, 0.5, 0.05, PALETTE.dark, 0, 0.18, 0));
+        g.add(needle);
+        g.add(cyl(1.2, 0.9, 0.22, PALETTE.cream, -0.6, 1.5, 0, 12));
+        g.add(cyl(0.45, 0.55, 0.85, PALETTE.rail, -0.6, 1.72, 0, 10));
+        animCallbacks.push(t => { needle.rotation.z = Math.sin(t * 2.5) * 0.75; });
+      },
+
+      u8(g) {
+        g.add(cyl(2.2, 2.2, 0.18, PALETTE.wood, 0, 0, 0, 16));
+        const mainPizza = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.85, 1.85, 0.32, 16, 1, false, 0, Math.PI * 1.5),
+          mat(PALETTE.rail)
+        );
+        mainPizza.position.set(0, 0.34, 0);
+        g.add(mainPizza);
+
+        const sliceGroup = new THREE.Group();
+        const sliceMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.85, 1.85, 0.32, 8, 1, false, Math.PI * 1.55, Math.PI * 0.42),
+          mat(PALETTE.orange)
+        );
+        sliceGroup.add(sliceMesh);
+        g.add(sliceGroup);
+        animCallbacks.push(t => {
+          const offset = (Math.sin(t * 2.2) + 1) * 0.3;
+          sliceGroup.position.set(offset, 0.5 + offset * 0.7, -offset);
+        });
+      },
+
+      u9(g) {
+        const colors = [PALETTE.orange, PALETTE.rail, PALETTE.matcha, PALETTE.teal, PALETTE.purple];
+        const bars = [];
+        for (let i = 0; i < 5; i++) {
+          const h = 0.75 + i * 0.5;
+          const b = box(0.62, h, 0.62, colors[i], (i - 2) * 0.8, 0, 0);
+          g.add(b);
+          bars.push({ mesh: b, idx: i });
+        }
+        animCallbacks.push(t => {
+          bars.forEach(item => {
+            item.mesh.scale.y = 1 + Math.sin(t * 2.6 - item.idx * 0.6) * 0.15;
+          });
+        });
+      },
+
+      fin(g) {
+        g.add(box(3.4, 0.35, 2.8, PALETTE.cream, 0, 0, 0));
+        for (const [px, pz] of [[-1.2, -0.9], [1.2, -0.9], [-1.2, 0.9], [1.2, 0.9]]) {
+          g.add(cyl(0.2, 0.24, 2.2, PALETTE.rail, px, 0.35, pz, 10));
+        }
+        g.add(box(1.7, 1.0, 1.1, PALETTE.wood, 0, 0.35, 0));
+        g.add(box(1.8, 0.32, 1.2, PALETTE.orange, 0, 1.35, 0));
+        const gem = sphere(0.52, PALETTE.warmGlow, 0, 2.8, 0, 1);
+        g.add(gem);
+        animCallbacks.push(t => {
+          gem.rotation.y = t * 1.8;
+          gem.position.y = 2.8 + Math.sin(t * 2.8) * 0.2;
+        });
+      }
+    };
+
+    /* =========================================================================
+       7. 建立圓潤奶油夾心島嶼 (12邊圓弧感 + 奶油夾心帶 + 路燈與書本)
+       ========================================================================= */
+    function renderLabelInner(el, isl) {
+      if (isl.isHub) {
+        el.innerHTML = `<span>⚓</span><span>${isl.code}・${isl.title}</span>`;
+      } else {
+        const gameTag = isl.gameUrl
+          ? `<span style="background:var(--primary-light); color:var(--primary); border:1px solid var(--primary); font-size:10px; padding:1px 6px; border-radius:99px;">🎮遊戲</span>`
+          : '';
+        el.innerHTML = `
+          <span style="background:${isl.color}; color:#fff; padding:1px 8px; border-radius:99px; font-size:11.5px;">${isl.code}</span>
+          <span>${isl.title}</span>
+          ${gameTag}
+          <span style="color:#d9792f; font-size:12px;">${isl.read ? '✓' : `★${isl.stars}`}</span>
+        `;
+      }
+    }
+
+    ISLANDS.forEach((isl, index) => {
+      const g = new THREE.Group();
+      g.position.set(isl.x, 0, isl.z);
+      const r = isl.isHub ? 6.6 : (isl.isSpecial ? 5.6 : 4.9);
+
+      // 參考《紅焰教學夢幻島》的奶油夾心圓潤島嶼結構 (10邊圓潤多邊形)
+      g.add(cyl(r * 0.98, r * 1.06, 1.8, PALETTE.rock, 0, -1.4, 0, 10));
+      g.add(cyl(r * 1.01, r * 1.02, 0.14, PALETTE.cream, 0, -0.6, 0, 10)); // 奶油夾心層 1
+      g.add(cyl(r * 1.03, r * 1.04, 0.12, PALETTE.cream, 0, -1.0, 0, 10)); // 奶油夾心層 2
+      g.add(cyl(r, r, 0.28, isl.hexColor, 0, 0.35, 0, 10));                // 粉彩主題色領圈
+      g.add(cyl(r * 0.97, r * 0.98, 0.22, PALETTE.grass, 0, 0.62, 0, 10)); // 溫潤燕麥草地頂面
+
+      // 水面柔和呼吸漣漪圈
+      const rippleGeo = new THREE.RingGeometry(r * 1.08, r * 1.18, 24);
+      rippleGeo.rotateX(-Math.PI / 2);
+      const rippleMat = new THREE.MeshBasicMaterial({
+        color: 0xfffaf1,
+        transparent: true,
+        opacity: 0.45,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const ripple = new THREE.Mesh(rippleGeo, rippleMat);
+      ripple.position.y = -0.8;
+      g.add(ripple);
+      const phase = index * 0.7;
+      animCallbacks.push(t => {
+        const s = 1 + 0.05 * (1 + Math.sin(t * 1.8 + phase));
+        ripple.scale.set(s, 1, s);
+      });
+
+      // 掛載單元立體地標
+      const kitGroup = new THREE.Group();
+      kitGroup.position.y = 0.84;
+      if (LANDMARK_BUILDERS[isl.id]) {
+        LANDMARK_BUILDERS[isl.id](kitGroup);
+      }
+      g.add(kitGroup);
+
+      // 點綴搖曳椰子樹、粉彩圓樹與溫暖小路燈
+      if (!isl.isHub) {
+        const pTree = createPalmTree(-r * 0.62, -r * 0.42, 0.88, 0.22);
+        pTree.position.y = 0.84;
+        const sTree = createSoftTree(r * 0.6, -r * 0.38, index % 2);
+        sTree.position.y = 0.84;
+        g.add(pTree, sTree);
+        addLamp(kitGroup, -r * 0.55, r * 0.45);
+      } else {
+        const p1 = createPalmTree(-4.2, -2.5, 1.0, 0.22); p1.position.y = 0.84;
+        const p2 = createPalmTree(4.2, -2.5, 0.95, -0.22); p2.position.y = 0.84;
+        g.add(p1, p2);
+      }
+
+      // 點擊感應柱
+      const hitMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(r * 1.05, r * 1.05, 5.5, 12),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      hitMesh.position.y = 2.2;
+      hitMesh.userData = { islandId: isl.id };
+      g.add(hitMesh);
+      pickMeshes.push(hitMesh);
+
+      scene.add(g);
+      islandGroups[isl.id] = g;
+
+      // 建立 2D 浮動標籤
+      const el = document.createElement('div');
+      el.className = `island-label ${isl.isHub ? 'is-hub' : ''}`;
+      el.style.setProperty('--badge-color', isl.color);
+      renderLabelInner(el, isl);
+      el.onclick = (e) => {
+        e.stopPropagation();
+        selectIsland(isl.id);
+      };
+      labelsContainer.appendChild(el);
+      labelElements[isl.id] = el;
+    });
+
+    // 建立中央放射狀溫潤木橋
+    outerIslands.forEach(isl => {
+      createSoftBridge(new THREE.Vector3(0, 0.3, 0), new THREE.Vector3(isl.x, 0.3, isl.z), isl.hexColor);
+    });
+
+    function createSoftBridge(startPos, endPos, accentColor) {
+      const bridgeGroup = new THREE.Group();
+      const dir = new THREE.Vector3().subVectors(endPos, startPos);
+      const fullDist = dir.length();
+      const normDir = dir.clone().normalize();
+
+      const startOffset = 6.7;
+      const endOffset = fullDist - 4.9;
+      const bridgeLen = endOffset - startOffset;
+      const steps = Math.floor(bridgeLen / 1.2);
+
+      for (let i = 0; i <= steps; i++) {
+        const ratio = i / steps;
+        const d = startOffset + ratio * bridgeLen;
+        const pos = startPos.clone().add(normDir.clone().multiplyScalar(d));
+        pos.y = 0.25 + Math.sin(ratio * Math.PI) * 0.95;
+
+        const plank = new THREE.Mesh(
+          new THREE.BoxGeometry(1.45, 0.14, 0.65),
+          mat(i % 2 === 0 ? PALETTE.wood : PALETTE.rail)
+        );
+        plank.position.copy(pos);
+        plank.lookAt(endPos.x, pos.y, endPos.z);
+        plank.castShadow = true;
+        bridgeGroup.add(plank);
+
+        if (i % 3 === 0) {
+          for (const side of [-0.65, 0.65]) {
+            const post = cyl(0.07, 0.07, 0.55, PALETTE.cream, 0, 0, 0, 6);
+            post.position.set(side, 0.1, 0);
+            plank.add(post);
+            const cap = sphere(0.1, accentColor, side, 0.7, 0, 0);
+            plank.add(cap);
+          }
+        }
+      }
+      scene.add(bridgeGroup);
+    }
+
+    /* =========================================================================
+       8. 溫柔可愛海洋生態：噴水鯨魚、海豚、海鷗、小帆船
+       ========================================================================= */
+    function buildGentleWildlife() {
+      // 🐋 噴水藍鯨
+      for (let w = 0; w < 2; w++) {
+        const whale = new THREE.Group();
+        const bodyMesh = sphere(1.7, 0x7fa6c4, 0, 0, 0, 1);
+        bodyMesh.scale.set(1.1, 0.82, 1.85);
+        const tailGroup = new THREE.Group();
+        tailGroup.position.set(0, 0.1, -2.7);
+        tailGroup.add(box(2.0, 0.16, 0.8, 0x6b92b0, 0, 0, 0));
+
+        const spoutGroup = new THREE.Group();
+        spoutGroup.position.set(0, 1.3, 1.1);
+        const drops = [];
+        for (let d = 0; d < 8; d++) {
+          const drop = sphere(0.16, PALETTE.white, 0, 0, 0, 0);
+          spoutGroup.add(drop);
+          drops.push({ mesh: drop, angle: (d / 8) * Math.PI * 2 });
+        }
+        whale.add(bodyMesh, tailGroup, spoutGroup);
+        scene.add(whale);
+
+        const orbitR = 45 + w * 7;
+        const speed = w === 0 ? 0.1 : -0.085;
+        const offset = w * Math.PI;
+        animCallbacks.push(t => {
+          const ang = t * speed + offset;
+          const x = Math.cos(ang) * orbitR;
+          const z = Math.sin(ang) * orbitR;
+          const bob = Math.sin(t * 1.6 + w) * 0.35;
+          whale.position.set(x, -0.7 + bob, z);
+          const nextAng = ang + 0.05 * Math.sign(speed);
+          whale.lookAt(Math.cos(nextAng) * orbitR, -0.7 + bob, Math.sin(nextAng) * orbitR);
+          tailGroup.rotation.x = Math.sin(t * 4.5) * 0.3;
+
+          drops.forEach((p, idx) => {
+            const pr = ((t * 1.1 + idx * 0.12) % 1);
+            p.mesh.position.set(
+              Math.cos(p.angle) * pr * 1.0,
+              Math.sin(pr * Math.PI) * 2.3,
+              Math.sin(p.angle) * pr * 1.0
+            );
+            p.mesh.scale.setScalar(1 - pr * 0.6);
+          });
+        });
+      }
+
+      // 🐬 躍水海豚
+      for (let d = 0; d < 4; d++) {
+        const dolphin = new THREE.Group();
+        const dBody = sphere(0.42, 0x8fb8c9, 0, 0, 0, 1);
+        dBody.scale.set(0.7, 0.8, 1.8);
+        dolphin.add(dBody);
+        scene.add(dolphin);
+
+        const spotAng = (d / 4) * Math.PI * 2 + 0.4;
+        const spotX = Math.cos(spotAng) * 19;
+        const spotZ = Math.sin(spotAng) * 19;
+        animCallbacks.push(t => {
+          const cycle = (t * 0.65 + d * 1.2) % 2.5;
+          if (cycle < 1.0) {
+            dolphin.visible = true;
+            dolphin.position.set(spotX + (cycle - 0.5) * 4.2, Math.sin(cycle * Math.PI) * 2.6 - 0.7, spotZ);
+            dolphin.rotation.z = -(cycle - 0.5) * 1.3;
+          } else {
+            dolphin.visible = false;
+          }
+        });
+      }
+
+      // 🕊️ 白色海鷗
+      for (let b = 0; b < 7; b++) {
+        const bird = new THREE.Group();
+        bird.add(sphere(0.22, PALETTE.white, 0, 0, 0, 0));
+        const wingL = new THREE.Group(); wingL.add(box(1.1, 0.04, 0.32, PALETTE.white, 0.55, 0, 0));
+        const wingR = new THREE.Group(); wingR.add(box(1.1, 0.04, 0.32, PALETTE.white, -0.55, 0, 0));
+        bird.add(wingL, wingR);
+        scene.add(bird);
+
+        const bRadius = 15 + b * 3.5;
+        const bHeight = 13 + (b % 3) * 2.5;
+        const bSpeed = 0.14 * (b % 2 ? 1 : -1);
+        const bOffset = b * 1.1;
+        animCallbacks.push(t => {
+          const u = t * bSpeed + bOffset;
+          bird.position.set(Math.cos(u) * bRadius, bHeight + Math.sin(t + b) * 0.5, Math.sin(u) * bRadius);
+          const nextU = u + 0.05 * Math.sign(bSpeed);
+          bird.lookAt(Math.cos(nextU) * bRadius, bird.position.y, Math.sin(nextU) * bRadius);
+          const flap = Math.sin(t * 6.5 + b) * 0.5;
+          wingL.rotation.z = flap;
+          wingR.rotation.z = -flap;
+        });
+      }
+
+      // ⛵ 繪本小帆船
+      const sailCols = [PALETTE.orange, PALETTE.teal, PALETTE.pink, PALETTE.rail];
+      for (let s = 0; s < 4; s++) {
+        const boat = new THREE.Group();
+        boat.add(box(1.0, 0.35, 2.0, PALETTE.wood, 0, 0, 0));
+        const sail = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.6, 3), mat(sailCols[s], { side: THREE.DoubleSide }));
+        sail.position.set(0, 1.2, 0);
+        sail.scale.set(0.15, 1, 1);
+        boat.add(sail);
+        scene.add(boat);
+
+        const boatR = 21;
+        const bPhase = (s / 4) * Math.PI * 2;
+        animCallbacks.push(t => {
+          const a = -t * 0.13 + bPhase;
+          boat.position.set(Math.cos(a) * boatR, -0.65 + Math.sin(t * 2 + s) * 0.07, Math.sin(a) * boatR);
+          boat.lookAt(Math.cos(a - 0.1) * boatR, boat.position.y, Math.sin(a - 0.1) * boatR);
+        });
+      }
+    }
+    buildGentleWildlife();
+
+    /* =========================================================================
+       9. Q 版探險家小朋友
+       ========================================================================= */
+    const player = new THREE.Group();
+    player.position.set(0, 0.85, 2.2);
+    scene.add(player);
+
+    const pHead = new THREE.Group();
+    pHead.position.y = 1.9;
+    pHead.add(sphere(0.72, 0xffe4c4, 0, 0, 0, 2));
+    pHead.add(sphere(0.1, 0x1e293b, 0.25, 0.05, 0.63, 1));
+    pHead.add(sphere(0.1, 0x1e293b, -0.25, 0.05, 0.63, 1));
+    pHead.add(sphere(0.12, 0xf4a298, 0.4, -0.08, 0.56, 1));
+    pHead.add(sphere(0.12, 0xf4a298, -0.4, -0.08, 0.56, 1));
+    pHead.add(cyl(0.92, 1.0, 0.1, PALETTE.rail, 0, 0.4, 0, 14));
+    pHead.add(cyl(0.6, 0.65, 0.4, PALETTE.cream, 0, 0.48, 0, 12));
+    pHead.add(cyl(0.66, 0.66, 0.1, PALETTE.orange, 0, 0.46, 0, 12));
+    player.add(pHead);
+
+    player.add(cyl(0.44, 0.52, 0.8, PALETTE.orange, 0, 0.7, 0, 10));
+    player.add(cyl(0.53, 0.5, 0.42, PALETTE.teal, 0, 0.65, 0, 10));
+    player.add(box(0.62, 0.68, 0.38, PALETTE.wood, 0, 0.78, -0.4));
+
+    const armL = new THREE.Group(); armL.position.set(0.52, 1.38, 0);
+    armL.add(cyl(0.12, 0.12, 0.5, 0xffe4c4, 0, -0.45, 0, 6));
+    const armR = new THREE.Group(); armR.position.set(-0.52, 1.38, 0);
+    armR.add(cyl(0.12, 0.12, 0.5, 0xffe4c4, 0, -0.45, 0, 6));
+    const legL = new THREE.Group(); legL.position.set(0.22, 0.68, 0);
+    legL.add(cyl(0.15, 0.15, 0.5, PALETTE.dark, 0, -0.5, 0, 6));
+    const legR = new THREE.Group(); legR.position.set(-0.22, 0.68, 0);
+    legR.add(cyl(0.15, 0.15, 0.5, PALETTE.dark, 0, -0.5, 0, 6));
+    player.add(armL, armR, legL, legR);
+
+    animCallbacks.push(t => {
+      if (!isWalking) {
+        pHead.position.y = 1.9 + Math.sin(t * 2.8) * 0.04;
+        armL.rotation.z = Math.sin(t * 2) * 0.08;
+        armR.rotation.z = -Math.sin(t * 2) * 0.08;
+      }
+    });
+
+    /* =========================================================================
+       10. 左側文青課程清單渲染 ＆ 進度更新
+       ========================================================================= */
+    function renderCourseList() {
+      const term = searchInput.value.trim().toLowerCase();
+      const grp = groupSelect.value;
+
+      const filtered = outerIslands.filter(isl => {
+        const matchGrp = !grp || isl.group === grp;
+        const matchTerm = !term ||
+          isl.title.toLowerCase().includes(term) ||
+          isl.summary.toLowerCase().includes(term) ||
+          isl.code.toLowerCase().includes(term) ||
+          isl.keypoints.some(k => k.toLowerCase().includes(term));
+        return matchGrp && matchTerm;
+      });
+
+      courseListEl.innerHTML = filtered.map(isl => `
+        <button class="course-entry ${isl.id === currentIslandId ? 'active-island' : ''}" data-island-id="${isl.id}">
+          <span class="course-num" style="background:${isl.color}">${isl.code}</span>
+          <span class="course-info">
+            <span class="course-title-row">
+              <span class="course-name">${isl.title}</span>
+              ${isl.gameUrl ? '<span class="game-ready-tag">🎮 遊戲已備妥</span>' : ''}
+            </span>
+            <small class="course-summary">${isl.summary}</small>
+          </span>
+          <span class="course-star">${isl.read ? '✓已讀' : `★${isl.stars}/3`}</span>
+        </button>
+      `).join('') || '<p class="hand-font" style="color:var(--muted); text-align:center; padding:20px;">找不到相符的單元，試試其他關鍵字。</p>';
+
+      courseListEl.querySelectorAll('.course-entry').forEach(btn => {
+        btn.onclick = () => selectIsland(btn.dataset.islandId);
+      });
+
+      // 更新統計與標籤
+      let totalStars = 0;
+      let readCount = 0;
+      outerIslands.forEach(isl => {
+        totalStars += isl.stars || 0;
+        if (isl.read) readCount++;
+      });
+      document.getElementById('star-counter').textContent = `${totalStars} / 33 星`;
+      document.getElementById('explored-count').textContent = `${readCount} / 11 已複習`;
+      document.getElementById('progress-fill').style.width = `${(readCount / 11) * 100}%`;
+
+      ISLANDS.forEach(isl => {
+        const el = labelElements[isl.id];
+        if (!el) return;
+        renderLabelInner(el, isl);
+        el.classList.toggle('is-current', isl.id === currentIslandId);
+      });
+    }
+    renderCourseList();
+
+    searchInput.addEventListener('input', renderCourseList);
+    groupSelect.addEventListener('change', renderCourseList);
+
+    /* =========================================================================
+       11. 小探險家走動與開啟單元重點統整面板
+       ========================================================================= */
+    function updateToast(msg) {
+      document.getElementById('status-toast').textContent = msg;
+    }
+
+    function walkPlayerToIsland(targetId, onArriveCallback = null) {
+      const targetIsl = ISLANDS.find(i => i.id === targetId);
+      if (!targetIsl) return;
+
+      document.getElementById('map-focus-title').textContent = `${targetIsl.code} · ${targetIsl.title}`;
+      document.getElementById('map-focus-sub').textContent = targetIsl.summary;
+
+      if (isWalking || targetId === currentIslandId) {
+        currentIslandId = targetId;
+        renderCourseList();
+        if (onArriveCallback) onArriveCallback();
+        return;
+      }
+
+      const waypoints = [];
+      const hubPoint = new THREE.Vector3(0, 0.85, 2.0);
+      if (currentIslandId !== 'hub' && targetId !== 'hub') {
+        waypoints.push(hubPoint);
+      }
+      if (targetId === 'hub') {
+        waypoints.push(hubPoint);
+      } else {
+        const dirToCenter = new THREE.Vector3(-targetIsl.x, 0, -targetIsl.z).normalize();
+        waypoints.push(new THREE.Vector3(
+          targetIsl.x + dirToCenter.x * 2.7,
+          0.85,
+          targetIsl.z + dirToCenter.z * 2.7
+        ));
+      }
+
+      isWalking = true;
+      updateToast(`🚶 小探險家正沿著木橋前往【${targetIsl.code} ${targetIsl.title}】…`);
+
+      function runSegment(segIdx) {
+        if (segIdx >= waypoints.length) {
+          currentIslandId = targetId;
+          isWalking = false;
+          armL.rotation.set(0, 0, 0);
+          armR.rotation.set(0, 0, 0);
+          legL.rotation.set(0, 0, 0);
+          legR.rotation.set(0, 0, 0);
+          renderCourseList();
+          sfx.playCheer();
+          confetti({ particleCount: 45, spread: 60, origin: { y: 0.65 } });
+          updateToast(`✨ 已抵達【${targetIsl.code} ${targetIsl.title}】！`);
+          if (onArriveCallback) onArriveCallback();
+          return;
+        }
+
+        const fromP = player.position.clone();
+        const toP = waypoints[segIdx];
+        const dist = fromP.distanceTo(toP);
+        const duration = Math.max(800, dist * 38);
+        const tStart = performance.now();
+        let lastStep = 0;
+
+        player.lookAt(toP.x, player.position.y, toP.z);
+
+        function tick(now) {
+          const p = Math.min((now - tStart) / duration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          player.position.lerpVectors(fromP, toP, ease);
+          player.position.y = 0.85 + Math.sin(ease * Math.PI) * 0.9;
+
+          const wc = now * 0.022;
+          armL.rotation.x = Math.sin(wc) * 0.8;
+          armR.rotation.x = -Math.sin(wc) * 0.8;
+          legL.rotation.x = -Math.sin(wc) * 0.9;
+          legR.rotation.x = Math.sin(wc) * 0.9;
+
+          if (now - lastStep > 165) {
+            sfx.playStep();
+            lastStep = now;
+          }
+
+          controls.target.lerp(new THREE.Vector3(player.position.x * 0.45, 1, player.position.z * 0.45), 0.06);
+
+          if (p < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            runSegment(segIdx + 1);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      runSegment(0);
+    }
+
+    function selectIsland(islandId) {
+      sfx.playPop();
+      const isl = ISLANDS.find(i => i.id === islandId);
+      if (!isl) return;
+
+      selectedIsland = isl;
+      document.getElementById('panel-kicker').innerHTML = `<span class="eyebrow-dot"></span> ${isl.code} · ${isl.group}`;
+      document.getElementById('panel-title').textContent = isl.title;
+      document.getElementById('panel-intro').textContent = isl.intro;
+      document.getElementById('panel-landmark').textContent = isl.landmark;
+      document.getElementById('panel-stars').textContent = isl.isHub ? '⚓ 中心港' : ('⭐'.repeat(isl.stars) + '☆'.repeat(3 - isl.stars));
+
+      // 渲染課本核心重點清單
+      const kpList = document.getElementById('panel-keypoints');
+      kpList.innerHTML = isl.keypoints.map((kp, i) => `
+        <li class="keypoint-item">
+          <span class="keypoint-num">${i + 1}</span>
+          <span>${kp}</span>
+        </li>
+      `).join('');
+
+      // 顯示或隱藏互動遊戲卡片
+      const gameCard = document.getElementById('panel-game-card');
+      if (isl.gameUrl) {
+        gameCard.hidden = false;
+        document.getElementById('panel-game-title').textContent = isl.gameTitle;
+        const gameEmojiEl = document.getElementById('panel-game-emoji');
+        if (gameEmojiEl) gameEmojiEl.textContent = isl.emoji || '🎮';
+      } else {
+        gameCard.hidden = true;
+      }
+
+      panelEl.hidden = false;
+      panelScrim.hidden = false;
+    }
+
+    function closeStudyPanel() {
+      panelEl.hidden = true;
+      panelScrim.hidden = true;
+    }
+
+    document.getElementById('btn-close-panel').onclick = closeStudyPanel;
+    panelScrim.onclick = closeStudyPanel;
+
+    // 面板按鈕：只帶小人散步過去
+    document.getElementById('btn-walk-only').onclick = () => {
+      const target = selectedIsland;
+      closeStudyPanel();
+      if (target) walkPlayerToIsland(target.id);
+    };
+
+    // 面板按鈕：完成重點複習並領取 3 星
+    document.getElementById('btn-mark-read').onclick = () => {
+      if (!selectedIsland) return;
+      selectedIsland.read = true;
+      if (!selectedIsland.isHub) selectedIsland.stars = 3;
+      const target = selectedIsland;
+      closeStudyPanel();
+      renderCourseList();
+      walkPlayerToIsland(target.id);
+      sfx.playCheer();
+      confetti({ particleCount: 55, spread: 70, origin: { y: 0.6 } });
+      updateToast(`📖 已完成【${target.title}】單元重點複習，獲得 3 顆學習星星！`);
+    };
+
+    // 遊戲啟動按鈕 1：立即打開
+    document.getElementById('btn-instant-game').onclick = () => {
+      const target = selectedIsland;
+      closeStudyPanel();
+      if (target && target.gameUrl) {
+        openGameOverlay(target);
+        walkPlayerToIsland(target.id);
+      }
+    };
+
+    // 遊戲啟動按鈕 2：小人跑到島上再開始
+    document.getElementById('btn-walk-and-game').onclick = () => {
+      const target = selectedIsland;
+      closeStudyPanel();
+      if (target && target.gameUrl) {
+        walkPlayerToIsland(target.id, () => openGameOverlay(target));
+      }
+    };
+
+    function openGameOverlay(isl) {
+      document.getElementById('game-overlay-title').textContent = `🎮 ${isl.code} ${isl.title}｜${isl.gameTitle}`;
+      gameIframe.src = isl.gameUrl;
+      gameOverlay.hidden = false;
+      // 切換至互動遊戲時，首頁背景音樂自動暫停
+      bgm.pauseForGame();
+    }
+
+    document.getElementById('btn-close-game').onclick = () => {
+      gameIframe.src = 'about:blank';
+      gameOverlay.hidden = true;
+      // 離開遊戲回到首頁時，背景音樂自動恢復
+      bgm.resumeFromGame();
+    };
+
+    document.getElementById('btn-complete-game').onclick = () => {
+      if (selectedIsland && !selectedIsland.isHub) {
+        selectedIsland.stars = 3;
+        selectedIsland.read = true;
+        renderCourseList();
+      }
+      gameIframe.src = 'about:blank';
+      gameOverlay.hidden = true;
+      sfx.playCheer();
+      confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+      // 完成遊戲回到首頁時，背景音樂自動恢復
+      bgm.resumeFromGame();
+    };
+
+    /* =========================================================================
+       12. 頂部控制列與 3D 點擊事件
+       ========================================================================= */
+    // 收合左側導覽欄
+    const workspaceEl = document.getElementById('workspace');
+    const railToggleBtn = document.getElementById('btn-rail-toggle');
+    railToggleBtn.onclick = () => {
+      sfx.playPop();
+      const collapsed = workspaceEl.classList.toggle('rail-collapsed');
+      railToggleBtn.setAttribute('aria-expanded', String(!collapsed));
+      railToggleBtn.textContent = collapsed ? '◨ 展開導覽' : '◧ 收合導覽';
+      setTimeout(handleResize, 310);
+    };
+
+    // 收合氛圍設定列
+    const dockEl = document.getElementById('display-controls');
+    const dockToggleBtn = document.getElementById('btn-dock-toggle');
+    dockToggleBtn.onclick = () => {
+      sfx.playPop();
+      dockEl.hidden = !dockEl.hidden;
+      dockToggleBtn.setAttribute('aria-expanded', String(!dockEl.hidden));
+      setTimeout(handleResize, 50);
+    };
+
+    // 切換晨光 / 海霧 / 夜海三種莫蘭迪主題（Three.js r128 精準不泛白曝光值）
+    const THEME_3D = {
+      morning: { bg: 0xcce6f0, water: 0x5fb0c4, sun: 0.54, hemi: 0.58 },
+      mist:    { bg: 0xc2dce0, water: 0x529ba6, sun: 0.50, hemi: 0.54 },
+      night:   { bg: 0x16263b, water: 0x14263d, sun: 0.28, hemi: 0.36 }
+    };
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.onclick = () => {
+        sfx.playPop();
+        const t = btn.dataset.theme;
+        document.documentElement.dataset.theme = t;
+        document.querySelectorAll('.theme-btn').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+        const cfg = THEME_3D[t];
+        scene.background.setHex(cfg.bg);
+        scene.fog.color.setHex(cfg.bg);
+        waterMat.color.setHex(cfg.water);
+        sunLight.intensity = cfg.sun;
+        hemiLight.intensity = cfg.hemi;
+      };
+    });
+
+    document.getElementById('btn-go-hub').onclick = () => walkPlayerToIsland('hub');
+    document.getElementById('btn-rail-hub').onclick = () => selectIsland('hub');
+    document.getElementById('brand-home').onclick = (e) => { e.preventDefault(); walkPlayerToIsland('hub'); };
+
+    document.getElementById('btn-overview').onclick = () => {
+      sfx.playPop();
+      camera.position.set(0, 56, 62);
+      controls.target.set(0, 0, 1);
+    };
+
+    document.getElementById('btn-sound').onclick = (e) => {
+      sfx.enabled = !sfx.enabled;
+      e.currentTarget.textContent = sfx.enabled ? '🔔 點擊音效開' : '🔕 點擊音效關';
+    };
+
+    // 背景音樂按鈕事件 (頂部與氛圍列雙向同步)
+    const toggleBgm = () => {
+      sfx.playPop();
+      bgm.toggle();
+    };
+    const btnBgmHeader = document.getElementById('btn-bgm');
+    const btnBgmDock = document.getElementById('btn-bgm-dock');
+    if (btnBgmHeader) btnBgmHeader.onclick = toggleBgm;
+    if (btnBgmDock) btnBgmDock.onclick = toggleBgm;
+
+    const volumeSlider = document.getElementById('bgm-volume-slider');
+    if (volumeSlider) {
+      volumeSlider.oninput = (e) => {
+        bgm.setVolume(parseFloat(e.target.value));
+      };
+    }
+
+    // 瀏覽器分頁切換檢測：離開此分頁時音樂自動停止，回到此分頁自動恢復
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        bgm.pauseForVisibility();
+      } else {
+        if (gameOverlay.hidden) {
+          bgm.resumeFromVisibility();
+        }
+      }
+    });
+
+    window.addEventListener('pagehide', () => bgm.stop());
+    window.addEventListener('beforeunload', () => bgm.stop());
+
+    // 現代瀏覽器自動播放防禦：使用者首次點擊或按鍵時啟動音樂
+    const handleFirstGesture = () => {
+      getAudioContext();
+      if (bgm.enabled && !bgm.isPlaying && gameOverlay.hidden) {
+        bgm.start();
+      }
+      document.removeEventListener('pointerdown', handleFirstGesture);
+      document.removeEventListener('keydown', handleFirstGesture);
+    };
+    document.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    document.addEventListener('keydown', handleFirstGesture, { once: true });
+
+    // 3D Raycaster 點擊島嶼
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let downPos = { x: 0, y: 0 };
+
+    renderer.domElement.addEventListener('pointerdown', e => {
+      downPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointerup', e => {
+      if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(pickMeshes, false);
+      if (hits.length > 0) {
+        selectIsland(hits[0].object.userData.islandId);
+      }
+    });
+
+    /* =========================================================================
+       13. 標籤座標同步與主動畫迴圈
+       ========================================================================= */
+    function updateLabelsPosition() {
+      const rect = container.getBoundingClientRect();
+      const v = new THREE.Vector3();
+      ISLANDS.forEach(isl => {
+        const el = labelElements[isl.id];
+        const yOffset = isl.isHub ? 6.8 : (isl.isSpecial ? 6.2 : 4.8);
+        v.set(isl.x, yOffset, isl.z);
+        v.project(camera);
+
+        if (v.z > 1) {
+          el.style.display = 'none';
+          return;
+        }
+        el.style.display = 'flex';
+        const x = (v.x * 0.5 + 0.5) * rect.width;
+        const y = (-(v.y * 0.5) + 0.5) * rect.height;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.zIndex = Math.floor((1 - v.z) * 50);
+      });
+    }
+
+    function handleResize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', handleResize);
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      const posArr = waterGeo.attributes.position.array;
+      for (let i = 0; i < posArr.length; i += 3) {
+        posArr[i + 1] = Math.sin(waterBasePos[i] * 0.14 + t * 0.9) * 0.09 + Math.cos(waterBasePos[i + 2] * 0.14 + t * 1.1) * 0.09;
+      }
+      waterGeo.attributes.position.needsUpdate = true;
+      waterGeo.computeVertexNormals();
+
+      for (let i = 0; i < animCallbacks.length; i++) {
+        animCallbacks[i](t);
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+      updateLabelsPosition();
+    }
+
+    animate();
+  </script>
+</body>
+</html>

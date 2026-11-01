@@ -1,0 +1,494 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>南一三上國語成語遊戲｜12課總目錄首頁</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Noto Serif TC"', 'serif'],
+          },
+          keyframes: {
+            popIn: {
+              '0%': { transform: 'scale(0.92)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            }
+          },
+          animation: {
+            'pop-in': 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 55%, #020617 100%);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-tactile {
+      transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.12s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s ease;
+    }
+    .btn-tactile:not(:disabled):hover {
+      transform: translateY(-2px);
+    }
+    .btn-tactile:not(:disabled):active {
+      transform: translateY(3px);
+    }
+    .card-hover {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans">
+
+  <div x-data="catalogHubApp()" x-init="initHub()" class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- 頂部大標題橫幅 -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl mb-8 relative overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold mb-3">
+            <span>📚 南一版國小國語三上・生字延伸成語、四字語詞</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-serif font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-100 to-orange-400">
+            南一三上國語成語遊戲
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base mt-2 max-w-2xl">
+            全冊共 <strong class="text-amber-300">12 課</strong>、收錄 <strong class="text-cyan-300" x-text="totalIdiomsCount"></strong> 個課本延伸成語與四字語詞。點擊任一課即可進入該課專屬「成語填填看」闖關遊戲！
+          </p>
+        </div>
+
+        <!-- 右側音效與紀錄控制 -->
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            @click="toggleMute()"
+            class="btn-tactile px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs sm:text-sm font-bold text-slate-200 shadow-md flex items-center gap-1.5"
+          >
+            <span x-text="isMuted ? '🔇 靜音中' : '🔊 音效開啟'"></span>
+          </button>
+          <button
+            type="button"
+            x-show="completedLessonsCount > 0"
+            @click="clearAllRecords()"
+            class="btn-tactile px-3.5 py-2.5 rounded-2xl bg-rose-950/70 hover:bg-rose-900/80 border border-rose-500/40 text-xs sm:text-sm font-bold text-rose-300 shadow-md"
+          >
+            🗑️ 重置成績紀錄
+          </button>
+        </div>
+      </div>
+
+      <!-- 全冊闖關進度統計列 -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800/90">
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-xl">🗂️</div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold">收錄課次</div>
+            <div class="text-xl font-black text-white">共 12 課</div>
+          </div>
+        </div>
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-xl">📖</div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold">全冊成語總數</div>
+            <div class="text-xl font-black text-cyan-300"><span x-text="totalIdiomsCount"></span> 個</div>
+          </div>
+        </div>
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-xl">✅</div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold">已挑戰課次</div>
+            <div class="text-xl font-black text-emerald-400"><span x-text="completedLessonsCount"></span> / 12 課</div>
+          </div>
+        </div>
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-xl">👑</div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold">100分滿分課次</div>
+            <div class="text-xl font-black text-amber-400"><span x-text="perfectLessonsCount"></span> / 12 課</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 搜尋與快速篩選列 -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+      <div class="flex items-center gap-2">
+        <span class="text-lg sm:text-xl font-black text-amber-300">🧭 十二課成語遊戲目錄</span>
+        <span class="text-xs text-slate-400 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-full">點選課次卡片即可開始遊戲</span>
+      </div>
+      <div class="relative w-full sm:w-80">
+        <input
+          type="text"
+          x-model.trim="searchKeyword"
+          placeholder="🔍 搜尋課名或成語（如：胸有成竹）..."
+          class="w-full bg-slate-900/95 border-2 border-slate-700 focus:border-amber-400 rounded-2xl px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none transition-colors"
+        />
+        <button
+          x-show="searchKeyword"
+          @click="searchKeyword = ''; PlaySound('click')"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+        >
+          ✖
+        </button>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         12 課目錄卡片網格 (RWD 1 / 2 / 3 欄)
+    =========================================== -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <template x-for="lesson in filteredLessons" :key="lesson.code">
+        <article
+          class="card-hover bg-slate-900/95 border-2 border-slate-700/80 hover:border-amber-400/80 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col justify-between relative overflow-hidden"
+        >
+          <!-- 頂部彩色裝飾條 -->
+          <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r" :class="lesson.theme"></div>
+
+          <div>
+            <!-- 課次編號與最高分狀態 -->
+            <div class="flex items-center justify-between gap-2 mb-3 pt-1">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800 border border-slate-600 text-amber-300 text-xs font-black tracking-wider">
+                <span x-text="lesson.icon"></span>
+                <span x-text="'第 ' + lesson.code + ' 課'"></span>
+              </span>
+
+              <!-- 最高分徽章 -->
+              <template x-if="getLessonScore(lesson.code) !== null">
+                <span
+                  class="px-2.5 py-1 rounded-xl text-xs font-black border flex items-center gap-1"
+                  :class="getLessonScore(lesson.code) === 100
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                    : 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'"
+                >
+                  <span x-text="getLessonScore(lesson.code) === 100 ? '👑 滿分 100' : '🏆 最高 ' + getLessonScore(lesson.code) + ' 分'"></span>
+                </span>
+              </template>
+              <template x-if="getLessonScore(lesson.code) === null">
+                <span class="px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400 text-xs font-bold">
+                  尚未挑戰
+                </span>
+              </template>
+            </div>
+
+            <!-- 課名標題 -->
+            <h2 class="text-2xl font-serif font-black text-white mb-1 flex items-center gap-2">
+              <span x-text="lesson.title"></span>
+            </h2>
+            <p class="text-xs text-slate-400 font-medium mb-4">
+              收錄 <strong class="text-cyan-300" x-text="lesson.idioms.length"></strong> 個延伸成語・每次隨機抽 10 題
+            </p>
+
+            <!-- 成語預覽標籤池 -->
+            <div class="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-3 mb-5">
+              <div class="text-[11px] font-bold text-slate-400 mb-2 flex items-center justify-between">
+                <span>📌 本課成語預覽：</span>
+                <button
+                  type="button"
+                  @click="openPreviewModal(lesson)"
+                  class="text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+                >
+                  查看完整解釋 (<span x-text="lesson.idioms.length"></span>)
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="(idObj, iIdx) in lesson.idioms.slice(0, 6)" :key="iIdx">
+                  <span
+                    class="px-2 py-0.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-200 font-serif text-xs font-bold"
+                    x-text="idObj.idiom"
+                  ></span>
+                </template>
+                <template x-if="lesson.idioms.length > 6">
+                  <span
+                    @click="openPreviewModal(lesson)"
+                    class="cursor-pointer px-2 py-0.5 rounded-lg bg-indigo-950 border border-indigo-500/40 text-indigo-300 text-xs font-bold hover:bg-indigo-900"
+                    x-text="'+' + (lesson.idioms.length - 6) + ' 個...'"
+                  ></span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部操作按鈕組 -->
+          <div class="flex items-center gap-2.5">
+            <a
+              :href="'./' + lesson.fileName"
+              @click="PlaySound('start')"
+              class="btn-tactile flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r text-slate-950 font-black text-base tracking-wider shadow-[0_5px_0_rgba(0,0,0,0.4)] active:shadow-[0_2px_0_rgba(0,0,0,0.4)] flex items-center justify-center gap-2"
+              :class="lesson.theme"
+            >
+              <span>🎮 進入第 <span x-text="lesson.code"></span> 課遊戲</span>
+            </a>
+            <button
+              type="button"
+              @click="openPreviewModal(lesson)"
+              class="btn-tactile py-3.5 px-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-bold text-sm shadow-[0_5px_0_#0f172a]"
+              title="預覽本課成語與例句"
+            >
+              📖 詞庫
+            </button>
+          </div>
+        </article>
+      </template>
+    </section>
+
+    <!-- ==========================================
+         成語詞庫快速預覽彈出視窗 (Preview Modal)
+    =========================================== -->
+    <div
+      x-show="previewLesson !== null"
+      x-cloak
+      @keydown.escape.window="closePreviewModal()"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+    >
+      <template x-if="previewLesson">
+        <div
+          @click.outside="closePreviewModal()"
+          class="w-full max-w-2xl bg-slate-900 border-2 border-indigo-400/50 rounded-3xl p-6 sm:p-7 shadow-2xl animate-pop-in max-h-[85vh] flex flex-col"
+        >
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl" x-text="previewLesson.icon"></span>
+              <div>
+                <div class="text-xs font-bold text-amber-400" x-text="'南一三上國語・第 ' + previewLesson.code + ' 課'"></div>
+                <h3 class="text-xl sm:text-2xl font-serif font-black text-white" x-text="previewLesson.title + '（共 ' + previewLesson.idioms.length + ' 個成語）'"></h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="closePreviewModal()"
+              class="btn-tactile w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-bold flex items-center justify-center"
+            >
+              ✖
+            </button>
+          </div>
+
+          <!-- 該課所有成語列表 -->
+          <div class="overflow-y-auto my-4 space-y-2.5 pr-1 flex-1">
+            <template x-for="(item, idx) in previewLesson.idioms" :key="idx">
+              <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-xs font-bold" x-text="'#' + (idx + 1)"></span>
+                  <span class="font-serif font-black text-xl text-white tracking-widest" x-text="item.idiom"></span>
+                </div>
+                <p class="text-sm text-amber-200/95 font-medium mb-1">
+                  <strong class="text-indigo-300">解釋：</strong><span x-text="item.meaning"></span>
+                </p>
+                <p class="text-xs sm:text-sm text-slate-400">
+                  <strong class="text-emerald-400">例句：</strong><span x-text="item.example"></span>
+                </p>
+              </div>
+            </template>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 flex gap-3">
+            <a
+              :href="'./' + previewLesson.fileName"
+              @click="PlaySound('start')"
+              class="btn-tactile flex-1 py-3.5 rounded-2xl bg-gradient-to-r text-slate-950 font-black text-center text-base shadow-lg"
+              :class="previewLesson.theme"
+            >
+              🚀 立即挑戰第 <span x-text="previewLesson.code"></span> 課成語遊戲
+            </a>
+            <button
+              type="button"
+              @click="closePreviewModal()"
+              class="btn-tactile px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm border border-slate-600"
+            >
+              關閉
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <footer class="text-center text-xs text-slate-500 mt-10 pb-4">
+      南一版國小國語三上｜12 課生字延伸成語互動遊戲系統
+    </footer>
+  </div>
+
+  <script>
+    /**
+     * 1. Web Audio API 音效模組 (預留全域 PlaySound 函數)
+     */
+    const AudioEngine = (() => {
+      let audioCtx = null;
+      let isMuted = false;
+
+      function getContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function playTone(freq, type, duration, startTimeOffset = 0, volume = 0.2) {
+        const ctx = getContext();
+        if (!ctx || isMuted) return;
+
+        const now = ctx.currentTime + startTimeOffset;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(volume, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      }
+
+      function play(soundName) {
+        if (isMuted) return;
+        const ctx = getContext();
+        if (!ctx) return;
+
+        switch (soundName) {
+          case 'click':
+            playTone(640, 'triangle', 0.07, 0, 0.18);
+            break;
+          case 'start':
+            playTone(523.25, 'triangle', 0.1, 0, 0.2);
+            playTone(659.25, 'triangle', 0.15, 0.08, 0.22);
+            break;
+          default:
+            playTone(480, 'sine', 0.08, 0, 0.15);
+        }
+      }
+
+      return {
+        play,
+        setMuted(val) { isMuted = Boolean(val); }
+      };
+    })();
+
+    function PlaySound(soundType) {
+      AudioEngine.play(soundType);
+    }
+
+    /**
+     * 2. 全冊 12 課教材成語總資料庫
+     */
+    const ALL_LESSONS_DATA = [{"theme":"from-amber-400 to-orange-500","code":"01","icon":"👋","idioms":[{"meaning":"比喻做事情、說話、寫作等不夠簡潔、乾脆。","example":"媽媽做事一向乾脆，絕對不會拖泥帶水。","idiom":"拖泥帶水"},{"meaning":"形容變化很多，沒有極限。","example":"合歡山擁有千變萬化的雲海景色，相當吸引人。","idiom":"千變萬化"},{"meaning":"指一般來客稀少、門庭冷清的景況。","example":"大地震過後，許多旅遊景點門可羅雀，乏人問津。","idiom":"門可羅雀"},{"meaning":"未經慎重考慮，即輕率的採取行動。","example":"這件事關係重大，須澈底查明真相，千萬不可輕舉妄動。","idiom":"輕舉妄動"},{"meaning":"比喻勢力或能力不夠雄厚，還不足以獨當一面。","example":"他羽毛未豐，許多社會經驗尚待磨練。","idiom":"羽毛未豐"},{"meaning":"比喻事物或計畫精巧，沒有一絲破綻或缺點。","example":"他們這場比賽配合得天衣無縫，讓對手完全無法招架。","idiom":"天衣無縫"},{"meaning":"用一根頭髮懸掛著幾萬斤的重物。比喻情況非常危險。","example":"千鈞一髮之際，他保持冷靜，做出正確判斷。","idiom":"千鈞一髮"},{"meaning":"剛好到最合適的程度。","example":"阿姨把這盤菜炒得恰到好處，鮮嫩爽口。","idiom":"恰到好處"},{"meaning":"指在上位的人怎麼做，下面的人就起而效法。","example":"自從新主管上任以來，勤勉自勵，下屬上行下效，工作績效大增。","idiom":"上行下效"},{"meaning":"無風無浪。比喻平靜無事或情勢穩定。","example":"風平浪靜的夏日海邊，有許多人戲水。","idiom":"風平浪靜"},{"meaning":"泛指男女間的來往、相處需慎重守禮。","example":"男女有別，兩性間相處時應互相尊重。","idiom":"男女有別"},{"meaning":"形容心境忽然變得開闊暢快，亦用於形容突然領悟某個道理。","example":"有些事情只要想清楚，一切就能豁然開朗。","idiom":"豁然開朗"},{"meaning":"形容人恐懼不安，不知如何是好。","example":"做錯事的我手足無措的向老師求救。","idiom":"手足無措"}],"fileName":"lesson01.html","title":"你好，新朋友","num":1},{"theme":"from-cyan-400 to-blue-500","code":"02","icon":"🤝","idioms":[{"meaning":"比喻做事依照一定的層次、步驟進行。","example":"做事情按部就班進行，才能有效率迅速完成。","idiom":"按部就班"},{"meaning":"泛指事先約好或規定的事。","example":"為了日後行事方便，我們可以約法三章，以便共同遵守。","idiom":"約法三章"},{"meaning":"形容事物紛紛不斷的到來。","example":"叔叔如願考上公務員，親朋好友的祝賀如雪片般紛至沓來。","idiom":"紛至沓來"},{"meaning":"有恆心的堅持到底。","example":"每天持之以恆的運動，身體就會更健康。","idiom":"持之以恆"},{"meaning":"對接觸過的人事物記得很清楚，像才剛發生的一樣。","example":"這部電影之前引起很大討論，大家都記憶猶新。","idiom":"記憶猶新"},{"meaning":"略微表示心意。","example":"這份禮物只是聊表心意，請您收下吧！","idiom":"聊表心意"},{"meaning":"指言論或文章有根據、有內容。","example":"這本書言之有物，非常值得一讀。","idiom":"言之有物"},{"meaning":"形容興致勃勃，情緒熱烈的樣子。","example":"弟弟興高采烈的拆開他期待已久的生日禮物。","idiom":"興高采烈"},{"meaning":"比喻對人懇切教誨、叮嚀。","example":"老師耳提面命要我們不要亂跑，但總是有同學不聽話。","idiom":"耳提面命"},{"meaning":"形容很憂愁的樣子。","example":"老師一宣布戶外教育取消後，大家都失望透頂，愁眉不展。","idiom":"愁眉不展"}],"fileName":"lesson02.html","title":"我們的約定","num":2},{"theme":"from-emerald-400 to-teal-500","code":"03","icon":"🔔","idioms":[{"meaning":"比喻近距離激烈的搏打、爭鬥。","example":"敵我兩軍在邊境相遇，短兵相接，戰況激烈。","idiom":"短兵相接"},{"meaning":"比喻使人警醒的力量。","example":"我希望能結交到好朋友，暮鼓晨鐘般每日提醒著我。","idiom":"暮鼓晨鐘"},{"meaning":"形容行動快速，出現、消失無法預測。","example":"他的行蹤總是神出鬼沒，讓人摸不著頭緒。","idiom":"神出鬼沒"},{"meaning":"比喻不合情理的吵鬧或故意搗亂。","example":"弟弟只要做錯事情，就會無理取鬧，讓媽媽很頭痛。","idiom":"無理取鬧"},{"meaning":"手足向上，仰面跌倒的樣子。","example":"弟弟學騎腳踏車，忽然重心不穩，摔了個四腳朝天。","idiom":"四腳朝天"},{"meaning":"比喻奮不顧身，不避艱險。","example":"當他下定決心完成一件事，便會赴湯蹈火，盡最大的努力。","idiom":"赴湯蹈火"},{"meaning":"形容空有華麗的外表，卻無實際的內涵。","example":"這個書包看起來很漂亮，但只是虛有其表，用幾次就壞掉了。","idiom":"虛有其表"},{"meaning":"痛痛快快、毫無顧慮的把想說的話全部講出來。","example":"我最喜歡上國語課，遇到什麼問題都能夠暢所欲言。","idiom":"暢所欲言"},{"meaning":"指以往從未發生過。","example":"這群人橫渡海峽的壯舉，真可說是史無前例。","idiom":"史無前例"},{"meaning":"形容事物種類眾多。","example":"這間百貨公司的商品林林總總，應有盡有。","idiom":"林林總總"},{"meaning":"比一般事物出色、不平凡。","example":"阿南從小就展現音樂天分，未來肯定會成為不同凡響的音樂家。","idiom":"不同凡響"},{"meaning":"形容人高興過度，舉止失去常態。","example":"爸爸勉勵我：比賽獲得第一名，千萬別得意忘形，要繼續保持。","idiom":"得意忘形"},{"meaning":"艱難的困境、遭遇已經結束，逐漸進入佳境。","example":"透過不斷的努力奮鬥，如今她終於能夠苦盡甘來。","idiom":"苦盡甘來"},{"meaning":"自己應盡的責任，沒有理由推卸。","example":"既然是責無旁貸的事，就應盡力完成。","idiom":"責無旁貸"}],"fileName":"lesson03.html","title":"下課十分鐘","num":3},{"theme":"from-violet-400 to-purple-500","code":"04","icon":"⚫","idioms":[{"meaning":"指心情煩躁，思緒凌亂。","example":"外面傳來陣陣吵雜的噪音，吵得大家心煩意亂，根本無法專心讀書。","idiom":"心煩意亂"},{"meaning":"因羞愧到極點而惱恨發怒。","example":"大家無意間聊到曉明以前的糗事，他竟然惱羞成怒，當場轉身離去。","idiom":"惱羞成怒"},{"meaning":"形容聲音非常雜亂、不安靜。","example":"姑姑家位在大馬路旁，四周環境吵吵鬧鬧。","idiom":"吵吵鬧鬧"},{"meaning":"雖然在事實上有所困難，但仍勉強努力去做。","example":"弟弟討厭喝魚湯，但在媽媽的鼓勵下，仍勉為其難的嘗了一口。","idiom":"勉為其難"},{"meaning":"本來無理，卻硬說成有理。","example":"明明是誤用成語，小鵑卻強詞奪理，試圖掩飾自己的粗心。","idiom":"強詞奪理"},{"meaning":"意義深長，值得人反覆尋思、體會。","example":"爺爺那番耐人尋味的話，令人深思。","idiom":"耐人尋味"},{"meaning":"形容感受深刻，清新舒適的感受直抵心田。","example":"一陣微風吹來，淡雅的花香沁人心脾。","idiom":"沁人心脾"},{"meaning":"形容知道的內容不完全，了解不深。","example":"對於這件事情我一知半解，你可能要向其他人詢問會比較清楚。","idiom":"一知半解"},{"meaning":"比喻看不清楚事情的真相。","example":"謠言滿天飛，事情真相讓人霧裡看花。","idiom":"霧裡看花"},{"meaning":"緊緊咬牙。意謂忍受痛苦而堅持到底。","example":"即使雙腿十分痠痛，小智仍咬緊牙關，努力完成這場比賽。","idiom":"咬緊牙關"},{"meaning":"比喻人固執而不知變通，費力的研究無用或無法解決的問題。","example":"凡事要想開點，不要總是鑽牛角尖。","idiom":"鑽牛角尖"},{"meaning":"即使失敗，仍然光榮。","example":"就算比賽失利，只要能發揮運動家的精神，則雖敗猶榮。","idiom":"雖敗猶榮"},{"meaning":"張開喉嚨，高聲叫喊。","example":"遇到危險時，要扯開嗓子大聲求救。","idiom":"扯開嗓子"}],"fileName":"lesson04.html","title":"一顆黑點","num":4},{"theme":"from-rose-400 to-red-600","code":"05","icon":"🔥","idioms":[{"meaning":"像有活力的龍虎一般。比喻活潑勇猛，生氣勃勃。","example":"一到下課時間，操場上就會有許多同學生龍活虎的互相追逐。","idiom":"生龍活虎"},{"meaning":"為人處事謙和退讓，以修養自我的德性。","example":"叔叔為人謙沖自牧，從不因個人的成就而驕傲自大。","idiom":"謙沖自牧"},{"meaning":"比喻非常欽佩。","example":"今天聽了老師的一席話，茅塞頓開，令我佩服得五體投地。","idiom":"五體投地"},{"meaning":"兄弟間感情和睦，能相互友愛尊敬。","example":"懂得孝順父母、兄友弟恭，是有禮貌的表現。","idiom":"兄友弟恭"},{"meaning":"形容擺脫長久的不如意，而感到快慰、舒暢。","example":"經過一連串的苦難後，他終於揚眉吐氣，獲得成功。","idiom":"揚眉吐氣"},{"meaning":"改變心意。","example":"經過一番解釋，他終於回心轉意，決定答應我的請求。","idiom":"回心轉意"},{"meaning":"歪斜不正的樣子。","example":"弟弟的字歪七扭八的，一點都不工整。","idiom":"歪七扭八"},{"meaning":"在禍患還沒有發生之前就加以防備。","example":"家中擺放急難救助包，是面對災難時，能防患未然的最佳準備。","idiom":"防患未然"},{"meaning":"比喻妄想瞞騙他人，結果卻只是欺騙自己而已。","example":"如果不去努力，只會用謊言自欺，就是掩耳盜鈴。","idiom":"掩耳盜鈴"},{"meaning":"比喻危急時，投入全部力量，作最後的冒險。","example":"事情既已如此，也只有孤注一擲，全力拚拚看了。","idiom":"孤注一擲"},{"meaning":"雙方相爭，同受損害。","example":"這兩個人勢均力敵，互相爭鬥的結果必然是兩敗俱傷。","idiom":"兩敗俱傷"},{"meaning":"形容不畏艱險，將生死置之度外。","example":"有個願意一同出生入死的朋友，他非常珍惜。","idiom":"出生入死"}],"fileName":"lesson05.html","title":"火大了","num":5},{"theme":"from-indigo-400 to-blue-600","code":"06","icon":"🤔","idioms":[{"meaning":"天色昏暗，指天黑。","example":"在夜幕低垂的秋夜裡，天上的星星十分耀眼。","idiom":"夜幕低垂"},{"meaning":"形容酒席結束，杯盤散亂的情形。","example":"吃完晚飯記得將自己的碗筷拿去洗，以免餐桌一片杯盤狼藉。","idiom":"杯盤狼藉"},{"meaning":"形容徘徊、留戀而不忍離去。","example":"日月潭的美景，讓許多遊客流連忘返，久久無法忘懷。","idiom":"流連忘返"},{"meaning":"形容文章立意深刻有力。","example":"這本書力透紙背，刻畫了人性的光明與堅強。","idiom":"力透紙背"},{"meaning":"比喻一次舉動就可以同時達到雙倍的效果。","example":"寫書法除了練習筆順，還可以讓字更工整，簡直一箭雙鵰。","idiom":"一箭雙鵰"},{"meaning":"比喻人毫無學識。","example":"這篇文章的作者學識淵博，豈是胸無點墨的人可以相比？","idiom":"胸無點墨"},{"meaning":"比喻責任已盡，身心輕鬆愉快。","example":"聽到颱風沒有造成太多災害，大家都如釋重負。","idiom":"如釋重負"},{"meaning":"比喻逃跑得無影無蹤、不知去向。","example":"搶匪在警察破門之前，已從密道逃之夭夭，不知去向。","idiom":"逃之夭夭"},{"meaning":"全由一人獨力處理。","example":"這次園遊會，從表演到攤位，都是各年級同學們一手包辦。","idiom":"一手包辦"},{"meaning":"比喻隱蔽的真相洩露出來。","example":"這場魔術表演漏洞百出，許多地方都露出馬腳。","idiom":"露出馬腳"},{"meaning":"文章內容和題目不符合，或說話時答非所問。","example":"這篇文章文筆優美，可惜文不對題。","idiom":"文不對題"},{"meaning":"比喻已經平息的事物，又重新活動起來。","example":"這裡的環境衛生這麼差，小心已滅絕的傳染病會死灰復燃。","idiom":"死灰復燃"}],"fileName":"lesson06.html","title":"我該怎麼辦？","num":6},{"theme":"from-pink-400 to-rose-500","code":"07","icon":"👵","idioms":[{"meaning":"離開故鄉，在外地生活。","example":"為了完成夢想，他小小年紀就離鄉背井到外地讀書。","idiom":"離鄉背井"},{"meaning":"由事情的某一點可推論其全貌。","example":"雖然只是完成了一件小任務，但阿吉做事的嚴謹態度可見一斑。","idiom":"可見一斑"},{"meaning":"簡單而容易使人明白。","example":"透過淺顯易懂的圖片，老師帶領我們認識校園有哪些植物。","idiom":"淺顯易懂"},{"meaning":"自以為聰明、不平凡。形容高傲、自以為是。","example":"自命不凡的他，總覺得所有事都應該以他為中心發展。","idiom":"自命不凡"},{"meaning":"形容受到裡外的雙重打擊。","example":"他最近遭受內外夾攻，不僅工作不順，家人又生病。","idiom":"內外夾攻"},{"meaning":"笑容的後面藏著刀。形容人外貌和善可親，內心卻陰險狠毒。","example":"他待人總是笑裡藏刀，很不受大家歡迎。","idiom":"笑裡藏刀"},{"meaning":"故做嬌態或裝腔作勢、不大方自然。","example":"維尼的個性扭扭捏捏，很不大方。","idiom":"扭扭捏捏"},{"meaning":"具多方面的才能和技藝。","example":"多才多藝的弟弟，在大家眼中是什麼都會的小神童。","idiom":"多才多藝"},{"meaning":"沒有學問，也沒有才能、技術。","example":"阿成不學無術，又不主動向他人學習，個性更是消極。","idiom":"不學無術"},{"meaning":"開創事業是很艱苦的。","example":"創業維艱，大多數成功立業的人都是經歷過一番艱苦奮鬥，而非一帆風順。","idiom":"創業維艱"}],"fileName":"lesson07.html","title":"最年輕的奶奶","num":7},{"theme":"from-amber-400 to-yellow-500","code":"08","icon":"💇","idioms":[{"meaning":"比喻過分沉溺於某事，且方法錯誤，而導致身心受到傷害。","example":"表哥廢寢忘食的讀武俠小說，簡直是走火入魔。","idiom":"走火入魔"},{"meaning":"指女性英雄。","example":"花木蘭是古代代父從軍的巾幗英雄。","idiom":"巾幗英雄"},{"meaning":"平等待人，不分親疏厚薄，沒有歧視。","example":"無論面對誰，都應該抱持著一視同仁的態度。","idiom":"一視同仁"},{"meaning":"因一時迷惑而走入錯誤的路途。","example":"阿泉因交友不慎而誤入歧途，如今非常後悔。","idiom":"誤入歧途"},{"meaning":"比喻沒有真才實學的人，混在行家之間充數。","example":"本次比賽的人，除少數是真才實學外，其他都是濫竽充數。","idiom":"濫竽充數"},{"meaning":"比喻才智和能力很強，先在小事上施展一下。","example":"學校的田徑賽，對參加過全國比賽的她，只能說是牛刀小試。","idiom":"牛刀小試"},{"meaning":"對所見的人事物感覺熟悉，卻又不真切。","example":"這個花園讓我感到似曾相識，但卻想不起是在哪邊看過。","idiom":"似曾相識"},{"meaning":"掌握時機，立刻決斷。","example":"船長一看漏水無法堵住，當機立斷，宣布棄船。","idiom":"當機立斷"},{"meaning":"比喻夫妻失散或決裂後重新團圓和好。","example":"他們經歷過重重波折，如今終於能夠破鏡重圓。","idiom":"破鏡重圓"},{"meaning":"雜亂不整齊。","example":"字要寫工整，不要時大時小，參差不齊。","idiom":"參差不齊"}],"fileName":"lesson08.html","title":"魔「髮」哥哥","num":8},{"theme":"from-teal-400 to-emerald-600","code":"09","icon":"🩺","idioms":[{"meaning":"比喻問題本小不處理，終致無法收拾。","example":"在處理事情上，諱疾忌醫的人，往往會把問題弄得更嚴重。","idiom":"諱疾忌醫"},{"meaning":"形容殷切盼望。","example":"已經過了約定的時間，卻不見她出現，小佑體會到望穿秋水的滋味。","idiom":"望穿秋水"},{"meaning":"形容早出晚歸、連夜趕路或工作備極勞累。","example":"舅舅為了家計，披星戴月，終日奔波，十分辛苦。","idiom":"披星戴月"},{"meaning":"事先有準備，即可應付急需時的困難。","example":"媽媽在家裡準備了一個齊全的急救箱，有備無患。","idiom":"有備無患"},{"meaning":"做事心力專一，勤勉踏實。","example":"再困難的事情他都是埋頭苦幹，怎麼樣都不會抱怨。","idiom":"埋頭苦幹"},{"meaning":"不直接提出疑問，而從旁推敲以探取實情。","example":"透過警察的旁敲側擊，歹徒終於說出藏身地點。","idiom":"旁敲側擊"},{"meaning":"比喻用狠毒的手段來對付狠毒的手段或人。","example":"對付作惡多端的他，唯有以毒攻毒這個辦法了。","idiom":"以毒攻毒"},{"meaning":"複習學過的課業，而能領悟出新的道理。","example":"表哥成績不斷進步，靠的是溫故知新的讀書方法。","idiom":"溫故知新"},{"meaning":"比喻針對問題所在，做有效的處理。","example":"關於這件事，我們要找出癥結所在，才好對症下藥。","idiom":"對症下藥"}],"fileName":"lesson09.html","title":"穿白袍的醫生伯伯","num":9},{"theme":"from-orange-400 to-red-500","code":"10","icon":"😲","idioms":[{"meaning":"歡樂到極點，往往會轉生悲愁。","example":"一聽到自己考一百分，他高興得跳起來，沒想到樂極生悲，扭傷了腳。","idiom":"樂極生悲"},{"meaning":"形容人的體格魁偉健碩。","example":"這群運動員一字排開，個個身材高大，虎背熊腰。","idiom":"虎背熊腰"},{"meaning":"比喻在別人艱困危急之時，給予適時的援助。","example":"正擔心人手不足，你願意來幫忙，可真是雪中送炭。","idiom":"雪中送炭"},{"meaning":"形容費盡腦力，竭盡心思。","example":"這題選擇題，就算我絞盡腦汁，還是不知道答案是否正確。","idiom":"絞盡腦汁"},{"meaning":"比喻做事務實穩健。","example":"他個性謹慎，做事情都腳踏實地，不會投機取巧。","idiom":"腳踏實地"},{"meaning":"比喻事物十分牢固，不易動搖。","example":"這項古老的傳統習俗，在當地已經根深蒂固。","idiom":"根深蒂固"},{"meaning":"列舉一個事理，就能推知其他同類事情或道理。","example":"課堂上，老師希望同學們都能舉一反三，靈活思考。","idiom":"舉一反三"},{"meaning":"比喻間接的詆毀、陷害別人。","example":"這篇新聞報導含沙射影的批評一些人。","idiom":"含沙射影"},{"meaning":"指與自身密切相關的痛苦。","example":"這件事情是他的切膚之痛，就不要再一直提出來了。","idiom":"切膚之痛"},{"meaning":"形容因驚嚇或錯愕而神情呆滯的樣子。","example":"大家都被這場突如其來的地震嚇得目瞪口呆。","idiom":"目瞪口呆"},{"meaning":"形容景象千變萬化，極為壯觀。","example":"阿里山風景秀麗，氣象萬千，實在美不勝收。","idiom":"氣象萬千"},{"meaning":"比喻極為純熟流利。","example":"姐姐非常喜愛英文，這一百個單字早已背得滾瓜爛熟。","idiom":"滾瓜爛熟"}],"fileName":"lesson10.html","title":"唉呀！誤會大了","num":10},{"theme":"from-lime-400 to-emerald-500","code":"11","icon":"🐆","idioms":[{"meaning":"形容做事十分困苦又勞累的樣子。","example":"距離活動時間愈來愈近，每個人都忙得焦頭爛額，希望活動能圓滿順利。","idiom":"焦頭爛額"},{"meaning":"比喻心懷不軌，想要伺機掠奪。","example":"小狗對桌上的烤雞虎視眈眈，口水直流。","idiom":"虎視眈眈"},{"meaning":"靠近水邊的樓臺。比喻因地利之便先得機會。","example":"作為小美的鄰居，阿明終於近水樓臺，和她成為很好的朋友。","idiom":"近水樓臺"},{"meaning":"獨力擔當某一方面的重任。","example":"經過很多考驗與努力，她已經可以獨當一面，將事情處理妥善。","idiom":"獨當一面"},{"meaning":"形容百花盛開，色彩絢麗的景象。","example":"春天的公園裡，各處百花盛開，萬紫千紅的景象非常漂亮。","idiom":"萬紫千紅"},{"meaning":"比喻忘本。也比喻對歷史或自己祖先的無知。","example":"她數典忘祖的態度，讓大家非常反感。","idiom":"數典忘祖"},{"meaning":"比喻見識淺薄的人。","example":"新聞讓我們不會成為井底之蛙，即使不出門，也能知道天下事。","idiom":"井底之蛙"},{"meaning":"比喻所做的事或所說的話毫無根據，憑空揣測。","example":"對於捕風捉影的謠言，不要隨便聽信，應該多方查證。","idiom":"捕風捉影"},{"meaning":"理解某一事物的知識或原理，進而推知其他同類的事理。","example":"為了活用知識，可以觸類旁通，不必硬記死背。","idiom":"觸類旁通"},{"meaning":"比喻以霸道強橫的方式坐享別人的成果。","example":"整個研究過程他都沒有參與，最後卻鳩占鵲巢，把功勞歸為己有。","idiom":"鳩占鵲巢"},{"meaning":"形容愚笨或受驚嚇而發愣的樣子。","example":"李先生聽了電話之後，就呆若木雞，好像受了什麼驚嚇。","idiom":"呆若木雞"},{"meaning":"形容恐懼不安，心神不寧的樣子。","example":"一輛汽車差點撞上我們，嚇得大家心驚肉跳。","idiom":"心驚肉跳"},{"meaning":"氣勢很強，令人敬畏。","example":"這支球隊不只看起來威風凜凜，實力更是大家公認的前幾名。","idiom":"威風凜凜"}],"fileName":"lesson11.html","title":"石虎的告白","num":11},{"theme":"from-sky-400 to-indigo-500","code":"12","icon":"🐞","idioms":[{"meaning":"乘人沒有防備時突然攻擊。","example":"在對手放鬆的一瞬間，我們的球隊攻其不備，一舉拿下勝利。","idiom":"攻其不備"},{"meaning":"沒有缺點可指責或挑剔。形容嚴密，沒有缺失。","example":"她無懈可擊的表現，贏得所有人的掌聲喝采。","idiom":"無懈可擊"},{"meaning":"為了個人得失而喪失原則的庸俗處世態度。","example":"如果大家都自掃門前雪，只求明哲保身，這個社會將變得很冷漠。","idiom":"明哲保身"},{"meaning":"指居處得以容身，生活便有著落，精神上亦有所寄託。","example":"脫離城市，這個鄉村就是我們安身立命的好地方","idiom":"安身立命"},{"meaning":"比喻難以脫身逃走。","example":"蝴蝶一旦落入蜘蛛網，便插翅難飛。","idiom":"插翅難飛"},{"meaning":"雙方力量、情勢相當，不分上下。","example":"這場比賽雙方勢均力敵，看起來相當刺激。","idiom":"勢均力敵"},{"meaning":"大家都知道。","example":"這起食安危機事件已鬧得眾所周知，引起社會大眾高度的關注。","idiom":"眾所周知"},{"meaning":"無論如何很難免除、避免。","example":"學習新事物時，犯錯是在所難免的。","idiom":"在所難免"},{"meaning":"比喻計畫周詳，有成功的把握。","example":"看他胸有成竹的樣子，這次表演應該會相當精采有趣。","idiom":"胸有成竹"},{"meaning":"開發財源增加收入，節省支出。","example":"阿姨今天能小有積蓄，就是長久以來開源節流的結果。","idiom":"開源節流"},{"meaning":"比喻微不足道的技能。","example":"這位魔術師的雕蟲小技，大家早就看過了。","idiom":"雕蟲小技"},{"meaning":"比喻做事中途退縮、放棄。","example":"弟弟才學了幾天的鋼琴﹐就不想繼續下去，打算打退堂鼓了。","idiom":"打退堂鼓"},{"meaning":"形容非常驚懼害怕，狼狽不堪。","example":"敵軍被我方打得屁滾尿流，狼狽不堪。","idiom":"屁滾尿流"}],"fileName":"lesson12.html","title":"昆蟲的保命妙招","num":12}];
+
+    /**
+     * 3. 首頁總目錄控制器
+     */
+    function catalogHubApp() {
+      return {
+        lessons: ALL_LESSONS_DATA,
+        searchKeyword: '',
+        isMuted: false,
+        scoresMap: {},
+        previewLesson: null,
+
+        initHub() {
+          this.loadAllScores();
+          window.addEventListener('pageshow', () => this.loadAllScores());
+        },
+
+        loadAllScores() {
+          const map = {};
+          for (const lesson of this.lessons) {
+            try {
+              const val = localStorage.getItem('nani3a_idiom_lesson_' + lesson.code + '_best');
+              map[lesson.code] = val !== null ? parseInt(val, 10) : null;
+            } catch (e) {
+              map[lesson.code] = null;
+            }
+          }
+          this.scoresMap = map;
+        },
+
+        getLessonScore(code) {
+          return this.scoresMap[code] !== undefined ? this.scoresMap[code] : null;
+        },
+
+        clearAllRecords() {
+          PlaySound('click');
+          if (!confirm('確定要清除所有課次的最高分紀錄嗎？')) return;
+          for (const lesson of this.lessons) {
+            try {
+              localStorage.removeItem('nani3a_idiom_lesson_' + lesson.code + '_best');
+            } catch (e) {}
+          }
+          this.loadAllScores();
+        },
+
+        toggleMute() {
+          this.isMuted = !this.isMuted;
+          AudioEngine.setMuted(this.isMuted);
+          if (!this.isMuted) PlaySound('click');
+        },
+
+        openPreviewModal(lesson) {
+          PlaySound('click');
+          this.previewLesson = lesson;
+        },
+
+        closePreviewModal() {
+          PlaySound('click');
+          this.previewLesson = null;
+        },
+
+        get totalIdiomsCount() {
+          return this.lessons.reduce((acc, cur) => acc + cur.idioms.length, 0);
+        },
+
+        get completedLessonsCount() {
+          return Object.values(this.scoresMap).filter(v => v !== null).length;
+        },
+
+        get perfectLessonsCount() {
+          return Object.values(this.scoresMap).filter(v => v === 100).length;
+        },
+
+        get filteredLessons() {
+          if (!this.searchKeyword) return this.lessons;
+          const kw = this.searchKeyword.toLowerCase();
+          return this.lessons.filter(lesson => {
+            if (lesson.title.toLowerCase().includes(kw) || lesson.code.includes(kw)) return true;
+            return lesson.idioms.some(i => i.idiom.includes(kw) || i.meaning.includes(kw));
+          });
+        }
+      };
+    }
+  </script>
+</body>
+</html>

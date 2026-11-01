@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>星際救援：10000以內的加減大作戰（翰林三上 L02）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-team: #0284c7;
+      --yellow-team: #eab308;
+      --red-team: #e11d48;
+      --ink-dark: #0f172a;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans TC', 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #fef9c3 50%, #ffe4e6 100%);
+      color: var(--ink-dark);
+      overflow-x: hidden;
+    }
+    .dopamine-card {
+      background: #ffffff;
+      border: 4px solid #0f172a;
+      box-shadow: 6px 6px 0px #0f172a;
+      border-radius: 1.25rem;
+    }
+    .dopamine-btn {
+      border: 3px solid #0f172a;
+      box-shadow: 4px 4px 0px #0f172a;
+      transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .dopamine-btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #0f172a;
+    }
+    .dopamine-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #0f172a;
+    }
+    /* 直式數位方格 */
+    .digit-cell {
+      width: 3.4rem;
+      height: 3.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', 'Noto Sans TC', monospace;
+      font-size: 2.25rem;
+      font-weight: 900;
+      border-radius: 0.75rem;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    @media (min-width: 1024px) {
+      .digit-cell {
+        width: 4rem;
+        height: 4.4rem;
+        font-size: 2.6rem;
+      }
+    }
+    /* 蟲食算可點擊空格 */
+    .worm-slot {
+      background: #fef08a;
+      border: 4px dashed #ca8a04;
+      color: #854d0e;
+      cursor: pointer;
+      animation: pulse-slot 1.8s infinite;
+    }
+    .worm-slot.active-slot {
+      background: #fde047;
+      border: 4px solid #0284c7;
+      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.35);
+      transform: scale(1.08);
+      animation: none;
+    }
+    .worm-slot.filled-slot {
+      background: #e0f2fe;
+      border: 4px solid #0284c7;
+      color: #0369a1;
+      animation: none;
+    }
+    @keyframes pulse-slot {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    /* 退位借10合體動畫 */
+    @keyframes hug-pop {
+      0% { transform: scale(0.5) translateY(-16px); opacity: 0; }
+      60% { transform: scale(1.2) translateY(2px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .animate-hug {
+      animation: hug-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    /* 定位格背景（展開白板用） */
+    .place-value-grid-bg {
+      background-color: #fffbeb;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.28) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.28) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-3">
+
+  <!-- 頂部導覽與三隊能量計分板 -->
+  <header class="w-full max-w-[1600px] mx-auto mb-2">
+    <div class="dopamine-card bg-white px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+      <!-- 左側：標題與返回群島 -->
+      <div class="flex items-center gap-2.5">
+        <a href="./math_island_adventure.html" class="dopamine-btn bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-xl font-black text-sm flex items-center gap-1" title="返回3D數學群島">
+          <span>🏝️</span><span class="hidden sm:inline">返回群島</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl md:text-3xl">🚀</span>
+          <div>
+            <h1 class="text-lg md:text-2xl font-black tracking-tight text-slate-900 leading-tight">
+              星際救援：10000以內的加減
+            </h1>
+            <p class="text-xs font-bold text-slate-500 hidden sm:block">
+              翰林三上 L02 ｜ 進退位視覺拆解・星際密碼蟲食算・未知數線段模型
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中間：藍、黃、紅 三隊星際飛船計分板 -->
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- 藍隊 -->
+        <div id="team-card-0" class="px-3 py-1.5 rounded-xl border-3 border-slate-900 bg-sky-100 flex items-center gap-2 transition-all">
+          <span class="text-xl">🛸</span>
+          <div>
+            <div class="text-xs font-black text-sky-900 flex items-center gap-1">
+              <span>藍隊・蒼穹號</span>
+              <span id="team-turn-0" class="px-1.5 py-0.2 bg-sky-600 text-white rounded text-[10px]">當前</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span id="team-score-0" class="text-lg md:text-xl font-black text-sky-700">100</span>
+              <span class="text-[11px] font-bold text-sky-600">⚡能量</span>
+              <button onclick="adjustTeamScore(0, 10)" class="px-1.5 py-0.5 bg-white hover:bg-sky-200 rounded border border-slate-700 text-xs font-black" title="手動+10">+10</button>
+              <button onclick="adjustTeamScore(0, -10)" class="px-1.5 py-0.5 bg-white hover:bg-rose-200 rounded border border-slate-700 text-xs font-black" title="手動-10">-10</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 黃隊 -->
+        <div id="team-card-1" class="px-3 py-1.5 rounded-xl border-3 border-slate-900 bg-amber-100 flex items-center gap-2 transition-all">
+          <span class="text-xl">🚀</span>
+          <div>
+            <div class="text-xs font-black text-amber-900 flex items-center gap-1">
+              <span>黃隊・耀日號</span>
+              <span id="team-turn-1" class="hidden px-1.5 py-0.2 bg-amber-600 text-white rounded text-[10px]">當前</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span id="team-score-1" class="text-lg md:text-xl font-black text-amber-700">100</span>
+              <span class="text-[11px] font-bold text-amber-600">⚡能量</span>
+              <button onclick="adjustTeamScore(1, 10)" class="px-1.5 py-0.5 bg-white hover:bg-amber-200 rounded border border-slate-700 text-xs font-black" title="手動+10">+10</button>
+              <button onclick="adjustTeamScore(1, -10)" class="px-1.5 py-0.5 bg-white hover:bg-rose-200 rounded border border-slate-700 text-xs font-black" title="手動-10">-10</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 紅隊 -->
+        <div id="team-card-2" class="px-3 py-1.5 rounded-xl border-3 border-slate-900 bg-rose-100 flex items-center gap-2 transition-all">
+          <span class="text-xl">🛰️</span>
+          <div>
+            <div class="text-xs font-black text-rose-900 flex items-center gap-1">
+              <span>紅隊・赤焰號</span>
+              <span id="team-turn-2" class="hidden px-1.5 py-0.2 bg-rose-600 text-white rounded text-[10px]">當前</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span id="team-score-2" class="text-lg md:text-xl font-black text-rose-700">100</span>
+              <span class="text-[11px] font-bold text-rose-600">⚡能量</span>
+              <button onclick="adjustTeamScore(2, 10)" class="px-1.5 py-0.5 bg-white hover:bg-rose-200 rounded border border-slate-700 text-xs font-black" title="手動+10">+10</button>
+              <button onclick="adjustTeamScore(2, -10)" class="px-1.5 py-0.5 bg-white hover:bg-rose-200 rounded border border-slate-700 text-xs font-black" title="手動-10">-10</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右側：工具列（戰區篩選、題號快選、音效、診斷報告） -->
+      <div class="flex items-center gap-2">
+        <select id="categoryFilter" onchange="onFilterChange()" class="dopamine-btn bg-amber-300 text-slate-900 px-2.5 py-1.5 rounded-xl font-black text-xs md:text-sm cursor-pointer">
+          <option value="all">🌌 全部 21 題（7大循環對稱賽）</option>
+          <option value="add_carry">➕ 循環1：四位數連續進位加法</option>
+          <option value="bug_align">🐛 循環2：直式位值抓蟲除錯</option>
+          <option value="sub_borrow">🧪 循環3：退位減法（借10抱抱合體）</option>
+          <option value="sub_zero">🌀 循環4：整千跨零退位（穿透黑洞）</option>
+          <option value="worm_add">🧩 循環5：蟲食算（加法直式填空格）</option>
+          <option value="worm_sub">🔐 循環6：蟲食算（減法直式填空格）</option>
+          <option value="unknown_bar">📏 循環7：未知數應用與線段模型</option>
+        </select>
+
+        <button onclick="openQuestionPicker()" class="dopamine-btn bg-sky-300 hover:bg-sky-400 text-slate-900 px-2.5 py-1.5 rounded-xl font-black text-xs md:text-sm">
+          🔢 選題 (<span id="qProgressText">1/21</span>)
+        </button>
+
+        <button onclick="openReportModal()" class="dopamine-btn bg-purple-300 hover:bg-purple-400 text-slate-900 px-2.5 py-1.5 rounded-xl font-black text-xs md:text-sm">
+          📊 診斷
+        </button>
+
+        <button id="soundToggleBtn" onclick="toggleSound()" class="dopamine-btn bg-emerald-300 hover:bg-emerald-400 text-slate-900 px-2.5 py-1.5 rounded-xl font-black text-xs md:text-sm" title="切換音效">
+          🔊
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主遊戲互動區 (16:9 無捲軸自適應雙欄佈局) -->
+  <main class="w-full max-w-[1600px] mx-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+
+    <!-- 左欄 (7 cols)：生活情境題幹 + 互動直式計算台（含原位手寫白板塗鴉層 & 迷思視覺化器） -->
+    <section class="lg:col-span-7 dopamine-card bg-white p-3 md:p-4 flex flex-col justify-between relative overflow-hidden">
+
+      <!-- 題目頂部標籤列 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b-2 border-slate-100">
+        <div class="flex items-center gap-2">
+          <span id="qTeamBadge" class="px-3 py-1 rounded-full font-black text-xs md:text-sm border-2 border-slate-900 bg-sky-300 text-slate-900">
+            🛸 藍隊任務
+          </span>
+          <span id="qCategoryBadge" class="px-3 py-1 rounded-full font-black text-xs md:text-sm bg-amber-100 text-amber-900 border border-amber-400">
+            ➕ 四位數連續進位加法
+          </span>
+          <span id="qEstimateBadge" class="hidden md:inline-block px-2.5 py-0.5 rounded-lg font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-300">
+            🎯 高位估算參照
+          </span>
+        </div>
+
+        <!-- 原位手寫筆開關與手動清空（換題絕不自動清空！） -->
+        <div class="flex items-center gap-1.5 z-30">
+          <button id="overlayPenBtn" onclick="toggleOverlayPen()" class="dopamine-btn bg-amber-200 hover:bg-amber-300 text-slate-900 px-2.5 py-1 rounded-xl font-black text-xs md:text-sm flex items-center gap-1">
+            <span>✏️</span><span id="overlayPenStatus">開啟原位手寫筆</span>
+          </button>
+          <button onclick="setOverlayColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-slate-900 shadow-sm" title="紅筆（退位劃線/進位）"></button>
+          <button onclick="setOverlayColor('#1d4ed8')" class="w-6 h-6 rounded-full bg-blue-700 border-2 border-slate-900 shadow-sm" title="藍筆（計算書寫）"></button>
+          <button onclick="setOverlayColor('#059669')" class="w-6 h-6 rounded-full bg-emerald-600 border-2 border-slate-900 shadow-sm" title="綠筆（圈選重點）"></button>
+          <button onclick="clearOverlayCanvas()" class="dopamine-btn bg-rose-100 hover:bg-rose-200 text-rose-900 px-2.5 py-1 rounded-xl font-black text-xs" title="手動清空原位筆跡">
+            🗑️ 手動清空
+          </button>
+        </div>
+      </div>
+
+      <!-- 生活情境題目敘述卡片 -->
+      <div class="my-2 bg-gradient-to-r from-sky-50 via-amber-50 to-pink-50 border-3 border-slate-800 rounded-2xl p-3 md:p-4 shadow-sm relative">
+        <div class="flex items-start gap-3">
+          <div id="qSceneIcon" class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white border-2 border-slate-800 flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow">
+            🐼
+          </div>
+          <div class="flex-1">
+            <div id="qSceneTitle" class="text-xs md:text-sm font-black text-sky-800 mb-0.5">
+              【生活情境應用・市立動物園參觀人次】
+            </div>
+            <p id="qStoryText" class="text-base md:text-xl lg:text-2xl font-black text-slate-900 leading-snug">
+              市立動物園上週有 <span class="text-sky-700 underline">3578</span> 人來參觀，本週貓熊寶寶亮相有 <span class="text-rose-600 underline">2645</span> 人參觀，這兩週共有多少人參觀？
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 互動直式計算與概念視覺化主舞台（上方覆蓋可手寫透明畫布） -->
+      <div class="flex-1 bg-slate-50 border-3 border-slate-800 rounded-2xl p-3 flex flex-col items-center justify-center relative min-h-[260px]">
+
+        <!-- 原位透明手寫塗鴉 Canvas（預設 pointer-events-none，開啟畫筆時可直接在直式上書寫劃記） -->
+        <canvas id="overlayCanvas" class="absolute inset-0 w-full h-full z-20 pointer-events-none touch-none"></canvas>
+
+        <!-- 概念互動控制按鈕列（依題型自動切換：進位天花板 / 借10抱抱合體 / 跨零黑洞透視 / 靠右磁吸軌道 / 動態線段圖） -->
+        <div id="conceptActionRow" class="w-full flex flex-wrap items-center justify-between gap-2 mb-2 z-10">
+          <span id="conceptTagPrompt" class="text-xs md:text-sm font-black text-slate-700 bg-white px-3 py-1 rounded-xl border-2 border-slate-800">
+            💡 點擊下方【概念透視】可動態觀察進退位與線段變化！
+          </span>
+          <button id="conceptDemoBtn" onclick="triggerConceptAnimation()" class="dopamine-btn bg-amber-300 hover:bg-amber-400 text-slate-900 px-3 py-1 rounded-xl font-black text-xs md:text-sm flex items-center gap-1">
+            <span>✨</span><span id="conceptDemoBtnText">啟動「進退位步驟透視」動畫</span>
+          </button>
+        </div>
+
+        <!-- 動態直式定位板 / 蟲食算填空區 / 未知數線段模型容器 -->
+        <div id="interactiveStageContainer" class="w-full flex flex-col items-center justify-center py-1 z-10">
+          <!-- 由 JS 動態渲染：千百十個定位板直式、蟲食算空格、或線段圖模型 -->
+        </div>
+
+        <!-- 概念拆解即時提示橫幅 -->
+        <div id="conceptStepBanner" class="w-full mt-2 bg-amber-100/90 border-2 border-amber-500 rounded-xl px-3 py-1.5 text-center font-black text-xs md:text-sm text-amber-950 hidden z-10">
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 右欄 (5 cols)：互動答題區（蟲食算0~9點擊數字盤 / 選項作答區）+ 迷思澄清即時回饋 -->
+    <section class="lg:col-span-5 dopamine-card bg-white p-3 md:p-4 flex flex-col justify-between">
+
+      <!-- 作答面板標題與模式切換 -->
+      <div>
+        <div class="flex items-center justify-between pb-2 border-b-2 border-slate-100 mb-2">
+          <h2 id="answerPanelTitle" class="text-base md:text-xl font-black text-slate-900 flex items-center gap-1.5">
+            <span>🎯</span><span>任務作答控制台</span>
+          </h2>
+          <button onclick="openScratchpadModal()" class="dopamine-btn bg-indigo-200 hover:bg-indigo-300 text-indigo-950 px-3 py-1 rounded-xl font-black text-xs md:text-sm flex items-center gap-1">
+            <span>📋</span><span>展開大白板算草稿</span>
+          </button>
+        </div>
+
+        <!-- 模式 A：點擊填入數字鍵盤（蟲食算 & 填空模式專用，也可在一般題切換使用） -->
+        <div id="keypadPanel" class="hidden bg-sky-50 border-3 border-slate-800 rounded-2xl p-3 mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <span id="keypadHintText" class="text-xs md:text-sm font-black text-sky-900">
+              👆 請先點選左方直式中的【？空格】，再點擊下方數字填入：
+            </span>
+            <button onclick="clearWormInputs()" class="px-2 py-0.5 bg-white hover:bg-rose-100 text-rose-700 border border-slate-700 rounded-lg text-xs font-black">
+              重填空格
+            </button>
+          </div>
+          <!-- 0~9 大尺寸觸控數字鍵盤 -->
+          <div class="grid grid-cols-5 gap-2 mb-2.5">
+            <button onclick="onDigitPadClick(1)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">1</button>
+            <button onclick="onDigitPadClick(2)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">2</button>
+            <button onclick="onDigitPadClick(3)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">3</button>
+            <button onclick="onDigitPadClick(4)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">4</button>
+            <button onclick="onDigitPadClick(5)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">5</button>
+            <button onclick="onDigitPadClick(6)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">6</button>
+            <button onclick="onDigitPadClick(7)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">7</button>
+            <button onclick="onDigitPadClick(8)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">8</button>
+            <button onclick="onDigitPadClick(9)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">9</button>
+            <button onclick="onDigitPadClick(0)" class="dopamine-btn bg-white hover:bg-amber-200 text-slate-900 py-2.5 rounded-xl font-black text-xl md:text-2xl">0</button>
+          </div>
+          <button id="submitWormBtn" onclick="submitWormAnswer()" class="w-full dopamine-btn bg-emerald-400 hover:bg-emerald-500 text-slate-950 py-2.5 rounded-xl font-black text-base md:text-lg flex items-center justify-center gap-2">
+            <span>🚀</span><span>確認送出填入的數字密碼</span>
+          </button>
+        </div>
+
+        <!-- 模式 B：四選一迷思誘答診斷選項卡 -->
+        <div id="optionsPanel" class="grid grid-cols-1 gap-2.5 mb-2">
+          <!-- 由 JS 動態生成 4 個大尺寸觸控按鈕 -->
+        </div>
+      </div>
+
+      <!-- 迷思概念澄清與三階鷹架回饋區 -->
+      <div id="feedbackCard" class="bg-slate-50 border-3 border-slate-800 rounded-2xl p-3 flex flex-col justify-between min-h-[145px]">
+        <div id="feedbackHeader" class="flex items-center justify-between mb-1">
+          <span class="text-xs md:text-sm font-black text-slate-700 flex items-center gap-1">
+            <span>🧭</span><span>星際導航・迷思雷達站</span>
+          </span>
+          <span id="singleLockTag" class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+            🔒 謹慎思考・單次鎖定
+          </span>
+        </div>
+        <div id="feedbackBody" class="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">
+          請先在左方直式觀察位值（可用「✏️原位手寫筆」或「📋展開大白板」列式計算），再點選答案！若遇到困難可點擊下方【💡 提示鷹架】。
+        </div>
+      </div>
+
+      <!-- 底部教師與課堂主控三按鈕 + 上一題/下一題 -->
+      <div class="pt-2 mt-2 border-t-2 border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <button onclick="showScaffoldHint()" class="dopamine-btn bg-amber-300 hover:bg-amber-400 text-slate-900 px-3 py-1.5 rounded-xl font-black text-xs md:text-sm flex items-center gap-1">
+            <span>💡</span><span>提示鷹架</span>
+          </button>
+          <button onclick="triggerConceptAnimation()" class="dopamine-btn bg-sky-300 hover:bg-sky-400 text-slate-900 px-3 py-1.5 rounded-xl font-black text-xs md:text-sm flex items-center gap-1">
+            <span>🔍</span><span>步驟透視</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="prevQuestion()" class="dopamine-btn bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-1.5 rounded-xl font-black text-xs md:text-sm">
+            ⬅️ 上一題
+          </button>
+          <button onclick="nextQuestion()" class="dopamine-btn bg-emerald-400 hover:bg-emerald-500 text-slate-950 px-4 py-1.5 rounded-xl font-black text-xs md:text-sm">
+            下一題 ➡️
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 彈窗 1：展開式千百十個定位格草稿大白板 (保留筆跡・手動清空！) -->
+  <div id="scratchpadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-2 md:p-4">
+    <div class="w-full max-w-4xl dopamine-card bg-white p-4 flex flex-col h-[86vh] max-h-[680px]">
+      <!-- 白板頂部列 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b-2 border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📋</span>
+          <div>
+            <h3 class="font-black text-slate-900 text-sm md:text-lg">直式定位格手寫計算白板（筆跡自動保留，點「手動清空」才擦除）</h3>
+            <p id="scratchModalQuestionRef" class="text-xs font-bold text-sky-700"></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- 筆色與橡皮擦 -->
+          <button onclick="setScratchPen('#1e3a8a', 4)" class="px-2.5 py-1 rounded-lg bg-blue-900 text-white text-xs font-bold border-2 border-slate-900">🖊️ 藍筆</button>
+          <button onclick="setScratchPen('#dc2626', 4)" class="px-2.5 py-1 rounded-lg bg-red-600 text-white text-xs font-bold border-2 border-slate-900">🖍️ 紅筆</button>
+          <button onclick="setScratchPen('#059669', 4)" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold border-2 border-slate-900">🟢 綠筆</button>
+          <button onclick="setScratchEraser()" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-slate-900 text-xs font-bold border-2 border-slate-900">🧽 橡皮擦</button>
+          <button onclick="clearScratchpadCanvas()" class="dopamine-btn px-3 py-1 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs md:text-sm font-black">
+            🗑️ 手動清空
+          </button>
+          <button onclick="closeScratchpadModal()" class="dopamine-btn px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs md:text-sm font-black">
+            ✕ 關閉（保留筆跡）
+          </button>
+        </div>
+      </div>
+
+      <!-- 白板定位格標題提示 -->
+      <div class="grid grid-cols-4 text-center py-1 bg-amber-200/70 border-x-2 border-t-2 border-slate-400 rounded-t-xl mt-2 font-black text-sm md:text-base text-slate-800">
+        <div>千位 (1000)</div>
+        <div>百位 (100)</div>
+        <div>十位 (10)</div>
+        <div>個位 (1)</div>
+      </div>
+
+      <!-- 手寫 Canvas 區 -->
+      <div class="flex-1 w-full place-value-grid-bg border-2 border-slate-400 rounded-b-xl overflow-hidden relative touch-none">
+        <!-- 四欄分隔虛線 -->
+        <div class="absolute inset-0 grid grid-cols-4 pointer-events-none">
+          <div class="border-r-2 border-dashed border-amber-400/70"></div>
+          <div class="border-r-2 border-dashed border-amber-400/70"></div>
+          <div class="border-r-2 border-dashed border-amber-400/70"></div>
+          <div></div>
+        </div>
+        <canvas id="scratchCanvas" class="w-full h-full cursor-crosshair relative z-10"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 2：21題題號快速選題器 -->
+  <div id="questionPickerModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-3xl dopamine-card bg-white p-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b-2 border-slate-200 mb-3">
+        <h3 class="text-lg font-black text-slate-900">🔢 21 題平行對稱題庫・快速跳題器</h3>
+        <button onclick="closeQuestionPicker()" class="px-3 py-1 rounded-xl bg-slate-800 text-white text-xs font-black">✕ 關閉</button>
+      </div>
+      <div id="questionPickerGrid" class="grid grid-cols-3 sm:grid-cols-7 gap-2 overflow-y-auto p-1">
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 3：迷思診斷與戰果統計報告 -->
+  <div id="reportModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl dopamine-card bg-white p-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-2 border-b-2 border-slate-200 mb-3">
+        <h3 class="text-lg md:text-xl font-black text-slate-900">📊 第二單元《10000以內的加減》迷思診斷報告</h3>
+        <button onclick="closeReportModal()" class="px-3 py-1 rounded-xl bg-slate-800 text-white text-xs font-black">✕ 關閉</button>
+      </div>
+      <div id="reportContent" class="space-y-3 text-sm font-bold text-slate-800">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 音效引擎 (Web Audio API 原生合成音，零外部依賴、100% 不破音)
+    // =========================================================================
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.12) {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    }
+
+    function playSfx(kind) {
+      if (!soundEnabled) return;
+      if (kind === 'click') {
+        playTone(580, 'triangle', 0.08, 0.1);
+      } else if (kind === 'correct') {
+        playTone(523.25, 'triangle', 0.12, 0.15);
+        setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.15), 100);
+        setTimeout(() => playTone(783.99, 'triangle', 0.15, 0.15), 200);
+        setTimeout(() => playTone(1046.5, 'sine', 0.3, 0.18), 310);
+      } else if (kind === 'wrong') {
+        playTone(240, 'sawtooth', 0.18, 0.12);
+        setTimeout(() => playTone(180, 'sawtooth', 0.28, 0.12), 160);
+      } else if (kind === 'magic') {
+        playTone(440, 'sine', 0.1, 0.1);
+        setTimeout(() => playTone(660, 'sine', 0.12, 0.12), 90);
+        setTimeout(() => playTone(880, 'sine', 0.18, 0.12), 180);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) playSfx('click');
+    }
+
+    // =========================================================================
+    // 2. 完整 21 題平行對稱題庫 (7大迷思與蟲食算循環 × 藍、黃、紅 3隊)
+    // =========================================================================
+    const QUESTIONS_DB = [
+      // ---------------- 循環 1：四位數連續進位加法（3題數字與答案完全不同） ----------------
+      {
+        id: 1,
+        cycle: 'add_carry',
+        cycleName: '➕ 循環1：四位數連續進位加法',
+        team: 0, // 藍隊
+        icon: '🐼',
+        sceneTitle: '【生活情境應用・市立動物園參觀人次】（課本情境延伸）',
+        story: '市立動物園上週有 3578 人來參觀，本週貓熊寶寶亮相湧入 2645 人，這兩週共有多少人參觀？',
+        estimateText: '高位估算：3500 多 ＋ 2600 多 ≈ 6100 多人',
+        mode: 'choice',
+        op: '+',
+        topNum: [3, 5, 7, 8],
+        botNum: [2, 6, 4, 5],
+        ansNum: [6, 2, 2, 3],
+        carries: [1, 1, 1, 0], // 千百十個上方進位標記
+        demoBtnText: '點亮「天花板連續進位燈」分解',
+        demoSteps: '個位 8+5=13（寫3進1）➔ 十位 7+4+進位1=12（寫2進1）➔ 百位 5+6+進位1=12（寫2進1）➔ 千位 3+2+進位1=6，合起來是 6223 人！',
+        options: ['6113 人', '6213 人', '6223 人', '5223 人'],
+        correctIndex: 2,
+        misconceptions: [
+          '⚠️ 迷思抓包：你選了 6113，這是因為「十位與百位都忘了加上隔壁進上來的 1」！記得點亮天花板進位燈喔！',
+          '⚠️ 迷思抓包：你選了 6213，十位 7+4=11 還要加上個位進上來的 1，應該寫 2 進 1 喔！',
+          '🎉 完全正確！個位、十位、百位連續滿十進一，天花板上的進位 1 都有確實加上去，算出 6223 人！',
+          '⚠️ 迷思抓包：你選了 5223，百位 5+6+1=12 滿十進一到千位，千位 3+2 還要加上進位的 1 才是 6 喔！'
+        ],
+        hint: '先從個位算起：8＋5＝13（個位寫 3、進 1 到十位）。別忘了十位、百位頭頂上都有進位 1 喔！'
+      },
+      {
+        id: 2,
+        cycle: 'add_carry',
+        cycleName: '➕ 循環1：四位數連續進位加法',
+        team: 1, // 黃隊
+        icon: '🌱',
+        sceneTitle: '【生活情境應用・星際溫室樹苗培育】',
+        story: '生態植物園上個月培育了 4865 株台灣原生樹苗，這個月又培育了 2759 株，兩個月共培育了多少株樹苗？',
+        estimateText: '高位估算：接近 4900 ＋ 2800 ≈ 7700 株',
+        mode: 'choice',
+        op: '+',
+        topNum: [4, 8, 6, 5],
+        botNum: [2, 7, 5, 9],
+        ansNum: [7, 6, 2, 4],
+        carries: [1, 1, 1, 0],
+        demoBtnText: '點亮「天花板連續進位燈」分解',
+        demoSteps: '個位 5+9=14（寫4進1）➔ 十位 6+5+進位1=12（寫2進1）➔ 百位 8+7+進位1=16（寫6進1）➔ 千位 4+2+進位1=7，共 7624 株！',
+        options: ['7624 株', '7514 株', '7614 株', '6624 株'],
+        correctIndex: 0,
+        misconceptions: [
+          '🎉 完全正確！連續三次進位都精準加上天花板的 1，算出 7624 株！',
+          '⚠️ 迷思抓包：十位與百位都漏加了右邊進上來的 1！請用「✏️ 原位手寫筆」在十位、百位、千位上方寫上小 1。',
+          '⚠️ 迷思抓包：十位 6+5=11，漏加了個位進上來的 1！加上進位 1 會變成 12（寫 2 進 1）喔！',
+          '⚠️ 迷思抓包：百位 8+7+1=16 滿十進 1 到千位，千位 4+2 還要加上進位 1 才是 7 喔！'
+        ],
+        hint: '個位 5+9=14 進 1；十位 6+5+1=12 進 1；百位 8+7+1=16 進 1；千位 4+2+1=7！'
+      },
+      {
+        id: 3,
+        cycle: 'add_carry',
+        cycleName: '➕ 循環1：四位數連續進位加法',
+        team: 2, // 紅隊
+        icon: '🐬',
+        sceneTitle: '【生活情境應用・海洋生態館售票統計】',
+        story: '海洋生態館週六售出 1947 張門票，週日售出 3586 張門票，週末兩天一共售出多少張門票？',
+        estimateText: '高位估算：接近 2000 ＋ 3600 ≈ 5600 張',
+        mode: 'choice',
+        op: '+',
+        topNum: [1, 9, 4, 7],
+        botNum: [3, 5, 8, 6],
+        ansNum: [5, 5, 3, 3],
+        carries: [1, 1, 1, 0],
+        demoBtnText: '點亮「天花板連續進位燈」分解',
+        demoSteps: '個位 7+6=13（寫3進1）➔ 十位 4+8+進位1=13（寫3進1）➔ 百位 9+5+進位1=15（寫5進1）➔ 千位 1+3+進位1=5，共 5533 張！',
+        options: ['5423 張', '5523 張', '4533 張', '5533 張'],
+        correctIndex: 3,
+        misconceptions: [
+          '⚠️ 迷思抓包：十位與百位都忘記加上進位的 1 囉！記得滿十進一要在天花板做記號！',
+          '⚠️ 迷思抓包：十位 4+8=12，還要加上個位進上來的 1 才是 13（寫 3 進 1）喔！',
+          '⚠️ 迷思抓包：千位 1+3=4，忘記加上百位 9+5+1=15 進上來的 1 囉！',
+          '🎉 完全正確！連續進位絲毫不差，週末共售出 5533 張門票！'
+        ],
+        hint: '注意個位 7+6=13 進 1；十位 4+8+進位1=13 進 1；百位 9+5+進位1=15 進 1！'
+      },
+
+      // ---------------- 循環 2：直式位值抓蟲除錯（涵蓋兩位數加、兩位數減、三位數加錯位） ----------------
+      {
+        id: 4,
+        cycle: 'bug_align',
+        cycleName: '🐛 循環2：直式位值抓蟲除錯',
+        team: 0,
+        icon: '📚',
+        sceneTitle: '【生活情境除錯・開學書局採購百科全書】（課本課前任務延伸）',
+        story: '小丹去書局買一套 1436 元的自然百科全書和一盒 58 元的色鉛筆，他列直式算出「1436 ＋ 58 ＝ 2016 元」。請問他錯在哪裡？正確應付多少元？',
+        estimateText: '合理性檢驗：1436 加五十幾，應該是一千四百多，怎麼會變成兩千多！',
+        mode: 'bug_align',
+        op: '+',
+        wrongTop: [1, 4, 3, 6],
+        wrongBot: ['', 5, 8, ''],
+        wrongAns: [2, 0, 1, 6],
+        topNum: [1, 4, 3, 6],
+        botNum: [0, 0, 5, 8],
+        ansNum: [1, 4, 9, 4],
+        demoBtnText: '啟動「個位靠右磁吸軌道」修正對齊',
+        demoSteps: '抓蟲成功！58 是「5個十、8個一」，必須靠右對齊十位與個位！1436 ＋ 58 ＝ 1494 元！',
+        options: [
+          '沒有錯，1436 + 58 確實是 2016 元',
+          '58 寫錯位（5寫在百位了），正確是 1494 元',
+          '個位忘記進位，正確是 1484 元',
+          '58 應該對齊千位，正確是 7236 元'
+        ],
+        correctIndex: 1,
+        misconceptions: [
+          '⚠️ 迷思警報：1436 元加上 58 元不可能變成 2016 元！因為 58 的 5 是 5 個十，不能加在 4 個百上面！',
+          '🎉 抓蟲大師！你一眼看出他把 58 往左偏寫到百位和十位去了！靠右對齊個位後 1436+58=1494 元！',
+          '⚠️ 迷思警報：已經找出要對齊個位，但別忘了個位 6+8=14 要進 1 到十位，3+5+1=9，是 1494 元喔！',
+          '⚠️ 迷思警報：58 只有十位和個位，必須靠右對齊個位！'
+        ],
+        hint: '看看直式裡的「58」：8 是個位，應該對齊 1436 的 6（個位）才對！'
+      },
+      {
+        id: 5,
+        cycle: 'bug_align',
+        cycleName: '🐛 循環2：直式位值抓蟲除錯',
+        team: 1,
+        icon: '🥐',
+        sceneTitle: '【生活情境除錯・幸福烘焙坊麵粉庫存（減法錯位）】',
+        story: '烘焙坊準備了 2850 公克的高筋麵粉，試做一個小餐包用掉 64 公克，學徒列減法直式算出「2850 － 64 ＝ 2210 公克」。請問哪裡算錯？正確還剩幾公克？',
+        estimateText: '合理性檢驗：2850 減六十幾，應該還剩兩千七百多公克才對！',
+        mode: 'bug_align',
+        op: '-',
+        wrongTop: [2, 8, 5, 0],
+        wrongBot: ['', 6, 4, ''],
+        wrongAns: [2, 2, 1, 0],
+        topNum: [2, 8, 5, 0],
+        botNum: [0, 0, 6, 4],
+        ansNum: [2, 7, 8, 6],
+        demoBtnText: '啟動「個位靠右磁吸軌道」修正對齊',
+        demoSteps: '抓蟲成功！減數 64 的 6 是十位、4 是個位，對齊個位後退位計算：2850 － 64 ＝ 2786 公克！',
+        options: [
+          '沒有錯，2850 - 64 確實是 2210 公克',
+          '十位忘記退位，正確是 2886 公克',
+          '個位直接用 4-0=4，正確是 2794 公克',
+          '64 寫錯位（寫到百位和十位了），正確是 2786 公克'
+        ],
+        correctIndex: 3,
+        misconceptions: [
+          '⚠️ 迷思警報：只用掉 64 公克，學徒卻寫在百位和十位變成減掉 640 公克了！',
+          '⚠️ 小心退位：十位 5 借 1 給個位剩 4，4 不夠減 6 要向百位 8 借 1，所以百位剩 7，答案是 2786 公克！',
+          '⚠️ 迷思警報：個位 0 不夠減 4 要借 10，10-4=6，不能下減上變成 4 喔！',
+          '🎉 抓蟲大師！一眼識破減法直式錯位陷阱，將 64 靠右對齊個位後，2850-64=2786 公克！'
+        ],
+        hint: '64 的「4」是個位，要跟 2850 的「0」對齊在同一排，再做退位減法！'
+      },
+      {
+        id: 6,
+        cycle: 'bug_align',
+        cycleName: '🐛 循環2：直式位值抓蟲除錯',
+        team: 2,
+        icon: '🍎',
+        sceneTitle: '【生活情境除錯・陽光果園採收水果（三位數錯位）】',
+        story: '果園採收了 3265 顆紅蘋果與 428 顆水梨，工讀生列直式時把 428 靠左對齊到千位，算出「3265 ＋ 428 ＝ 7545 顆」。請幫果園老闆抓出錯誤並選出正確總數！',
+        estimateText: '合理性檢驗：三千多顆加四百多顆，應該不到四千顆，怎麼會變七千多！',
+        mode: 'bug_align',
+        op: '+',
+        wrongTop: [3, 2, 6, 5],
+        wrongBot: [4, 2, 8, ''],
+        wrongAns: [7, 5, 4, 5],
+        topNum: [3, 2, 6, 5],
+        botNum: [0, 4, 2, 8],
+        ansNum: [3, 6, 9, 3],
+        demoBtnText: '啟動「個位靠右磁吸軌道」修正對齊',
+        demoSteps: '抓蟲成功！428 是三位數（4個百、2個十、8個一），往右滑動對齊百、十、個位：3265 ＋ 428 ＝ 3693 顆！',
+        options: [
+          '428 靠左對齊到千位了，正確對齊個位後是 3693 顆',
+          '沒有算錯，總共是 7545 顆',
+          '個位忘記進位，正確是 3683 顆',
+          '百位算錯，正確是 4693 顆'
+        ],
+        correctIndex: 0,
+        misconceptions: [
+          '🎉 抓蟲大師！一眼看出三位數 428 不能靠左對齊千位，靠右對齊個位後 3265+428=3693 顆！',
+          '⚠️ 迷思警報：428 只有四百多顆，不能把 4 個百當成 4 個千來加喔！',
+          '⚠️ 小心個位 5+8=13 有滿十進 1 到十位，6+2+1=9，所以是 3693 顆！',
+          '⚠️ 百位 2+4=6 未滿十，千位維持 3，是 3693 顆喔！'
+        ],
+        hint: '把 428 往右移一格，讓 8 對齊個位的 5，再算算看 3265 + 428 是多少！'
+      },
+
+      // ---------------- 循環 3：四位數退位減法（借10抱抱合體，3題數字與答案完全不同） ----------------
+      {
+        id: 7,
+        cycle: 'sub_borrow',
+        cycleName: '🧪 循環3：退位減法（借10抱抱合體）',
+        team: 0,
+        icon: '📖',
+        sceneTitle: '【生活情境應用・兒童圖書館繪本借閱】',
+        story: '兒童圖書館原本有 5243 本精裝繪本，這學期被小朋友借走了 1675 本，現在圖書館架上還剩下幾本繪本？',
+        estimateText: '高位估算：5200 多 － 1600 多 ≈ 3500 多本',
+        mode: 'sub_hug',
+        op: '-',
+        topNum: [5, 2, 4, 3],
+        botNum: [1, 6, 7, 5],
+        ansNum: [3, 5, 6, 8],
+        afterBorrowTop: [4, 1, 3, 3], // 退位後剩下的頂部數字
+        borrowTenFlags: [0, 1, 1, 1], // 百、十、個皆有借 10
+        demoBtnText: '啟動「🧪 借10能量瓶與原數抱抱合體」',
+        demoSteps: '個位借10：10-5=5，別忘加回原本的3 ➔ 5+3=8！十位 4借走剩3，借10：10-7+3=6！百位 2借走剩1，借10：10-6+1=5！千位 4-1=3，得 3568 本！',
+        options: ['3565 本', '3568 本', '3678 本', '4568 本'],
+        correctIndex: 1,
+        misconceptions: [
+          '⚠️ 典型迷思抓包（借10忘了加頂）：你算出個位是 5，因為你算完 10-5=5 就直接寫下來，忘記把原本個位的 3 加回來（5+3=8）！',
+          '🎉 太神啦！「借來的 10 減下面之後，都有記得跟原本頭頂剩下的數字抱抱合體」，算出 3568 本！',
+          '⚠️ 迷思抓包：十位和百位被隔壁借走 1 之後，自己要先減 1（4變3、2變1）再算喔！',
+          '⚠️ 迷思抓包：千位的 5 已經借了 1 個千給百位，只剩下 4，所以千位是 4-1=3 喔！'
+        ],
+        hint: '點擊左方【🧪 借10抱抱合體】！個位借 10 減 5 剩 5，還要把原本的 3 加回來（5+3=8）喔！'
+      },
+      {
+        id: 8,
+        cycle: 'sub_borrow',
+        cycleName: '🧪 循環3：退位減法（借10抱抱合體）',
+        team: 1,
+        icon: '⚡',
+        sceneTitle: '【生活情境應用・綠能儲電廠電力調度】',
+        story: '綠能儲電站原本儲存了 8324 度電，支援工業區用去了 3758 度電，儲電站還剩下多少度電？',
+        estimateText: '高位估算：8300 多 － 3700 多 ≈ 4500 多度',
+        mode: 'sub_hug',
+        op: '-',
+        topNum: [8, 3, 2, 4],
+        botNum: [3, 7, 5, 8],
+        ansNum: [4, 5, 6, 6],
+        afterBorrowTop: [7, 2, 1, 4],
+        borrowTenFlags: [0, 1, 1, 1],
+        demoBtnText: '啟動「🧪 借10能量瓶與原數抱抱合體」',
+        demoSteps: '個位借10：10-8+原本的4=6！十位 2借走剩1，借10：10-5+1=6！百位 3借走剩2，借10：10-7+2=5！千位 7-3=4，得 4566 度！',
+        options: ['4562 度', '4676 度', '5566 度', '4566 度'],
+        correctIndex: 3,
+        misconceptions: [
+          '⚠️ 典型迷思抓包（借10忘了加頂）：個位借 10 減 8 得 2，忘記把被減數原本的 4 加回來（2+4=6）囉！',
+          '⚠️ 迷思抓包：百位 3 借 1 剩 2、十位 2 借 1 剩 1，別忘了先扣除借給右邊的 1 喔！',
+          '⚠️ 迷思抓包：千位的 8 借出 1 後剩下 7，7-3=4（不是 5）喔！',
+          '🎉 太神啦！每一次借位都有先減 1、再讓借來的 10 與原數合體，精準算出 4566 度！'
+        ],
+        hint: '個位 4 不夠減 8，向十位借 10：10－8＝2，再把原本的 4 加回來變成 6！'
+      },
+      {
+        id: 9,
+        cycle: 'sub_borrow',
+        cycleName: '🧪 循環3：退位減法（借10抱抱合體）',
+        team: 2,
+        icon: '🌾',
+        sceneTitle: '【生活情境應用・池上穀倉稻米出貨】',
+        story: '農會穀倉今年收成了 7521 公斤池上米，運送到超市賣出 2684 公斤後，穀倉裡還剩下多少公斤池上米？',
+        estimateText: '高位估算：7500 多 － 2600 多 ≈ 4800 多公斤',
+        mode: 'sub_hug',
+        op: '-',
+        topNum: [7, 5, 2, 1],
+        botNum: [2, 6, 8, 4],
+        ansNum: [4, 8, 3, 7],
+        afterBorrowTop: [6, 4, 1, 1],
+        borrowTenFlags: [0, 1, 1, 1],
+        demoBtnText: '啟動「🧪 借10能量瓶與原數抱抱合體」',
+        demoSteps: '個位借10：10-4+原本的1=7！十位 2借走剩1，借10：10-8+1=3！百位 5借走剩4，借10：10-6+4=8！千位 6-2=4，得 4837 公斤！',
+        options: ['4837 公斤', '4836 公斤', '4947 公斤', '5837 公斤'],
+        correctIndex: 0,
+        misconceptions: [
+          '🎉 太神啦！借10抱抱合體完全正確，穀倉還剩下 4837 公斤池上米！',
+          '⚠️ 典型迷思抓包（借10忘了加頂）：個位 10-4=6，忘了加回原本的 1（6+1=7）囉！',
+          '⚠️ 迷思抓包：記得被隔壁借走 1 的數字（百位5變4、十位2變1），頭頂要先減 1 喔！',
+          '⚠️ 迷思抓包：千位的 7 借走 1 後剩下 6，6-2=4 喔！'
+        ],
+        hint: '個位借 10 減 4 得 6，加回原本的 1 是 7；十位 2 借走剩 1，借 10 減 8 得 2，加 1 是 3！'
+      },
+
+      // ---------------- 循環 4：整千與跨雙零退位（穿透黑洞，3題數字與答案完全不同） ----------------
+      {
+        id: 10,
+        cycle: 'sub_zero',
+        cycleName: '🌀 循環4：整千跨零退位（穿透黑洞）',
+        team: 0,
+        icon: '🎡',
+        sceneTitle: '【生活情境應用・遊樂園歡樂集點卡】',
+        story: '小翰在遊樂園集點卡中存滿了 4000 點，兌換一台遙控太空船用去 1635 點，集點卡裡還剩下多少點？',
+        estimateText: '高位估算：4000 － 1600 多 ≈ 2300 多點',
+        mode: 'sub_zero',
+        op: '-',
+        topNum: [4, 0, 0, 0],
+        botNum: [1, 6, 3, 5],
+        ansNum: [2, 3, 6, 5],
+        afterBorrowTop: [3, 9, 9, 10],
+        demoBtnText: '啟動「🌀 穿透跨零黑洞：0變9」分解動畫',
+        demoSteps: '千位 4 借 1 剩 3 ➔ 百位得 10，借 1 給十位自己剩 9 ➔ 十位得 10，借 1 給個位自己剩 9 ➔ 個位得 10！所以是 399(10) 減 1635 ＝ 2365 點！',
+        options: ['2475 點', '3365 點', '2365 點', '2635 點'],
+        correctIndex: 2,
+        misconceptions: [
+          '⚠️ 跨零黑洞迷思：你把中間兩個 0 也全部當成 10 來減了！百位和十位把 1 借給右邊後，自己只剩下 9 喔！',
+          '⚠️ 迷思抓包：千位的 4 已經借出 1 個千了，只剩下 3，3-1=2（不是 3）喔！',
+          '🎉 完美穿透跨零黑洞！清楚知道百位和十位的 0 借給隔壁後自己變成 9，算出 2365 點！',
+          '⚠️ 致命迷思抓包：不可以因為上面是 0 就直接「下減上（6-0=6、3-0=3）」喔！'
+        ],
+        hint: '點擊左方【🌀 穿透跨零黑洞】！整千數 4000 退位後，頭頂會變成「千3、百9、十9、個10」喔！'
+      },
+      {
+        id: 11,
+        cycle: 'sub_zero',
+        cycleName: '🌀 循環4：整千跨零退位（穿透黑洞）',
+        team: 1,
+        icon: '💨',
+        sceneTitle: '【生活情境應用・百貨週年慶買空氣清淨機】',
+        story: '爸爸帶了 7000 元現金去家電行，買了一台 2846 元的空氣清淨機，請問店員應該找回多少元？',
+        estimateText: '高位估算：7000 － 2800 多 ≈ 4100 多元',
+        mode: 'sub_zero',
+        op: '-',
+        topNum: [7, 0, 0, 0],
+        botNum: [2, 8, 4, 6],
+        ansNum: [4, 1, 5, 4],
+        afterBorrowTop: [6, 9, 9, 10],
+        demoBtnText: '啟動「🌀 穿透跨零黑洞：0變9」分解動畫',
+        demoSteps: '千位 7 借 1 剩 6 ➔ 百位 10 借 1 剩 9 ➔ 十位 10 借 1 剩 9 ➔ 個位得 10！個位 10-6=4、十位 9-4=5、百位 9-8=1、千位 6-2=4，找回 4154 元！',
+        options: ['4154 元', '4264 元', '5154 元', '4846 元'],
+        correctIndex: 0,
+        misconceptions: [
+          '🎉 完美穿透跨零黑洞！7000 退位變成「6、9、9、10」，精準找回 4154 元！',
+          '⚠️ 跨零黑洞迷思：百位與十位的 10 各借了 1 給右邊，所以頭頂是 9-8=1、9-4=5 喔！',
+          '⚠️ 迷思抓包：千位的 7 借了 1 個千給百位後剩下 6，所以千位是 6-2=4（不是 5）喔！',
+          '⚠️ 致命迷思抓包：千萬不能看到 0 就直接拿下面的 8、4、6 照抄喔！'
+        ],
+        hint: '7000 借位後，千位剩 6、百位剩 9、十位剩 9、個位是 10！'
+      },
+      {
+        id: 12,
+        cycle: 'sub_zero',
+        cycleName: '🌀 循環4：整千跨零退位（穿透黑洞）',
+        team: 2,
+        icon: '✨',
+        sceneTitle: '【生活情境應用・跨年晚會發放螢光棒（跨雙零退位）】',
+        story: '跨年晚會服務台準備了 9003 支星光螢光棒，發給現場觀眾 5428 支後，服務台還剩下多少支螢光棒？',
+        estimateText: '高位估算：9000 多 － 5400 多 ≈ 3500 多支',
+        mode: 'sub_zero',
+        op: '-',
+        topNum: [9, 0, 0, 3],
+        botNum: [5, 4, 2, 8],
+        ansNum: [3, 5, 7, 5],
+        afterBorrowTop: [8, 9, 9, 13],
+        demoBtnText: '啟動「🌀 穿透跨零黑洞：0變9」分解動畫',
+        demoSteps: '千位 9 借 1 剩 8 ➔ 百位變 9 ➔ 十位變 9 ➔ 個位借 10 加原本的 3 變成 13！個位 13-8=5，十位 9-2=7，百位 9-4=5，千位 8-5=3，還剩 3575 支！',
+        options: ['3685 支', '3575 支', '3572 支', '4575 支'],
+        correctIndex: 1,
+        misconceptions: [
+          '⚠️ 跨零黑洞迷思：中間百位和十位的 0 借給右邊後自己剩 9，不能用 10 來減 4 和 2 喔！',
+          '🎉 完美穿透跨零黑洞！中間兩個 0 變 9、個位借 10 加 3 變 13，算出還剩 3575 支！',
+          '⚠️ 借10忘加頂迷思：個位借 10 減 8 得 2，別忘了加上原本個位的 3（2+3=5）喔！',
+          '⚠️ 迷思抓包：千位的 9 借走 1 後剩下 8，8-5=3 喔！'
+        ],
+        hint: '9003 跨零退位後，頭頂依序是「千8、百9、十9、個13（10+3）」，再往下減！'
+      },
+
+      // ---------------- 循環 5：星際密碼「蟲食算」—— 加法直式填空格（挖空位置與數字皆不同） ----------------
+      {
+        id: 13,
+        cycle: 'worm_add',
+        cycleName: '🧩 循環5：蟲食算（加法直式填空格）',
+        team: 0,
+        icon: '🛸',
+        sceneTitle: '【星際密碼蟲食算・太空站兩批物資補給紀錄修復】',
+        story: '太空站電腦的加法直式紀錄被隕石擦掉了兩個數字（？空格）！請點擊左方直式中的【？】空格，再用右方 0~9 數字盤填入正確數字！',
+        estimateText: '推理線索：從個位 8＋5＝13（進 1）開始往左推敲！',
+        mode: 'worm',
+        op: '+',
+        // 以物件標示哪些位置是蟲食算空格：{ val: 正確值, isBlank: true, slotId: 0/1, label: '百位/十位' }
+        wormRows: {
+          top: [
+            { val: 3 },
+            { val: 5, isBlank: true, slotIndex: 0, posName: '被加數百位' },
+            { val: 7 },
+            { val: 8 }
+          ],
+          bot: [
+            { val: 2 },
+            { val: 6 },
+            { val: 4, isBlank: true, slotIndex: 1, posName: '加數十位' },
+            { val: 5 }
+          ],
+          ans: [
+            { val: 6 },
+            { val: 2 },
+            { val: 2 },
+            { val: 3 }
+          ]
+        },
+        demoBtnText: '啟動「🧩 蟲食算逆向推理線索」',
+        demoSteps: '① 個位 8+5=13，寫 3 進 1 到十位！ ② 十位：7 ＋ [？] ＋ 進位1 ＝ 12，所以十位 [？] 填 4（進 1 到百位）！ ③ 百位：[？] ＋ 6 ＋ 進位1 ＝ 12，所以百位 [？] 填 5！',
+        hint: '先看十位：個位 8+5=13 有進 1 到十位，7 + 進位1 = 8，8 加多少會等於 12（十位寫2）？格2填 4！再看百位：6 + 進位1 = 7，7 加多少等於 12？格1填 5！'
+      },
+      {
+        id: 14,
+        cycle: 'worm_add',
+        cycleName: '🧩 循環5：蟲食算（加法直式填空格）',
+        team: 1,
+        icon: '🚄',
+        sceneTitle: '【星際密碼蟲食算・高鐵列車週末載客量紀錄修復】',
+        story: '高鐵車站的載客量直式報表有兩格模糊不清（？空格）！請點擊左方直式中的【？】空格，從右方數字盤選出正確數字修復報表！',
+        estimateText: '推理線索：個位 9＋3＝12（進 1），十位 6＋5＋1＝12（進 1 到百位）！',
+        mode: 'worm',
+        op: '+',
+        wormRows: {
+          top: [
+            { val: 2, isBlank: true, slotIndex: 0, posName: '被加數千位' },
+            { val: 8 },
+            { val: 6 },
+            { val: 9 }
+          ],
+          bot: [
+            { val: 4 },
+            { val: 7, isBlank: true, slotIndex: 1, posName: '加數百位' },
+            { val: 5 },
+            { val: 3 }
+          ],
+          ans: [
+            { val: 7 },
+            { val: 6 },
+            { val: 2 },
+            { val: 2 }
+          ]
+        },
+        demoBtnText: '啟動「🧩 蟲食算逆向推理線索」',
+        demoSteps: '① 個位 9+3=12 進 1，十位 6+5+1=12 進 1 到百位！ ② 百位：8 ＋ [？] ＋ 進位1 ＝ 16，所以加數百位 [？] 填 7（進 1 到千位）！ ③ 千位：[？] ＋ 4 ＋ 進位1 ＝ 7，所以被加數千位 [？] 填 2！',
+        hint: '十位 6+5+1=12 有進 1 到百位！百位 8 + 進位1 = 9，9 加多少變成 16（寫6進1）？格2填 7！千位 [？] + 4 + 進位1 = 7，格1填 2！'
+      },
+      {
+        id: 15,
+        cycle: 'worm_add',
+        cycleName: '🧩 循環5：蟲食算（加法直式填空格）',
+        team: 2,
+        icon: '♻️',
+        sceneTitle: '【星際密碼蟲食算・環保站兩週回收鋁罐紀錄】',
+        story: '環保回收站的加法直式被雨水弄糊了兩個數字（？空格）！請點擊左方直式中的【？】空格，用右方數字盤填入正確答案！',
+        estimateText: '推理線索：先從個位 6 ＋ [？] ＝ 13（個位寫 3 進 1）開始破案！',
+        mode: 'worm',
+        op: '+',
+        wormRows: {
+          top: [
+            { val: 5 },
+            { val: 4 },
+            { val: 8, isBlank: true, slotIndex: 0, posName: '被加數十位' },
+            { val: 6 }
+          ],
+          bot: [
+            { val: 1 },
+            { val: 9 },
+            { val: 3 },
+            { val: 7, isBlank: true, slotIndex: 1, posName: '加數個位' }
+          ],
+          ans: [
+            { val: 7 },
+            { val: 4 },
+            { val: 2 },
+            { val: 3 }
+          ]
+        },
+        demoBtnText: '啟動「🧩 蟲食算逆向推理線索」',
+        demoSteps: '① 個位：6 ＋ [？] ＝ 13（寫 3 進 1 到十位），所以加數個位 [？] 填 7！ ② 十位：[？] ＋ 3 ＋ 進位1 ＝ 12（寫 2 進 1 到百位），所以被加數十位 [？] 填 8！',
+        hint: '先看格2（加數個位）：6 加多少尾數會是 3（13）？填 7！因為 6+7=13 進 1 到十位，十位 [？] + 3 + 進位1 = 12，所以格1（被加數十位）填 8！'
+      },
+
+      // ---------------- 循環 6：星際密碼「蟲食算」—— 減法退位直式填空格（挖空位置與數字皆不同） ----------------
+      {
+        id: 16,
+        cycle: 'worm_sub',
+        cycleName: '🔐 循環6：蟲食算（減法直式填空格）',
+        team: 0,
+        icon: '📦',
+        sceneTitle: '【減法蟲食算解密・星際倉庫糧食出貨紀錄】',
+        story: '倉庫原有 6[？]52 包太空糧食，運出 27[？]4 包後剩下 3568 包。請點擊左方減法直式中的兩個【？】空格，填入正確數字！',
+        estimateText: '推理線索：個位 2 不夠減 4，向十位借 1 後，十位的 5 只剩 4 喔！',
+        mode: 'worm',
+        op: '-',
+        wormRows: {
+          top: [
+            { val: 6 },
+            { val: 3, isBlank: true, slotIndex: 0, posName: '被減數百位' },
+            { val: 5 },
+            { val: 2 }
+          ],
+          bot: [
+            { val: 2 },
+            { val: 7 },
+            { val: 8, isBlank: true, slotIndex: 1, posName: '減數十位' },
+            { val: 4 }
+          ],
+          ans: [
+            { val: 3 },
+            { val: 5 },
+            { val: 6 },
+            { val: 8 }
+          ]
+        },
+        demoBtnText: '啟動「🔐 減法退位蟲食算推理」',
+        demoSteps: '① 個位 12-4=8（向十位借了 1）。 ② 十位原本的 5 剩 4，向百位借 10 變成 14：14 － [？] ＝ 6，所以十位 [？] 填 8！ ③ 百位 [？] 借走 1 又向千位借 10：10 + [？] - 1 - 7 = 5，所以百位 [？] 填 3！',
+        hint: '十位的 5 借給個位 1 後剩 4，再向百位借 10 變 14，14 減多少等於 6？格2填 8！百位減 7 剩 5（且有借給十位 1），7+5+1=13，所以格1（被減數百位）填 3！'
+      },
+      {
+        id: 17,
+        cycle: 'worm_sub',
+        cycleName: '🔐 循環6：蟲食算（減法直式填空格）',
+        team: 1,
+        icon: '🏛️',
+        sceneTitle: '【減法蟲食算解密・班級購書基金跨零退位紀錄】',
+        story: '學校提供 8000 元購書基金，買了 [？]2[？]5 元的科學繪本後，剛好剩下 3735 元。請點擊直式中的兩個【？】空格填入正確數字！',
+        estimateText: '推理線索：8000 跨零退位後，頭頂變成「千7、百9、十9、個10」！',
+        mode: 'worm',
+        op: '-',
+        wormRows: {
+          top: [
+            { val: 8 },
+            { val: 0 },
+            { val: 0 },
+            { val: 0 }
+          ],
+          bot: [
+            { val: 4, isBlank: true, slotIndex: 0, posName: '減數千位' },
+            { val: 2 },
+            { val: 6, isBlank: true, slotIndex: 1, posName: '減數十位' },
+            { val: 5 }
+          ],
+          ans: [
+            { val: 3 },
+            { val: 7 },
+            { val: 3 },
+            { val: 5 }
+          ]
+        },
+        demoBtnText: '啟動「🔐 減法退位蟲食算推理」',
+        demoSteps: '8000 退位後頭頂變成「千7、百9、十9、個10」！ ① 十位：9 － [？] ＝ 3，所以十位 [？] 填 6！ ② 千位：7 － [？] ＝ 3，所以千位 [？] 填 4！',
+        hint: '把 8000 退位想成「7、9、9、10」：十位 9 減多少等於 3？（格2填 6）；千位 7 減多少等於 3？（格1填 4）！'
+      },
+      {
+        id: 18,
+        cycle: 'worm_sub',
+        cycleName: '🔐 循環6：蟲食算（減法直式填空格）',
+        team: 2,
+        icon: '🍊',
+        sceneTitle: '【減法蟲食算解密・麻豆文旦果園出貨單】',
+        story: '果園採收了 [？]423 顆老欉文旦，宅配寄出 385[？] 顆後，果園還剩 5566 顆。請點擊直式中的兩個【？】空格填入正確數字！',
+        estimateText: '推理線索：個位 3 不夠減，向十位借 10 變成 13 － [？] ＝ 6！',
+        mode: 'worm',
+        op: '-',
+        wormRows: {
+          top: [
+            { val: 9, isBlank: true, slotIndex: 0, posName: '被減數千位' },
+            { val: 4 },
+            { val: 2 },
+            { val: 3 }
+          ],
+          bot: [
+            { val: 3 },
+            { val: 8 },
+            { val: 5 },
+            { val: 7, isBlank: true, slotIndex: 1, posName: '減數個位' }
+          ],
+          ans: [
+            { val: 5 },
+            { val: 5 },
+            { val: 6 },
+            { val: 6 }
+          ]
+        },
+        demoBtnText: '啟動「🔐 減法退位蟲食算推理」',
+        demoSteps: '① 個位 3 借 10 變 13：13 － [？] ＝ 6，所以減數個位 [？] 填 7！ ② 十位 2 剩 1，借 10 變 11-5=6；百位 4 剩 3，向千位借 10 變 13-8=5！ ③ 千位 [？] 借走 1 後減 3 得 5（5+3+1=9），所以被減數千位 [？] 填 9！',
+        hint: '個位 13 減多少等於 6？（格2填 7）；百位 4 借給十位剩 3，又不夠減 8 所以向千位借了 1！千位借走 1 後減 3 等於 5，所以格1（被減數千位）填 9！'
+      },
+
+      // ---------------- 循環 7：未知數生活應用題與動態線段模型 ----------------
+      {
+        id: 19,
+        cycle: 'unknown_bar',
+        cycleName: '📏 循環7：未知數應用與線段模型',
+        team: 0,
+        icon: '🚀',
+        sceneTitle: '【未知數應用（加數未知）・飛船超空間推進燃料補充】',
+        story: '救援飛船目前已經注入 3524 公升燃料，還要再補充 ( 　 ) 公升燃料，才能達到滿載的 4423 公升？請選出正確的橫式列式與 ( 　 ) 裡的答案！',
+        estimateText: '加減互逆：已知部分 ＋ 未知部分 ＝ 全部總量 ➔ 全部 － 已知 ＝ 未知！',
+        mode: 'unknown_bar',
+        unknownType: 'addend', // A + ( ) = B
+        barData: {
+          totalLabel: '滿載總量 4423 公升',
+          part1Label: '已有 3524 公升',
+          part2Label: '還要補充 ( ? ) 公升',
+          part1Ratio: 72,
+          part2Ratio: 28,
+          equationText: '3524 ＋ ( 　 ) ＝ 4423',
+          reverseText: '逆推算式：( 　 ) ＝ 4423 － 3524 ＝ 899'
+        },
+        demoBtnText: '展開「📏 動態線段模型 (Bar Model) 逆推圖」',
+        demoSteps: '看線段圖：全長是 4423，左邊已知 3524，要求右邊那一截 ( )，必須把全長剪掉左邊：4423 － 3524 ＝ 899 公升！',
+        options: [
+          '列式 3524 + ( ) = 4423，算出 ( ) = 7947 公升',
+          '列式 4423 + ( ) = 3524，算出 ( ) = 899 公升',
+          '列式 3524 + ( ) = 4423，算出 ( ) = 899 公升',
+          '列式 3524 - ( ) = 4423，算出 ( ) = 1101 公升'
+        ],
+        correctIndex: 2,
+        misconceptions: [
+          '⚠️ 迷思抓包：列式對了，但求加數 ( ) 不能把 4423 和 3524 加起來喔！部分一定比全部 4423 小，要用減法逆推！',
+          '⚠️ 迷思抓包：4423 已經是滿載的總量了，如果再加 ( ) 怎麼會變少成 3524 呢？',
+          '🎉 觀念超清楚！從線段圖一眼看出「已有＋補充＝總量」，逆推用總量減去已有：4423 - 3524 = 899 公升！',
+          '⚠️ 迷思抓包：「還要補充」是加上去，所以順向列式是 3524 + ( ) = 4423 喔！'
+        ],
+        hint: '點擊【📏 展開動態線段模型】！全長是 4423，扣掉左邊的 3524，就能算出右邊的 ( ) 囉！'
+      },
+      {
+        id: 20,
+        cycle: 'unknown_bar',
+        cycleName: '📏 循環7：未知數應用與線段模型',
+        team: 1,
+        icon: '🎟️',
+        sceneTitle: '【未知數應用（被減數未知）・愛心園遊會點券金庫還原】',
+        story: '學生會總部發給各班 685 張園遊券後，金庫裡還剩下 1495 張。請問金庫「原本」共有 ( 　 ) 張園遊券？請選出正確列式與答案！',
+        estimateText: '關鍵觀念：原本的數量（被減數）是最大的龍頭！要把發出去的與剩下的「拼回來」！',
+        mode: 'unknown_bar',
+        unknownType: 'minuend', // ( ) - A = B
+        barData: {
+          totalLabel: '金庫原本共有 ( ? ) 張【最大龍頭】',
+          part1Label: '發出 685 張',
+          part2Label: '還剩下 1495 張',
+          part1Ratio: 32,
+          part2Ratio: 68,
+          equationText: '( 　 ) － 685 ＝ 1495',
+          reverseText: '逆推算式：( 　 ) ＝ 1495 ＋ 685 ＝ 2180'
+        },
+        demoBtnText: '展開「📏 動態線段模型：兩塊拼回大金庫」',
+        demoSteps: '看線段圖：原本的 ( ) 是整條最長的線段！切走「發出的 685」還剩「1495」，要把兩段接回去：1495 ＋ 685 ＝ 2180 張！',
+        options: [
+          '列式 ( ) - 685 = 1495，算出 ( ) = 2180 張',
+          '列式 ( ) - 685 = 1495，算出 ( ) = 810 張',
+          '列式 1495 - 685 = ( )，算出 ( ) = 810 張',
+          '列式 ( ) + 685 = 1495，算出 ( ) = 810 張'
+        ],
+        correctIndex: 0,
+        misconceptions: [
+          '🎉 觀念超清楚！依題意列式 ( ) - 685 = 1495，逆推把發出的和剩下的拼回大金庫：1495 + 685 = 2180 張！',
+          '⚠️ 典型迷思抓包：列式對了，但求最前面的「被減數 ( )」不能用減的！如果原本只有 810 張，怎麼可能發出 685 張還剩 1495 張？要把兩塊加起來！',
+          '⚠️ 迷思抓包：看到題目有「發出」就急著拿 1495 減 685，忘了題目問的是「原本共有多少張」喔！',
+          '⚠️ 迷思抓包：發出園遊券是變少（減掉 685），所以列式是 ( ) - 685 = 1495 喔！'
+        ],
+        hint: '「原本的數量」一定比剩下的 1495 張還要多！把「發出去的 685」跟「剩下的 1495」合起來就是原本的數量！'
+      },
+      {
+        id: 21,
+        cycle: 'unknown_bar',
+        cycleName: '📏 循環7：未知數應用與線段模型',
+        team: 2,
+        icon: '💧',
+        sceneTitle: '【未知數應用（減數未知）・智慧農業水庫蓄水量監測】',
+        story: '智慧水庫原本蓄水 7932 公噸，經過一週農田灌溉用去 ( 　 ) 公噸後，水庫還剩下 3370 公噸。請問灌溉用去了多少公噸的水？',
+        estimateText: '關鍵觀念：原本總量 － 用去的水量 ＝ 剩下的水量 ➔ 總量 － 剩下 ＝ 用去！',
+        mode: 'unknown_bar',
+        unknownType: 'subtrahend', // A - ( ) = B
+        barData: {
+          totalLabel: '原本蓄水總量 7932 公噸',
+          part1Label: '灌溉用去 ( ? ) 公噸',
+          part2Label: '還剩下 3370 公噸',
+          part1Ratio: 57,
+          part2Ratio: 43,
+          equationText: '7932 － ( 　 ) ＝ 3370',
+          reverseText: '逆推算式：( 　 ) ＝ 7932 － 3370 ＝ 4562'
+        },
+        demoBtnText: '展開「📏 動態線段模型：總量扣掉剩下」',
+        demoSteps: '看線段圖：整條總長是 7932，扣掉「剩下的 3370」，就是「灌溉用去的 ( )」：7932 － 3370 ＝ 4562 公噸！',
+        options: [
+          '列式 7932 - ( ) = 3370，算出 ( ) = 11302 公噸',
+          '列式 ( ) - 7932 = 3370，算出 ( ) = 11302 公噸',
+          '列式 3370 - ( ) = 7932，算出 ( ) = 4562 公噸',
+          '列式 7932 - ( ) = 3370，算出 ( ) = 4562 公噸'
+        ],
+        correctIndex: 3,
+        misconceptions: [
+          '⚠️ 迷思抓包：水庫原本只有 7932 公噸，用掉的水怎麼可能高達 11302 公噸（比原本還多）！求減數要用 7932 - 3370 喔！',
+          '⚠️ 迷思抓包：7932 是原本的總水量，應該放在被減數（最前面）：7932 - ( ) = 3370！',
+          '⚠️ 迷思抓包：3370 是剩下的水，比較少，不能放在被減數減去用掉的水喔！',
+          '🎉 觀念超清楚！順向列式 7932 - ( ) = 3370，再用全部扣掉剩下：7932 - 3370 = 4562 公噸！'
+        ],
+        hint: '原本有 7932 公噸，最後剩下 3370 公噸，把原本的水減掉剩下的水（7932 - 3370），就知道用掉多少水了！'
+      }
+    ];
+
+    // =========================================================================
+    // 3. 遊戲狀態管理
+    // =========================================================================
+    let filteredQuestions = [...QUESTIONS_DB];
+    let currentQIndex = 0;
+    let teamScores = [100, 100, 100]; // 藍、黃、紅三隊初始能量
+    let questionAnswered = {}; // { qId: { correct: bool, detail: string } }
+    let demoActive = false; // 是否已啟動概念透視動畫
+
+    // 蟲食算空格互動狀態
+    let activeWormSlot = 0; // 目前選取的空格編號 (0 或 1)
+    let wormUserValues = [null, null]; // 學生點擊填入的兩個數字
+
+    // =========================================================================
+    // 4. 題目渲染與互動直式生成引擎
+    // =========================================================================
+    function getCurrentQuestion() {
+      return filteredQuestions[currentQIndex] || QUESTIONS_DB[0];
+    }
+
+    function onFilterChange() {
+      const val = document.getElementById('categoryFilter').value;
+      if (val === 'all') {
+        filteredQuestions = [...QUESTIONS_DB];
+      } else {
+        filteredQuestions = QUESTIONS_DB.filter(q => q.cycle === val);
+      }
+      currentQIndex = 0;
+      playSfx('click');
+      renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+      const q = getCurrentQuestion();
+      demoActive = false;
+      activeWormSlot = 0;
+      wormUserValues = [null, null];
+
+      // 1. 更新進度與頂部三隊高亮
+      document.getElementById('qProgressText').textContent = `${currentQIndex + 1}/${filteredQuestions.length}`;
+      highlightActiveTeam(q.team);
+
+      // 2. 更新標籤與生活情境故事
+      const teamNames = ['🛸 藍隊・蒼穹號任務', '🚀 黃隊・耀日號任務', '🛰️ 紅隊・赤焰號任務'];
+      const teamColors = [
+        'bg-sky-300 text-slate-900',
+        'bg-amber-300 text-slate-900',
+        'bg-rose-300 text-slate-900'
+      ];
+      const badge = document.getElementById('qTeamBadge');
+      badge.className = `px-3 py-1 rounded-full font-black text-xs md:text-sm border-2 border-slate-900 ${teamColors[q.team]}`;
+      badge.textContent = teamNames[q.team];
+
+      document.getElementById('qCategoryBadge').textContent = q.cycleName;
+      document.getElementById('qEstimateBadge').textContent = `🎯 ${q.estimateText}`;
+      document.getElementById('qSceneIcon').textContent = q.icon;
+      document.getElementById('qSceneTitle').textContent = q.sceneTitle;
+      document.getElementById('qStoryText').textContent = q.story;
+      document.getElementById('conceptDemoBtnText').textContent = q.demoBtnText;
+
+      const stepBanner = document.getElementById('conceptStepBanner');
+      stepBanner.classList.add('hidden');
+      stepBanner.textContent = '';
+
+      // 3. 渲染左欄主舞台（直式定位板 / 蟲食算 / 未知數線段圖）
+      renderInteractiveStage(q);
+
+      // 4. 渲染右欄作答區（蟲食算 0~9 數字點擊盤 vs 四選一診斷選項）
+      renderAnswerPanel(q);
+
+      // 5. 重設迷思回饋欄（注意：白板筆跡絕對不自動清除，完全保留給師生手動清空！）
+      const fbCard = document.getElementById('feedbackCard');
+      fbCard.className = 'bg-slate-50 border-3 border-slate-800 rounded-2xl p-3 flex flex-col justify-between min-h-[145px]';
+      document.getElementById('feedbackBody').innerHTML =
+        `💡 <b>作答指引：</b>可點擊上方<b>【✏️ 開啟原位手寫筆】</b>直接在直式上劃掉退位數字或寫上進位 1；切換題目時筆跡會保留，點<b>【🗑️ 手動清空】</b>才會擦除喔！`;
+    }
+
+    function highlightActiveTeam(teamIdx) {
+      for (let i = 0; i < 3; i++) {
+        const card = document.getElementById(`team-card-${i}`);
+        const tag = document.getElementById(`team-turn-${i}`);
+        if (i === teamIdx) {
+          card.classList.add('ring-4', 'ring-slate-900', 'scale-105', 'shadow-md');
+          tag.classList.remove('hidden');
+        } else {
+          card.classList.remove('ring-4', 'ring-slate-900', 'scale-105', 'shadow-md');
+          tag.classList.add('hidden');
+        }
+      }
+    }
+
+    function adjustTeamScore(teamIdx, delta) {
+      teamScores[teamIdx] = Math.max(0, teamScores[teamIdx] + delta);
+      document.getElementById(`team-score-${teamIdx}`).textContent = teamScores[teamIdx];
+      playSfx(delta > 0 ? 'correct' : 'click');
+    }
+
+    // =========================================================================
+    // 5. 渲染左欄互動數學舞台 (依題型渲染直式、蟲食算空格、或線段模型)
+    // =========================================================================
+    function renderInteractiveStage(q) {
+      const container = document.getElementById('interactiveStageContainer');
+
+      // 題型 A：未知數與動態線段模型 (Cycle 7)
+      if (q.mode === 'unknown_bar') {
+        const b = q.barData;
+        container.innerHTML = `
+          <div class="w-full max-w-xl bg-white border-3 border-slate-800 rounded-2xl p-3.5 shadow-sm">
+            <div class="text-center font-black text-base md:text-xl text-indigo-900 mb-2">
+              📐 題意順向列式：<span class="bg-amber-200 px-3 py-0.5 rounded-lg border-2 border-slate-800">${b.equationText}</span>
+            </div>
+            <!-- 總長大括號條 -->
+            <div class="mb-2">
+              <div class="w-full bg-indigo-600 text-white font-black text-sm md:text-base py-2 px-3 rounded-xl border-2 border-slate-900 text-center shadow">
+                🌟 總量（全部長度）：${b.totalLabel}
+              </div>
+            </div>
+            <!-- 兩部分拼接條 -->
+            <div class="flex w-full gap-1.5 items-stretch">
+              <div style="width:${b.part1Ratio}%" class="bg-sky-300 text-slate-900 font-black text-xs md:text-base py-3 px-2 rounded-xl border-3 border-slate-900 text-center flex items-center justify-center">
+                ${b.part1Label}
+              </div>
+              <div style="width:${b.part2Ratio}%" class="bg-amber-300 text-slate-900 font-black text-xs md:text-base py-3 px-2 rounded-xl border-3 border-dashed border-rose-600 text-center flex items-center justify-center animate-pulse">
+                ${b.part2Label}
+              </div>
+            </div>
+            ${demoActive ? `
+              <div class="mt-3 p-2 bg-emerald-100 border-2 border-emerald-600 rounded-xl text-center font-black text-emerald-950 text-sm md:text-lg animate-hug">
+                🔓 ${b.reverseText}
+              </div>
+            ` : `
+              <div class="mt-2 text-center text-xs font-bold text-slate-500">
+                （觀察上方長條圖：要求未知的部分或總長，該把兩段相加還是相減呢？）
+              </div>
+            `}
+          </div>
+        `;
+        return;
+      }
+
+      // 題型 B：星際密碼「蟲食算」直式填空格 (Cycle 5 & 6)
+      if (q.mode === 'worm') {
+        const rows = q.wormRows;
+        container.innerHTML = `
+          <div class="bg-white border-4 border-slate-900 rounded-2xl p-3 md:p-4 shadow-md">
+            <!-- 千百十個定位表頭 -->
+            <div class="grid grid-cols-5 gap-2 mb-1.5 text-center font-black text-xs md:text-sm">
+              <div></div>
+              <div class="bg-rose-100 text-rose-900 py-1 rounded-lg border border-rose-300">千位</div>
+              <div class="bg-amber-100 text-amber-900 py-1 rounded-lg border border-amber-300">百位</div>
+              <div class="bg-emerald-100 text-emerald-900 py-1 rounded-lg border border-emerald-300">十位</div>
+              <div class="bg-sky-100 text-sky-900 py-1 rounded-lg border border-sky-300">個位</div>
+            </div>
+
+            <!-- 被加(減)數列 -->
+            <div class="grid grid-cols-5 gap-2 items-center mb-1.5">
+              <div></div>
+              ${rows.top.map(cell => renderWormCellHTML(cell)).join('')}
+            </div>
+
+            <!-- 運算符號與加(減)數列 -->
+            <div class="grid grid-cols-5 gap-2 items-center pb-2 border-b-4 border-slate-900">
+              <div class="digit-cell text-rose-600">${q.op === '+' ? '＋' : '－'}</div>
+              ${rows.bot.map(cell => renderWormCellHTML(cell)).join('')}
+            </div>
+
+            <!-- 答案列 -->
+            <div class="grid grid-cols-5 gap-2 items-center pt-2">
+              <div></div>
+              ${rows.ans.map(cell => renderWormCellHTML(cell)).join('')}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 題型 C：直式位值抓蟲除錯 (Cycle 2)
+      if (q.mode === 'bug_align') {
+        const showFixed = demoActive;
+        const tRow = showFixed ? q.topNum.map((d, i) => (d === 0 && i === 0) ? '' : d) : q.wrongTop;
+        const bRow = showFixed ? q.botNum.map((d, i) => (d === 0 && (i === 0 || (i === 1 && q.botNum[0] === 0))) ? '' : d) : q.wrongBot;
+        const aRow = showFixed ? q.ansNum.map((d, i) => (d === 0 && i === 0) ? '' : d) : q.wrongAns;
+
+        container.innerHTML = `
+          <div class="bg-white border-4 ${showFixed ? 'border-emerald-600' : 'border-rose-500'} rounded-2xl p-3 md:p-4 shadow-md relative">
+            <div class="text-center font-black text-xs md:text-sm mb-1.5 px-3 py-0.5 rounded-full ${showFixed ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-800'}">
+              ${showFixed ? '✅ 已啟動個位靠右對齊磁吸軌道（正確直式）' : '🐛 題目中的錯誤直式（請找出哪個數字排錯軌道了？）'}
+            </div>
+            <div class="grid grid-cols-5 gap-2 mb-1 text-center font-black text-xs md:text-sm">
+              <div></div>
+              <div class="bg-rose-100 text-rose-900 py-1 rounded-lg">千位</div>
+              <div class="bg-amber-100 text-amber-900 py-1 rounded-lg">百位</div>
+              <div class="bg-emerald-100 text-emerald-900 py-1 rounded-lg">十位</div>
+              <div class="bg-sky-100 text-sky-900 py-1 rounded-lg">個位</div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 items-center mb-1">
+              <div></div>
+              ${tRow.map(d => `<div class="digit-cell bg-slate-100 border-2 border-slate-300">${d !== '' ? d : ''}</div>`).join('')}
+            </div>
+            <div class="grid grid-cols-5 gap-2 items-center pb-2 border-b-4 border-slate-900">
+              <div class="digit-cell text-rose-600">${q.op === '+' ? '＋' : '－'}</div>
+              ${bRow.map((d, idx) => `
+                <div class="digit-cell ${!showFixed && d !== '' ? 'bg-rose-200 border-3 border-rose-600 text-rose-900 animate-pulse' : 'bg-sky-100 border-2 border-sky-400'}">
+                  ${d !== '' ? d : ''}
+                </div>
+              `).join('')}
+            </div>
+            <div class="grid grid-cols-5 gap-2 items-center pt-2">
+              <div></div>
+              ${aRow.map(d => `<div class="digit-cell ${showFixed ? 'bg-emerald-100 border-2 border-emerald-500 text-emerald-900' : 'bg-rose-50 border-2 border-rose-300 text-rose-700'}">${d !== '' ? d : ''}</div>`).join('')}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 題型 D：一般四位數進位加法 / 借10抱抱合體減法 / 整千跨零退位減法 (Cycle 1, 3, 4)
+      let ceilingRowHTML = '';
+      if (q.cycle === 'add_carry') {
+        ceilingRowHTML = q.carries.map((c, idx) => `
+          <div class="h-8 flex items-center justify-center">
+            ${demoActive && c === 1 ? `<span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-black text-xs md:text-sm animate-hug shadow">進位 +1</span>` : `<span class="text-xs font-bold text-slate-300">天花板</span>`}
+          </div>
+        `).join('');
+      } else if (q.cycle === 'sub_borrow') {
+        ceilingRowHTML = q.afterBorrowTop.map((rem, idx) => `
+          <div class="h-9 flex items-center justify-center">
+            ${demoActive ? `
+              <div class="flex items-center gap-0.5 animate-hug">
+                ${q.borrowTenFlags[idx] ? `<span class="px-1.5 py-0.5 rounded bg-rose-500 text-white font-black text-xs">借10</span>` : ''}
+                <span class="px-1.5 py-0.5 rounded bg-amber-300 text-slate-900 font-black text-xs border border-slate-800">剩${rem}</span>
+              </div>
+            ` : `<span class="text-xs font-bold text-slate-300">退位區</span>`}
+          </div>
+        `).join('');
+      } else if (q.cycle === 'sub_zero') {
+        ceilingRowHTML = q.afterBorrowTop.map((rem, idx) => `
+          <div class="h-9 flex items-center justify-center">
+            ${demoActive ? `
+              <span class="px-2 py-0.5 rounded-lg ${rem === 9 ? 'bg-purple-600 text-white' : 'bg-amber-400 text-slate-950'} font-black text-sm md:text-base animate-hug shadow border border-slate-900">
+                變 ${rem}
+              </span>
+            ` : `<span class="text-xs font-bold text-slate-300">跨零區</span>`}
+          </div>
+        `).join('');
+      }
+
+      container.innerHTML = `
+        <div class="bg-white border-4 border-slate-900 rounded-2xl p-3 md:p-4 shadow-md">
+          <!-- 千百十個定位表頭 -->
+          <div class="grid grid-cols-5 gap-2 mb-1 text-center font-black text-xs md:text-sm">
+            <div></div>
+            <div class="bg-rose-100 text-rose-900 py-1 rounded-lg border border-rose-300">千位</div>
+            <div class="bg-amber-100 text-amber-900 py-1 rounded-lg border border-amber-300">百位</div>
+            <div class="bg-emerald-100 text-emerald-900 py-1 rounded-lg border border-emerald-300">十位</div>
+            <div class="bg-sky-100 text-sky-900 py-1 rounded-lg border border-sky-300">個位</div>
+          </div>
+
+          <!-- 進退位天花板動態區 -->
+          <div class="grid grid-cols-5 gap-2 items-center mb-1">
+            <div class="text-[11px] font-black text-slate-400 text-center">進退位</div>
+            ${ceilingRowHTML}
+          </div>
+
+          <!-- 被加/被減數列 -->
+          <div class="grid grid-cols-5 gap-2 items-center mb-1.5">
+            <div></div>
+            ${q.topNum.map((d, idx) => `
+              <div class="digit-cell bg-slate-100 border-2 border-slate-300 ${demoActive && q.op === '-' ? 'line-through decoration-rose-600 decoration-4 text-slate-400' : 'text-slate-900'}">
+                ${d}
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- 運算符號與加/減數列 -->
+          <div class="grid grid-cols-5 gap-2 items-center pb-2 border-b-4 border-slate-900">
+            <div class="digit-cell text-rose-600">${q.op === '+' ? '＋' : '－'}</div>
+            ${q.botNum.map(d => `
+              <div class="digit-cell bg-slate-100 border-2 border-slate-300 text-slate-900">
+                ${d}
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- 答案列 -->
+          <div class="grid grid-cols-5 gap-2 items-center pt-2">
+            <div class="text-xs font-black text-slate-500 text-center">答案</div>
+            ${q.ansNum.map(d => `
+              <div class="digit-cell ${demoActive ? 'bg-emerald-100 border-3 border-emerald-600 text-emerald-900 animate-hug' : 'bg-amber-50 border-3 border-dashed border-amber-400 text-amber-600'}">
+                ${demoActive ? d : '？'}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWormCellHTML(cell) {
+      if (!cell.isBlank) {
+        return `<div class="digit-cell bg-slate-100 border-2 border-slate-300 text-slate-900">${cell.val}</div>`;
+      }
+      const sIdx = cell.slotIndex;
+      const isSelected = activeWormSlot === sIdx;
+      const userVal = wormUserValues[sIdx];
+      const hasVal = userVal !== null && userVal !== undefined;
+      const cls = isSelected
+        ? 'worm-slot active-slot'
+        : hasVal
+          ? 'worm-slot filled-slot'
+          : 'worm-slot';
+      return `
+        <div onclick="selectWormSlot(${sIdx})" class="digit-cell ${cls}" title="點擊此空格再按右方數字盤">
+          ${hasVal ? userVal : '？'}
+          <span class="absolute -top-2.5 right-0.5 px-1 bg-slate-900 text-white rounded text-[10px] font-bold">
+            格${sIdx + 1}
+          </span>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 6. 右欄作答區渲染與互動判定（點擊填入蟲食算 & 四選一診斷）
+    // =========================================================================
+    function renderAnswerPanel(q) {
+      const keypadPanel = document.getElementById('keypadPanel');
+      const optionsPanel = document.getElementById('optionsPanel');
+
+      if (q.mode === 'worm') {
+        keypadPanel.classList.remove('hidden');
+        optionsPanel.classList.add('hidden');
+        document.getElementById('answerPanelTitle').innerHTML = `<span>🧩</span><span>蟲食算密碼點擊鍵盤（格${activeWormSlot + 1} 輸入中）</span>`;
+        const submitBtn = document.getElementById('submitWormBtn');
+        submitBtn.disabled = false;
+        submitBtn.className = 'w-full dopamine-btn bg-emerald-400 hover:bg-emerald-500 text-slate-950 py-2.5 rounded-xl font-black text-base md:text-lg flex items-center justify-center gap-2';
+      } else {
+        keypadPanel.classList.add('hidden');
+        optionsPanel.classList.remove('hidden');
+        document.getElementById('answerPanelTitle').innerHTML = `<span>🎯</span><span>任務作答控制台（點擊選擇正確答案）</span>`;
+
+        const labels = ['A', 'B', 'C', 'D'];
+        const btnColors = [
+          'bg-sky-100 hover:bg-sky-200 text-slate-900',
+          'bg-amber-100 hover:bg-amber-200 text-slate-900',
+          'bg-rose-100 hover:bg-rose-200 text-slate-900',
+          'bg-emerald-100 hover:bg-emerald-200 text-slate-900'
+        ];
+
+        optionsPanel.innerHTML = q.options.map((opt, idx) => `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="dopamine-btn ${btnColors[idx]} p-3 md:p-3.5 rounded-2xl font-black text-left text-base md:text-xl flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center text-base font-black shrink-0">${labels[idx]}</span>
+            <span class="flex-1 leading-snug">${opt}</span>
+          </button>
+        `).join('');
+      }
+    }
+
+    // 蟲食算：點選直式中的空格
+    function selectWormSlot(slotIdx) {
+      activeWormSlot = slotIdx;
+      playSfx('click');
+      const q = getCurrentQuestion();
+      renderInteractiveStage(q);
+      document.getElementById('answerPanelTitle').innerHTML = `<span>🧩</span><span>蟲食算密碼點擊鍵盤（格${activeWormSlot + 1} 輸入中）</span>`;
+    }
+
+    // 蟲食算：點擊 0~9 數字鍵盤填入目前選中的空格，並自動跳到下一格
+    function onDigitPadClick(digit) {
+      playSfx('click');
+      wormUserValues[activeWormSlot] = digit;
+      // 自動跳到另一格尚未填寫的空格
+      if (activeWormSlot === 0 && wormUserValues[1] === null) {
+        activeWormSlot = 1;
+      } else if (activeWormSlot === 1 && wormUserValues[0] === null) {
+        activeWormSlot = 0;
+      } else {
+        activeWormSlot = activeWormSlot === 0 ? 1 : 0;
+      }
+      const q = getCurrentQuestion();
+      renderInteractiveStage(q);
+      document.getElementById('answerPanelTitle').innerHTML = `<span>🧩</span><span>蟲食算密碼點擊鍵盤（格${activeWormSlot + 1} 輸入中）</span>`;
+    }
+
+    function clearWormInputs() {
+      playSfx('click');
+      wormUserValues = [null, null];
+      activeWormSlot = 0;
+      renderInteractiveStage(getCurrentQuestion());
+    }
+
+    function submitWormAnswer() {
+      const q = getCurrentQuestion();
+      if (wormUserValues[0] === null || wormUserValues[1] === null) {
+        playSfx('wrong');
+        showFeedback(false, '⚠️ 請先點擊直式中的兩個【？空格】，並點選 0~9 數字填入完整後再送出喔！');
+        return;
+      }
+
+      // 找出正確答案
+      const allCells = [...q.wormRows.top, ...q.wormRows.bot, ...q.wormRows.ans];
+      const slot0Cell = allCells.find(c => c.isBlank && c.slotIndex === 0);
+      const slot1Cell = allCells.find(c => c.isBlank && c.slotIndex === 1);
+
+      const ok0 = wormUserValues[0] === slot0Cell.val;
+      const ok1 = wormUserValues[1] === slot1Cell.val;
+      const allCorrect = ok0 && ok1;
+
+      if (allCorrect) {
+        playSfx('correct');
+        triggerConfetti();
+        adjustTeamScore(q.team, 20);
+        questionAnswered[q.id] = { correct: true, detail: `蟲食算雙格全對 (${slot0Cell.val}, ${slot1Cell.val})` };
+        demoActive = true;
+        renderInteractiveStage(q);
+        showFeedback(
+          true,
+          `🎉 <b>星際密碼破解成功！</b>（${q.team === 0 ? '藍隊' : q.team === 1 ? '黃隊' : '紅隊'} ＋20⚡）<br>【格1・${slot0Cell.posName}】填 <b>${slot0Cell.val}</b>，【格2・${slot1Cell.posName}】填 <b>${slot1Cell.val}</b>！<br>🔍 推理過程：${q.demoSteps}`
+        );
+      } else {
+        playSfx('wrong');
+        questionAnswered[q.id] = { correct: false, detail: `誤填 (${wormUserValues[0]}, ${wormUserValues[1]})` };
+        let errDetail = '⚠️ <b>密碼推算有誤，來看看哪一格中了進退位陷阱：</b><br>';
+        if (!ok1) {
+          errDetail += `• <b>【格2・${slot1Cell.posName}】</b>你填了 ${wormUserValues[1]}，請注意個位有沒有進位或借位喔！<br>`;
+        } else {
+          errDetail += `• ✅ <b>【格2・${slot1Cell.posName}】</b>填 ${wormUserValues[1]} 正確！<br>`;
+        }
+        if (!ok0) {
+          errDetail += `• <b>【格1・${slot0Cell.posName}】</b>你填了 ${wormUserValues[0]}，請檢查十位有沒有滿十進一或向百位借位！<br>`;
+        } else {
+          errDetail += `• ✅ <b>【格1・${slot0Cell.posName}】</b>填 ${wormUserValues[0]} 正確！<br>`;
+        }
+        errDetail += `💡 提示：${q.hint}`;
+        showFeedback(false, errDetail);
+      }
+    }
+
+    // 一般題型：四選一單次鎖定判定
+    function selectOption(idx) {
+      const q = getCurrentQuestion();
+      const isCorrect = idx === q.correctIndex;
+
+      // 單次機會鎖定所有按鈕
+      q.options.forEach((_, i) => {
+        const btn = document.getElementById(`opt-btn-${i}`);
+        if (!btn) return;
+        btn.disabled = true;
+        if (i === q.correctIndex) {
+          btn.className = 'dopamine-btn bg-emerald-400 text-slate-950 p-3 md:p-3.5 rounded-2xl font-black text-left text-base md:text-xl flex items-center gap-3 ring-4 ring-emerald-700';
+        } else if (i === idx && !isCorrect) {
+          btn.className = 'dopamine-btn bg-rose-300 text-rose-950 p-3 md:p-3.5 rounded-2xl font-black text-left text-base md:text-xl flex items-center gap-3 opacity-90 line-through';
+        } else {
+          btn.classList.add('opacity-50');
+        }
+      });
+
+      // 自動啟動左方直式概念透視
+      demoActive = true;
+      renderInteractiveStage(q);
+
+      const stepBanner = document.getElementById('conceptStepBanner');
+      stepBanner.classList.remove('hidden');
+      stepBanner.textContent = `🔍 步驟拆解：${q.demoSteps}`;
+
+      if (isCorrect) {
+        playSfx('correct');
+        triggerConfetti();
+        adjustTeamScore(q.team, 20);
+        questionAnswered[q.id] = { correct: true, detail: q.options[idx] };
+        showFeedback(true, `${q.misconceptions[idx]}<br><span class="text-xs text-emerald-800">（所屬隊伍能量 ＋20⚡！）</span>`);
+      } else {
+        playSfx('wrong');
+        questionAnswered[q.id] = { correct: false, detail: q.options[idx] };
+        showFeedback(false, `${q.misconceptions[idx]}<br><span class="text-xs text-rose-900">👉 請看左方直式已經為你開啟【概念分解透視】！</span>`);
+      }
+    }
+
+    function showFeedback(isSuccess, htmlText) {
+      const fbCard = document.getElementById('feedbackCard');
+      if (isSuccess) {
+        fbCard.className = 'bg-emerald-100 border-3 border-emerald-700 rounded-2xl p-3 flex flex-col justify-between min-h-[145px] animate-hug';
+      } else {
+        fbCard.className = 'bg-rose-100 border-3 border-rose-600 rounded-2xl p-3 flex flex-col justify-between min-h-[145px] animate-hug';
+      }
+      document.getElementById('feedbackBody').innerHTML = htmlText;
+    }
+
+    // 啟動概念透視動畫按鈕
+    function triggerConceptAnimation() {
+      playSfx('magic');
+      const q = getCurrentQuestion();
+      demoActive = !demoActive;
+      renderInteractiveStage(q);
+
+      const stepBanner = document.getElementById('conceptStepBanner');
+      if (demoActive) {
+        stepBanner.classList.remove('hidden');
+        stepBanner.textContent = `✨ 概念透視：${q.demoSteps}`;
+      } else {
+        stepBanner.classList.add('hidden');
+      }
+    }
+
+    // 顯示三階鷹架提示
+    function showScaffoldHint() {
+      playSfx('magic');
+      const q = getCurrentQuestion();
+      const fbCard = document.getElementById('feedbackCard');
+      fbCard.className = 'bg-amber-100 border-3 border-amber-600 rounded-2xl p-3 flex flex-col justify-between min-h-[145px] animate-hug';
+      document.getElementById('feedbackBody').innerHTML = `
+        <div class="font-black text-amber-950 mb-1">💡 教師引導・解題鷹架提示：</div>
+        <div class="text-slate-900">${q.hint}</div>
+        <div class="text-xs text-amber-800 mt-1">🎯 ${q.estimateText}</div>
+      `;
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 70,
+          spread: 65,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    // =========================================================================
+    // 7. 上一題 / 下一題 / 快速選題器 / 迷思診斷報告
+    // =========================================================================
+    function prevQuestion() {
+      playSfx('click');
+      if (currentQIndex > 0) {
+        currentQIndex--;
+      } else {
+        currentQIndex = filteredQuestions.length - 1;
+      }
+      renderCurrentQuestion();
+    }
+
+    function nextQuestion() {
+      playSfx('click');
+      if (currentQIndex < filteredQuestions.length - 1) {
+        currentQIndex++;
+      } else {
+        currentQIndex = 0;
+      }
+      renderCurrentQuestion();
+    }
+
+    function openQuestionPicker() {
+      playSfx('click');
+      const grid = document.getElementById('questionPickerGrid');
+      const teamBg = ['bg-sky-200', 'bg-amber-200', 'bg-rose-200'];
+      grid.innerHTML = filteredQuestions.map((q, idx) => {
+        const ans = questionAnswered[q.id];
+        const statusIcon = ans ? (ans.correct ? '✅' : '❌') : '';
+        return `
+          <button onclick="jumpToQuestion(${idx})" class="dopamine-btn ${teamBg[q.team]} p-2 rounded-xl font-black text-xs flex flex-col items-center justify-center gap-0.5 ${idx === currentQIndex ? 'ring-4 ring-slate-900' : ''}">
+            <span class="text-sm">第 ${q.id} 題 ${statusIcon}</span>
+            <span class="text-[10px] text-slate-700 truncate w-full text-center">${q.icon} ${q.cycleName.slice(2, 7)}</span>
+          </button>
+        `;
+      }).join('');
+      document.getElementById('questionPickerModal').classList.remove('hidden');
+    }
+
+    function closeQuestionPicker() {
+      document.getElementById('questionPickerModal').classList.add('hidden');
+    }
+
+    function jumpToQuestion(idx) {
+      playSfx('click');
+      currentQIndex = idx;
+      closeQuestionPicker();
+      renderCurrentQuestion();
+    }
+
+    function openReportModal() {
+      playSfx('click');
+      const totalDone = Object.keys(questionAnswered).length;
+      const correctCount = Object.values(questionAnswered).filter(v => v.correct).length;
+      const acc = totalDone > 0 ? Math.round((correctCount / totalDone) * 100) : 0;
+
+      const cycleStats = [
+        { key: 'add_carry', title: '➕ 循環1：四位數連續進位加法' },
+        { key: 'bug_align', title: '🐛 循環2：直式位值抓蟲除錯' },
+        { key: 'sub_borrow', title: '🧪 循環3：退位減法（借10抱抱合體）' },
+        { key: 'sub_zero', title: '🌀 循環4：整千跨零退位（穿透黑洞）' },
+        { key: 'worm_add', title: '🧩 循環5：蟲食算（加法直式填空格）' },
+        { key: 'worm_sub', title: '🔐 循環6：蟲食算（減法直式填空格）' },
+        { key: 'unknown_bar', title: '📏 循環7：未知數應用與線段模型' }
+      ];
+
+      const rowsHTML = cycleStats.map(c => {
+        const qs = QUESTIONS_DB.filter(q => q.cycle === c.key);
+        const done = qs.filter(q => questionAnswered[q.id]);
+        const ok = done.filter(q => questionAnswered[q.id].correct);
+        return `
+          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border-2 border-slate-200">
+            <span>${c.title}</span>
+            <span class="px-2.5 py-0.5 rounded-lg font-black ${ok.length === qs.length ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-100 text-amber-900'}">
+              答對 ${ok.length} / ${qs.length} 題
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('reportContent').innerHTML = `
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div class="p-3 rounded-xl bg-sky-100 border-2 border-slate-800">
+            <div class="text-xs text-sky-900">🛸 藍隊能量</div>
+            <div class="text-2xl font-black text-sky-700">${teamScores[0]} ⚡</div>
+          </div>
+          <div class="p-3 rounded-xl bg-amber-100 border-2 border-slate-800">
+            <div class="text-xs text-amber-900">🚀 黃隊能量</div>
+            <div class="text-2xl font-black text-amber-700">${teamScores[1]} ⚡</div>
+          </div>
+          <div class="p-3 rounded-xl bg-rose-100 border-2 border-slate-800">
+            <div class="text-xs text-rose-900">🛰️ 紅隊能量</div>
+            <div class="text-2xl font-black text-rose-700">${teamScores[2]} ⚡</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-400 text-center mb-3">
+          已完成 <b>${totalDone} / 21</b> 題 ｜ 總答對 <b>${correctCount}</b> 題（精熟率 <b>${acc}%</b>）
+        </div>
+        <div class="space-y-2">${rowsHTML}</div>
+      `;
+      document.getElementById('reportModal').classList.remove('hidden');
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 8. 雙模式手寫白板系統（原位浮層畫筆 + 展開式大白板，100% 手動清空！）
+    // =========================================================================
+    let overlayPenActive = false;
+    let overlayColor = '#dc2626';
+    let overlayDrawing = false;
+    let overlayCtx = null;
+
+    let scratchDrawing = false;
+    let scratchCtx = null;
+    let scratchColor = '#1e3a8a';
+    let scratchWidth = 4;
+    let scratchErasing = false;
+
+    function initCanvases() {
+      // 1. 初始化原位透明塗鴉畫布
+      const oCanvas = document.getElementById('overlayCanvas');
+      const resizeOverlay = () => {
+        // 保留既有筆跡的離屏備份
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = oCanvas.width;
+        tempCanvas.height = oCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (oCanvas.width > 0 && oCanvas.height > 0) {
+          tempCtx.drawImage(oCanvas, 0, 0);
+        }
+        const rect = oCanvas.parentElement.getBoundingClientRect();
+        oCanvas.width = rect.width;
+        oCanvas.height = rect.height;
+        overlayCtx = oCanvas.getContext('2d');
+        overlayCtx.lineCap = 'round';
+        overlayCtx.lineJoin = 'round';
+        if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+          overlayCtx.drawImage(tempCanvas, 0, 0);
+        }
+      };
+      resizeOverlay();
+      window.addEventListener('resize', resizeOverlay);
+
+      bindCanvasEvents(oCanvas, () => overlayCtx, () => overlayDrawing, (v) => { overlayDrawing = v; }, () => ({
+        color: overlayColor,
+        width: 4,
+        erase: false
+      }));
+
+      // 2. 初始化展開式大白板畫布
+      const sCanvas = document.getElementById('scratchCanvas');
+      bindCanvasEvents(sCanvas, () => scratchCtx, () => scratchDrawing, (v) => { scratchDrawing = v; }, () => ({
+        color: scratchColor,
+        width: scratchWidth,
+        erase: scratchErasing
+      }));
+    }
+
+    function bindCanvasEvents(canvas, getCtx, isDown, setDown, getStyle) {
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+      };
+
+      const start = (e) => {
+        const ctx = getCtx();
+        if (!ctx) return;
+        e.preventDefault();
+        setDown(true);
+        const pos = getPos(e);
+        const st = getStyle();
+        ctx.globalCompositeOperation = st.erase ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = st.color;
+        ctx.lineWidth = st.erase ? 26 : st.width;
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      };
+
+      const move = (e) => {
+        if (!isDown()) return;
+        const ctx = getCtx();
+        if (!ctx) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      };
+
+      const end = () => {
+        setDown(false);
+      };
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('touchend', end);
+    }
+
+    function toggleOverlayPen() {
+      playSfx('click');
+      overlayPenActive = !overlayPenActive;
+      const oCanvas = document.getElementById('overlayCanvas');
+      const btn = document.getElementById('overlayPenBtn');
+      const status = document.getElementById('overlayPenStatus');
+
+      if (overlayPenActive) {
+        oCanvas.classList.remove('pointer-events-none');
+        oCanvas.classList.add('cursor-crosshair');
+        btn.className = 'dopamine-btn bg-rose-500 text-white px-2.5 py-1 rounded-xl font-black text-xs md:text-sm flex items-center gap-1 ring-2 ring-slate-900';
+        status.textContent = '手寫中（點此切換點擊）';
+      } else {
+        oCanvas.classList.add('pointer-events-none');
+        oCanvas.classList.remove('cursor-crosshair');
+        btn.className = 'dopamine-btn bg-amber-200 hover:bg-amber-300 text-slate-900 px-2.5 py-1 rounded-xl font-black text-xs md:text-sm flex items-center gap-1';
+        status.textContent = '開啟原位手寫筆';
+      }
+    }
+
+    function setOverlayColor(c) {
+      overlayColor = c;
+      if (!overlayPenActive) toggleOverlayPen();
+    }
+
+    // 只有手動點擊「🗑️ 手動清空」才會擦除原位筆跡
+    function clearOverlayCanvas() {
+      playSfx('click');
+      const oCanvas = document.getElementById('overlayCanvas');
+      if (overlayCtx) {
+        overlayCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
+      }
+    }
+
+    function openScratchpadModal() {
+      playSfx('click');
+      const q = getCurrentQuestion();
+      document.getElementById('scratchModalQuestionRef').textContent = `目前題目：第 ${q.id} 題 — ${q.story}`;
+      const modal = document.getElementById('scratchpadModal');
+      modal.classList.remove('hidden');
+
+      const sCanvas = document.getElementById('scratchCanvas');
+      const rect = sCanvas.parentElement.getBoundingClientRect();
+      // 若第一次開啟才設定尺寸，避免關閉再打開時清空筆跡！
+      if (!scratchCtx || sCanvas.width === 0) {
+        sCanvas.width = rect.width;
+        sCanvas.height = rect.height;
+        scratchCtx = sCanvas.getContext('2d');
+        scratchCtx.lineCap = 'round';
+        scratchCtx.lineJoin = 'round';
+      }
+    }
+
+    function closeScratchpadModal() {
+      playSfx('click');
+      document.getElementById('scratchpadModal').classList.add('hidden');
+    }
+
+    function setScratchPen(color, width) {
+      scratchErasing = false;
+      scratchColor = color;
+      scratchWidth = width;
+    }
+
+    function setScratchEraser() {
+      scratchErasing = true;
+    }
+
+    // 只有手動點擊「🗑️ 手動清空」才會擦除大白板筆跡
+    function clearScratchpadCanvas() {
+      playSfx('click');
+      const sCanvas = document.getElementById('scratchCanvas');
+      if (scratchCtx) {
+        scratchCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+      }
+    }
+
+    // 啟動初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+      setTimeout(initCanvases, 120);
+    });
+  </script>
+</body>
+</html>
