@@ -1,0 +1,1004 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>第12課：昆蟲的保命妙招｜南一三上國語成語填填看</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Noto Serif TC"', 'serif'],
+          },
+          keyframes: {
+            popIn: {
+              '0%': { transform: 'scale(0.5)', opacity: '0' },
+              '70%': { transform: 'scale(1.08)', opacity: '1' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            shake: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '20%, 60%': { transform: 'translateX(-10px)' },
+              '40%, 80%': { transform: 'translateX(10px)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 0 0 rgba(250, 204, 21, 0.7)' },
+              '50%': { boxShadow: '0 0 25px 8px rgba(250, 204, 21, 0.35)' },
+            },
+            floatUp: {
+              '0%': { transform: 'translateY(16px) scale(0.9)', opacity: '0' },
+              '20%': { transform: 'translateY(0px) scale(1.05)', opacity: '1' },
+              '80%': { transform: 'translateY(-8px) scale(1)', opacity: '1' },
+              '100%': { transform: 'translateY(-20px) scale(0.95)', opacity: '0' },
+            }
+          },
+          animation: {
+            'pop-in': 'popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            'shake': 'shake 0.4s ease-in-out',
+            'pulse-glow': 'pulseGlow 1.8s infinite',
+            'float-up': 'floatUp 1.25s ease-out forwards',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+    body {
+      background: radial-gradient(circle at 50% 15%, #1e1b4b 0%, #0f172a 65%, #020617 100%);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-tactile {
+      transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
+    }
+    .btn-tactile:not(:disabled):hover {
+      transform: translateY(-2px);
+    }
+    .btn-tactile:not(:disabled):active {
+      transform: translateY(4px);
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(260px) rotate(720deg) scale(0.6); opacity: 0; }
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      animation: confettiFall 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans flex flex-col justify-between overflow-x-hidden">
+
+  <div x-data="lessonIdiomGameApp()" x-init="initGame()" class="w-full max-w-3xl mx-auto px-4 py-5 my-auto flex flex-col items-center justify-center relative">
+
+    <!-- 頂部導覽列 -->
+    <header class="w-full flex flex-wrap items-center justify-between gap-2 mb-4 px-1">
+      <div class="flex items-center gap-2.5">
+        <a
+          href="./index.html"
+          @click="PlaySound('click')"
+          class="btn-tactile flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-400/50 text-xs sm:text-sm font-bold text-indigo-200 shadow-md"
+        >
+          <span>🏠 12課總目錄</span>
+        </a>
+        <div class="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 px-3.5 py-1.5 rounded-xl">
+          <span class="text-lg">🐞</span>
+          <div>
+            <div class="text-[11px] font-bold text-amber-400 leading-none">南一三上國語・第 12 課</div>
+            <div class="text-sm font-black text-white leading-tight mt-0.5">昆蟲的保命妙招</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="./lesson11.html" @click="PlaySound('click')" class="btn-tactile px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs sm:text-sm font-bold text-slate-200 shadow-md flex items-center gap-1"><span>⬅️ 第11課</span></a>
+        
+        <button
+          type="button"
+          @click="toggleMute()"
+          class="btn-tactile flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs sm:text-sm font-bold text-slate-200 shadow-md"
+        >
+          <span x-text="isMuted ? '🔇 靜音' : '🔊 音效'"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==========================================
+         1. 啟動畫面 (Start Screen)
+    =========================================== -->
+    <template x-if="gameState === 'start'">
+      <section class="w-full bg-slate-900/90 backdrop-blur-md border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-950/80 animate-pop-in">
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold mb-3">
+            <span>🐞 南一三上國語・第 12 課延伸成語挑戰</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-serif font-black tracking-wider text-white drop-shadow-[0_4px_12px_rgba(251,191,36,0.35)] mb-2">
+            《昆蟲的保命妙招》
+          </h1>
+          <p class="text-amber-300 font-bold text-base sm:text-lg">
+            成語填填看（本課共收錄 <span x-text="lessonIdioms.length"></span> 個成語）
+          </p>
+          <div x-show="bestScore !== null" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-bold">
+            <span>🏆 本課最高紀錄：<span x-text="bestScore"></span> 分</span>
+          </div>
+        </div>
+
+        <!-- 切換：遊戲說明 vs 本課成語預習卡 -->
+        <div class="flex justify-center gap-2 mb-5">
+          <button
+            type="button"
+            @click="startTab = 'rules'; PlaySound('click')"
+            class="btn-tactile px-4 py-2 rounded-xl text-xs sm:text-sm font-black border transition-all"
+            :class="startTab === 'rules' ? 'bg-amber-400 text-slate-950 border-amber-200 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700'"
+          >
+            📜 遊戲規則說明
+          </button>
+          <button
+            type="button"
+            @click="startTab = 'study'; PlaySound('click')"
+            class="btn-tactile px-4 py-2 rounded-xl text-xs sm:text-sm font-black border transition-all"
+            :class="startTab === 'study' ? 'bg-cyan-400 text-slate-950 border-cyan-200 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700'"
+          >
+            📖 先看本課成語釋義 (<span x-text="lessonIdioms.length"></span>)
+          </button>
+        </div>
+
+        <!-- 分頁 A：遊戲說明 -->
+        <div x-show="startTab === 'rules'" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 mb-7 space-y-3">
+          <h3 class="text-amber-400 font-bold text-base sm:text-lg flex items-center gap-2 border-b border-slate-800 pb-2">
+            <span>🎮 闖關規則說明</span>
+          </h3>
+          <ul class="space-y-2.5 text-sm sm:text-base text-slate-200">
+            <li class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-300 text-xs font-black flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <span>從第 12 課《昆蟲的保命妙招》生字延伸成語中隨機抽取 <strong class="text-amber-300">10 題</strong> 進行填空挑戰。</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-300 text-xs font-black flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <span>每題隨機隱藏一個字，請依據<strong class="text-cyan-300">成語解釋與課本例句</strong>，從 4 個候選字中選出正確的字。</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-300 text-xs font-black flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <span>每題限時 <strong class="text-rose-400" x-text="config.timePerQuestion + ' 秒'"></strong>，上方設有獨立的「🛡️ 闖關進度血條」與「⏱️ 倒數時間血條」。</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-300 text-xs font-black flex items-center justify-center shrink-0 mt-0.5">4</span>
+              <span>每題答對得 <strong class="text-emerald-400">10 分</strong>（顯示慶祝動畫），答錯彈出正確答案與例句解析，滿分 <strong class="text-amber-300">100 分</strong>！</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 分頁 B：本課成語溫習小卡 -->
+        <div x-show="startTab === 'study'" class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 mb-7 max-h-80 overflow-y-auto space-y-2.5 pr-1">
+          <template x-for="(item, idx) in lessonIdioms" :key="idx">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-500/40 transition-colors">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-xs font-bold" x-text="'#' + (idx + 1)"></span>
+                <span class="font-serif font-black text-lg sm:text-xl text-amber-300 tracking-widest" x-text="item.idiom"></span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-200 font-medium mb-1">
+                <strong class="text-indigo-300">解釋：</strong><span x-text="item.meaning"></span>
+              </p>
+              <p class="text-xs text-slate-400">
+                <strong class="text-emerald-400">例句：</strong><span x-text="item.example"></span>
+              </p>
+            </div>
+          </template>
+        </div>
+
+        <!-- 開始遊戲按鈕 -->
+        <button
+          type="button"
+          @click="startGame()"
+          class="btn-tactile w-full py-4 rounded-2xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:brightness-110 text-slate-950 font-black text-xl sm:text-2xl tracking-wider shadow-[0_6px_0_rgba(0,0,0,0.45),0_12px_24px_rgba(245,158,11,0.3)] active:shadow-[0_2px_0_rgba(0,0,0,0.45)] flex items-center justify-center gap-3"
+        >
+          <span>🚀 開始第 12 課挑戰</span>
+        </button>
+      </section>
+    </template>
+
+    <!-- ==========================================
+         2. 遊戲進行畫面 (Playing Screen)
+    =========================================== -->
+    <template x-if="gameState === 'playing'">
+      <section class="w-full space-y-4 animate-pop-in">
+
+        <!-- 頂部狀態與雙血條儀表板 -->
+        <div class="bg-slate-900/95 border-2 border-slate-700/80 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3.5">
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <!-- 目前得分與連勝 -->
+            <div class="sm:col-span-4 flex items-center justify-between sm:justify-start gap-3 bg-slate-950/80 border border-slate-800 px-4 py-2.5 rounded-2xl">
+              <div>
+                <div class="text-[11px] font-bold text-slate-400">目前得分</div>
+                <div class="text-2xl sm:text-3xl font-black text-amber-400 leading-none mt-0.5">
+                  <span x-text="score"></span>
+                  <span class="text-xs font-bold text-slate-500">/ 100</span>
+                </div>
+              </div>
+              <div class="text-right sm:ml-auto">
+                <div class="text-[11px] font-bold text-slate-400">連對狀態</div>
+                <div class="text-sm font-black text-emerald-400" x-text="streak > 0 ? '🔥 ' + streak + ' 連勝' : '—'"></div>
+              </div>
+            </div>
+
+            <!-- 獨立血條 1：闖關進度血條 (與時間血條明確區分) -->
+            <div class="sm:col-span-8 bg-slate-950/80 border border-slate-800 px-4 py-2.5 rounded-2xl">
+              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                <span class="text-cyan-300 flex items-center gap-1.5">
+                  <span>🛡️ 闖關進度血條（第 12 課）</span>
+                </span>
+                <span class="text-slate-200">
+                  第 <strong class="text-amber-300 text-sm" x-text="currentIndex + 1"></strong> / <span x-text="config.totalQuestions"></span> 題
+                </span>
+              </div>
+              <div class="grid grid-cols-10 gap-1.5 h-3.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <template x-for="(record, idx) in progressSlots" :key="idx">
+                  <div
+                    class="h-full rounded-md transition-all duration-300"
+                    :class="{
+                      'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]': record === 'correct',
+                      'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]': record === 'wrong',
+                      'bg-amber-400 animate-pulse': idx === currentIndex && record === 'pending',
+                      'bg-slate-800': idx > currentIndex && record === 'pending'
+                    }"
+                  ></div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- 獨立血條 2：倒數計時時間血條 -->
+          <div class="bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-2xl">
+            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+              <span class="flex items-center gap-1.5" :class="timeRemaining <= 4 ? 'text-rose-400 animate-pulse' : 'text-emerald-300'">
+                <span>⏱️ 本題倒數時間血條</span>
+                <span x-show="timeRemaining <= 4" class="text-[11px] bg-rose-500/20 border border-rose-500/40 text-rose-300 px-1.5 py-0.2 rounded">快沒時間了！</span>
+              </span>
+              <span class="font-mono text-sm font-black" :class="timeRemaining <= 4 ? 'text-rose-400' : 'text-slate-200'">
+                <span x-text="timeRemaining.toFixed(1)"></span> 秒
+              </span>
+            </div>
+            <div class="w-full h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-700/80 p-0.5">
+              <div
+                class="h-full rounded-full transition-all duration-100 ease-linear"
+                :class="timerBarColorClass"
+                :style="'width: ' + Math.max(0, Math.min(100, (timeRemaining / config.timePerQuestion) * 100)) + '%'"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 題目主舞台 -->
+        <div
+          class="relative bg-slate-900/95 border-2 rounded-3xl p-6 sm:p-8 shadow-2xl transition-colors duration-300 overflow-hidden"
+          :class="{
+            'border-emerald-400 shadow-emerald-950/70': feedbackState === 'correct',
+            'border-rose-500 animate-shake': feedbackState === 'wrong',
+            'border-indigo-500/40': feedbackState === 'idle'
+          }"
+        >
+          <!-- 答對時的慶祝動畫層 -->
+          <template x-if="showCelebration">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden z-20 flex items-center justify-center">
+              <template x-for="piece in confettiPieces" :key="piece.id">
+                <span
+                  class="confetti-piece"
+                  :style="'left: ' + piece.left + '%; top: ' + piece.top + '%; background-color: ' + piece.color + '; animation-delay: ' + piece.delay + 's;'"
+                ></span>
+              </template>
+              <div class="animate-float-up bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 text-slate-950 font-black px-7 py-3 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.95)] border-2 border-white text-lg sm:text-xl flex items-center gap-2">
+                <span>🎉 答對了！ +10 分</span>
+              </div>
+            </div>
+          </template>
+
+          <!-- 成語釋義與例句提示區 -->
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 mb-6 space-y-2 text-center">
+            <div>
+              <span class="inline-block px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold mr-1.5">
+                💡 成語解釋
+              </span>
+              <span class="text-slate-100 text-sm sm:text-base font-bold" x-text="currentQuestion.meaning"></span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-400 border-t border-slate-800/80 pt-2">
+              <span class="text-cyan-300 font-bold">📝 課本例句：</span>
+              <span x-text="maskedExample"></span>
+            </div>
+          </div>
+
+          <!-- 四字成語填空字格 -->
+          <div class="flex justify-center items-center gap-2.5 sm:gap-4 my-4">
+            <template x-for="(char, idx) in currentQuestion.chars" :key="idx">
+              <div
+                class="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center font-serif font-black text-3xl sm:text-5xl transition-all duration-300 select-none relative"
+                :class="getSlotStyle(idx)"
+              >
+                <template x-if="idx !== currentQuestion.missingIndex">
+                  <span x-text="char"></span>
+                </template>
+                <template x-if="idx === currentQuestion.missingIndex">
+                  <span
+                    x-text="feedbackState === 'idle' ? '？' : char"
+                    :class="feedbackState !== 'idle' ? 'animate-pop-in' : ''"
+                  ></span>
+                </template>
+                <template x-if="idx === currentQuestion.missingIndex && feedbackState === 'idle'">
+                  <span class="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-sans font-black text-[10px] shadow">
+                    填空
+                  </span>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <p class="text-center text-xs sm:text-sm text-slate-400 mt-4 mb-5">
+            請從下方 4 個候選字中，選出正確的字填入「？」格中
+          </p>
+
+          <!-- 4 個候選字選擇按鈕 -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4">
+            <template x-for="(optionChar, optIdx) in currentQuestion.options" :key="optIdx">
+              <button
+                type="button"
+                :disabled="isLocked"
+                @click="submitAnswer(optionChar)"
+                class="btn-tactile h-20 sm:h-24 rounded-2xl font-serif font-black text-3xl sm:text-4xl flex flex-col items-center justify-center relative focus:outline-none focus:ring-4 focus:ring-amber-400/50"
+                :class="getOptionButtonStyle(optionChar)"
+              >
+                <span x-text="optionChar"></span>
+                <span
+                  class="text-[11px] font-sans font-bold mt-1 tracking-widest opacity-75"
+                  x-text="'選項 ' + ['A', 'B', 'C', 'D'][optIdx]"
+                ></span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <!-- ==========================================
+         3. 答錯 / 超時彈出視窗 (Wrong Modal)
+    =========================================== -->
+    <div
+      x-show="showWrongModal"
+      x-cloak
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+    >
+      <div class="w-full max-w-md bg-slate-900 border-2 border-rose-500 rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(244,63,94,0.45)] text-center animate-pop-in relative overflow-hidden">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-3xl mb-2">
+          <span x-text="wrongReason === 'timeout' ? '⏰' : '💡'"></span>
+        </div>
+        <h3 class="text-2xl font-black text-rose-400 mb-1" x-text="wrongReason === 'timeout' ? '時間到！來不及作答' : '可惜答錯了！'"></h3>
+        <p class="text-xs sm:text-sm text-slate-400 mb-4">記住正確的字，下次一定能答對！</p>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4">
+          <div class="text-xs font-bold text-slate-400 mb-2">正確成語解答</div>
+          <div class="flex justify-center gap-2 my-2">
+            <template x-for="(c, i) in currentQuestion.chars" :key="i">
+              <span
+                class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-serif font-black text-2xl sm:text-3xl border-2"
+                :class="i === currentQuestion.missingIndex
+                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.4)] scale-105'
+                  : 'bg-slate-800 border-slate-700 text-white'"
+                x-text="c"
+              ></span>
+            </template>
+          </div>
+          <p class="text-xs sm:text-sm text-amber-300 font-bold mt-3" x-text="currentQuestion.meaning"></p>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" x-text="'例：' + currentQuestion.example"></p>
+        </div>
+
+        <p class="text-xs text-slate-400 mb-2">視窗即將自動關閉並進入下一題...</p>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-75 ease-linear"
+            :style="'width: ' + modalProgress + '%'"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         4. 結算畫面 (Result Screen)
+    =========================================== -->
+    <template x-if="gameState === 'result'">
+      <section class="w-full bg-slate-900/95 border-2 border-amber-400/50 rounded-3xl p-6 sm:p-8 shadow-2xl animate-pop-in">
+        <div class="text-center">
+          <div class="inline-block px-4 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold mb-2">
+            🏆 第 12 課《昆蟲的保命妙招》挑戰結算
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black text-white mb-1" x-text="resultRank.title"></h2>
+          <p class="text-sm text-slate-400 mb-5" x-text="resultRank.desc"></p>
+
+          <!-- 總分圓環 -->
+          <div class="inline-flex flex-col items-center justify-center w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-b from-slate-800 to-slate-950 border-4 border-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.3)] mb-6">
+            <span class="text-xs font-bold text-slate-400">最終得分</span>
+            <span class="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-400 leading-tight" x-text="score"></span>
+            <span class="text-xs font-bold text-amber-300/80">滿分 100 分</span>
+          </div>
+
+          <!-- 答題統計 -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-xs text-slate-400">答對題數</div>
+              <div class="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5">
+                <span x-text="correctCount"></span> <span class="text-xs text-slate-500">題</span>
+              </div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-xs text-slate-400">答錯/超時</div>
+              <div class="text-xl sm:text-2xl font-black text-rose-400 mt-0.5">
+                <span x-text="config.totalQuestions - correctCount"></span> <span class="text-xs text-slate-500">題</span>
+              </div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-xs text-slate-400">最高連勝</div>
+              <div class="text-xl sm:text-2xl font-black text-amber-400 mt-0.5">
+                <span x-text="maxStreak"></span> <span class="text-xs text-slate-500">連對</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 本局 10 題成語詳解總複習 -->
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 mb-6">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-300 mb-3 flex items-center justify-between">
+            <span>📖 本局 10 題成語複習清單</span>
+            <span class="text-xs text-emerald-400">底線字為本題填空字</span>
+          </h3>
+          <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+            <template x-for="(item, idx) in answerHistory" :key="idx">
+              <div
+                class="px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm"
+                :class="item.isCorrect ? 'bg-emerald-950/25 border-emerald-500/30' : 'bg-rose-950/25 border-rose-500/30'"
+              >
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold" :class="item.isCorrect ? 'text-emerald-400' : 'text-rose-400'" x-text="item.isCorrect ? '✔ 答對' : '✘ 答錯'"></span>
+                    <span class="font-serif font-black text-base sm:text-lg tracking-wider text-white">
+                      <template x-for="(ch, cIdx) in item.chars" :key="cIdx">
+                        <span :class="cIdx === item.missingIndex ? 'text-amber-300 underline decoration-2 underline-offset-4' : ''" x-text="ch"></span>
+                      </template>
+                    </span>
+                  </div>
+                </div>
+                <div class="text-slate-300 text-xs" x-text="'解釋：' + item.meaning"></div>
+                <div class="text-slate-400 text-[11px] mt-0.5" x-text="'例句：' + item.example"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- 底部操作按鈕列 -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            @click="startGame()"
+            class="btn-tactile flex-1 py-4 rounded-2xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:brightness-110 text-slate-950 font-black text-lg tracking-wider shadow-[0_5px_0_rgba(0,0,0,0.45)] active:shadow-[0_2px_0_rgba(0,0,0,0.45)] flex items-center justify-center gap-2"
+          >
+            <span>🔄 再玩一次</span>
+          </button>
+          
+          <a
+            href="./index.html"
+            @click="PlaySound('click')"
+            class="btn-tactile sm:w-44 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-base border border-slate-600 shadow-[0_5px_0_#1e293b] active:shadow-[0_2px_0_#1e293b] flex items-center justify-center gap-1.5"
+          >
+            <span>🏠 返回總目錄</span>
+          </a>
+        </div>
+      </section>
+    </template>
+
+  </div>
+
+  <script>
+    /**
+     * 1. Web Audio API 音效引擎 (預留全域 PlaySound 函數)
+     */
+    const AudioEngine = (() => {
+      let audioCtx = null;
+      let isMuted = false;
+
+      function getContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function playTone(freq, type, duration, startTimeOffset = 0, volume = 0.22) {
+        const ctx = getContext();
+        if (!ctx || isMuted) return;
+
+        const now = ctx.currentTime + startTimeOffset;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(volume, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      }
+
+      function play(soundName) {
+        if (isMuted) return;
+        const ctx = getContext();
+        if (!ctx) return;
+
+        switch (soundName) {
+          case 'click':
+            playTone(620, 'triangle', 0.07, 0, 0.18);
+            break;
+          case 'start':
+            playTone(440, 'sine', 0.12, 0, 0.2);
+            playTone(554.37, 'sine', 0.12, 0.09, 0.2);
+            playTone(659.25, 'triangle', 0.18, 0.18, 0.24);
+            playTone(880, 'triangle', 0.3, 0.28, 0.26);
+            break;
+          case 'correct':
+            playTone(523.25, 'triangle', 0.12, 0, 0.25);
+            playTone(659.25, 'triangle', 0.12, 0.09, 0.25);
+            playTone(783.99, 'triangle', 0.14, 0.18, 0.25);
+            playTone(1046.5, 'sine', 0.35, 0.27, 0.3);
+            break;
+          case 'wrong':
+            playTone(280, 'sawtooth', 0.18, 0, 0.2);
+            playTone(195, 'sawtooth', 0.35, 0.15, 0.22);
+            break;
+          case 'timeout':
+            playTone(320, 'square', 0.14, 0, 0.18);
+            playTone(260, 'square', 0.14, 0.14, 0.18);
+            playTone(190, 'sawtooth', 0.36, 0.28, 0.22);
+            break;
+          case 'tick':
+            playTone(880, 'sine', 0.04, 0, 0.1);
+            break;
+          case 'fanfare':
+            playTone(523.25, 'triangle', 0.15, 0, 0.24);
+            playTone(659.25, 'triangle', 0.15, 0.13, 0.24);
+            playTone(783.99, 'triangle', 0.15, 0.26, 0.24);
+            playTone(1046.5, 'triangle', 0.45, 0.39, 0.3);
+            break;
+          default:
+            playTone(440, 'sine', 0.1, 0, 0.15);
+        }
+      }
+
+      return {
+        play,
+        setMuted(val) { isMuted = Boolean(val); },
+        getMuted() { return isMuted; }
+      };
+    })();
+
+    function PlaySound(soundType) {
+      AudioEngine.play(soundType);
+    }
+
+    /**
+     * 2. 本課教材成語資料庫 (第 12 課：昆蟲的保命妙招)
+     */
+    const LESSON_NUMBER = 12;
+    const STORAGE_KEY_BEST = 'nani3a_idiom_lesson_12_best';
+    const LESSON_IDIOMS = [{"meaning":"乘人沒有防備時突然攻擊。","example":"在對手放鬆的一瞬間，我們的球隊攻其不備，一舉拿下勝利。","idiom":"攻其不備"},{"meaning":"沒有缺點可指責或挑剔。形容嚴密，沒有缺失。","example":"她無懈可擊的表現，贏得所有人的掌聲喝采。","idiom":"無懈可擊"},{"meaning":"為了個人得失而喪失原則的庸俗處世態度。","example":"如果大家都自掃門前雪，只求明哲保身，這個社會將變得很冷漠。","idiom":"明哲保身"},{"meaning":"指居處得以容身，生活便有著落，精神上亦有所寄託。","example":"脫離城市，這個鄉村就是我們安身立命的好地方","idiom":"安身立命"},{"meaning":"比喻難以脫身逃走。","example":"蝴蝶一旦落入蜘蛛網，便插翅難飛。","idiom":"插翅難飛"},{"meaning":"雙方力量、情勢相當，不分上下。","example":"這場比賽雙方勢均力敵，看起來相當刺激。","idiom":"勢均力敵"},{"meaning":"大家都知道。","example":"這起食安危機事件已鬧得眾所周知，引起社會大眾高度的關注。","idiom":"眾所周知"},{"meaning":"無論如何很難免除、避免。","example":"學習新事物時，犯錯是在所難免的。","idiom":"在所難免"},{"meaning":"比喻計畫周詳，有成功的把握。","example":"看他胸有成竹的樣子，這次表演應該會相當精采有趣。","idiom":"胸有成竹"},{"meaning":"開發財源增加收入，節省支出。","example":"阿姨今天能小有積蓄，就是長久以來開源節流的結果。","idiom":"開源節流"},{"meaning":"比喻微不足道的技能。","example":"這位魔術師的雕蟲小技，大家早就看過了。","idiom":"雕蟲小技"},{"meaning":"比喻做事中途退縮、放棄。","example":"弟弟才學了幾天的鋼琴﹐就不想繼續下去，打算打退堂鼓了。","idiom":"打退堂鼓"},{"meaning":"形容非常驚懼害怕，狼狽不堪。","example":"敵軍被我方打得屁滾尿流，狼狽不堪。","idiom":"屁滾尿流"}];
+
+    // 國小三年級常用干擾字池（結合本課成語字與常見混淆字）
+    const COMMON_DISTRACTOR_CHARS = Array.from('天地人心手足目口風雨山水火木金石日月星雲花草鳥獸龍虎馬牛羊雞犬魚大小多少高低長短前後左右上下進退明暗真假善惡美醜頭尾聲色光影氣力神意情理道法言行舉動成敗得失');
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    /**
+     * 3. Alpine.js 遊戲主邏輯模組
+     */
+    function lessonIdiomGameApp() {
+      return {
+        config: {
+          totalQuestions: 10,
+          pointsPerQuestion: 10,
+          timePerQuestion: 15,
+          celebrationDuration: 1200,
+          wrongModalDuration: 2500
+        },
+
+        lessonIdioms: LESSON_IDIOMS,
+        startTab: 'rules',
+        gameState: 'start',
+        isMuted: false,
+        isLocked: false,
+        feedbackState: 'idle',
+        selectedOption: null,
+        bestScore: null,
+
+        questionList: [],
+        currentIndex: 0,
+        score: 0,
+        correctCount: 0,
+        streak: 0,
+        maxStreak: 0,
+        progressSlots: [],
+        answerHistory: [],
+
+        timeRemaining: 15,
+        timerInterval: null,
+        lastTickSecond: null,
+
+        showCelebration: false,
+        confettiPieces: [],
+        showWrongModal: false,
+        wrongReason: 'wrong',
+        modalProgress: 100,
+        modalTimerInterval: null,
+
+        initGame() {
+          this.resetTimers();
+          this.progressSlots = Array(this.config.totalQuestions).fill('pending');
+          this.loadBestScore();
+        },
+
+        loadBestScore() {
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY_BEST);
+            if (saved !== null) {
+              this.bestScore = parseInt(saved, 10);
+            }
+          } catch (e) {}
+        },
+
+        saveBestScore(newScore) {
+          try {
+            if (this.bestScore === null || newScore > this.bestScore) {
+              this.bestScore = newScore;
+              localStorage.setItem(STORAGE_KEY_BEST, String(newScore));
+            }
+          } catch (e) {}
+        },
+
+        toggleMute() {
+          this.isMuted = !this.isMuted;
+          AudioEngine.setMuted(this.isMuted);
+          if (!this.isMuted) PlaySound('click');
+        },
+
+        get currentQuestion() {
+          return this.questionList[this.currentIndex] || {
+            idiom: '',
+            chars: ['', '', '', ''],
+            missingIndex: 0,
+            correctChar: '',
+            options: ['', '', '', ''],
+            meaning: '',
+            example: ''
+          };
+        },
+
+        get maskedExample() {
+          const q = this.currentQuestion;
+          if (!q.example) return '';
+          if (this.feedbackState !== 'idle') return q.example;
+          const maskedIdiom = q.chars.map((ch, idx) => idx === q.missingIndex ? ' (？) ' : ch).join('');
+          return q.example.split(q.idiom).join(maskedIdiom);
+        },
+
+        get timerBarColorClass() {
+          const ratio = this.timeRemaining / this.config.timePerQuestion;
+          if (ratio > 0.5) {
+            return 'bg-gradient-to-r from-emerald-400 to-cyan-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]';
+          }
+          if (ratio > 0.25) {
+            return 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_0_10px_rgba(251,191,36,0.6)]';
+          }
+          return 'bg-gradient-to-r from-rose-500 to-red-600 shadow-[0_0_12px_rgba(244,63,94,0.9)]';
+        },
+
+        get resultRank() {
+          if (this.score === 100) {
+            return { title: '👑 滿分過關！第12課成語小博士', desc: '太厲害了！本課成語已經完全融會貫通！' };
+          }
+          if (this.score >= 80) {
+            return { title: '🌟 表現優異！成語小達人', desc: '只差一點點就滿分囉，再挑戰一次吧！' };
+          }
+          if (this.score >= 60) {
+            return { title: '📘 基礎穩固！成語小秀才', desc: '已經掌握大部分成語，多看幾次例句會更熟練！' };
+          }
+          return { title: '🌱 繼續加油！成語小學徒', desc: '別灰心，看完下方複習清單後再挑戰一次！' };
+        },
+
+        generateQuestions() {
+          const lessonPoolChars = Array.from(new Set(this.lessonIdioms.flatMap(x => Array.from(x.idiom))));
+          let selectedItems = [];
+
+          if (this.lessonIdioms.length >= this.config.totalQuestions) {
+            selectedItems = shuffleArray(this.lessonIdioms).slice(0, this.config.totalQuestions).map(item => ({
+              ...item,
+              forcedMissingIndex: null
+            }));
+          } else {
+            const firstPass = shuffleArray(this.lessonIdioms).map(item => {
+              const mIdx = Math.floor(Math.random() * 4);
+              return { ...item, forcedMissingIndex: mIdx };
+            });
+            const extraSource = firstPass[Math.floor(Math.random() * firstPass.length)];
+            const extraMissingIndex = (extraSource.forcedMissingIndex + 1 + Math.floor(Math.random() * 3)) % 4;
+            selectedItems = shuffleArray([
+              ...firstPass,
+              { ...extraSource, forcedMissingIndex: extraMissingIndex }
+            ]);
+          }
+
+          return selectedItems.map(item => {
+            const chars = Array.from(item.idiom);
+            const missingIndex = item.forcedMissingIndex !== null && item.forcedMissingIndex !== undefined
+              ? item.forcedMissingIndex
+              : Math.floor(Math.random() * 4);
+            const correctChar = chars[missingIndex];
+
+            const candidatePool = [
+              ...shuffleArray(lessonPoolChars),
+              ...shuffleArray(COMMON_DISTRACTOR_CHARS)
+            ];
+            const distractors = [];
+            for (const ch of candidatePool) {
+              if (ch !== correctChar && !chars.includes(ch) && !distractors.includes(ch)) {
+                distractors.push(ch);
+              }
+              if (distractors.length === 3) break;
+            }
+
+            return {
+              idiom: item.idiom,
+              chars,
+              missingIndex,
+              correctChar,
+              options: shuffleArray([correctChar, ...distractors]),
+              meaning: item.meaning,
+              example: item.example
+            };
+          });
+        },
+
+        startGame() {
+          PlaySound('start');
+          this.resetTimers();
+
+          this.questionList = this.generateQuestions();
+          this.currentIndex = 0;
+          this.score = 0;
+          this.correctCount = 0;
+          this.streak = 0;
+          this.maxStreak = 0;
+          this.progressSlots = Array(this.config.totalQuestions).fill('pending');
+          this.answerHistory = [];
+
+          this.gameState = 'playing';
+          this.loadCurrentQuestion();
+        },
+
+        loadCurrentQuestion() {
+          this.resetTimers();
+          this.isLocked = false;
+          this.feedbackState = 'idle';
+          this.selectedOption = null;
+          this.showCelebration = false;
+          this.showWrongModal = false;
+          this.timeRemaining = this.config.timePerQuestion;
+          this.lastTickSecond = Math.ceil(this.timeRemaining);
+
+          const startTimestamp = performance.now();
+          const totalMs = this.config.timePerQuestion * 1000;
+
+          this.timerInterval = setInterval(() => {
+            if (this.isLocked) return;
+            const elapsed = performance.now() - startTimestamp;
+            const remain = Math.max(0, (totalMs - elapsed) / 1000);
+            this.timeRemaining = remain;
+
+            const ceilSec = Math.ceil(remain);
+            if (ceilSec <= 4 && ceilSec > 0 && ceilSec !== this.lastTickSecond) {
+              this.lastTickSecond = ceilSec;
+              PlaySound('tick');
+            }
+
+            if (remain <= 0) {
+              this.handleTimeout();
+            }
+          }, 50);
+        },
+
+        submitAnswer(chosenChar) {
+          if (this.isLocked) return;
+          this.isLocked = true;
+          this.selectedOption = chosenChar;
+          this.clearMainTimer();
+
+          const isCorrect = chosenChar === this.currentQuestion.correctChar;
+          if (isCorrect) {
+            this.handleCorrectAnswer();
+          } else {
+            this.handleWrongAnswer('wrong');
+          }
+        },
+
+        handleCorrectAnswer() {
+          PlaySound('correct');
+          this.feedbackState = 'correct';
+          this.score += this.config.pointsPerQuestion;
+          this.correctCount += 1;
+          this.streak += 1;
+          if (this.streak > this.maxStreak) this.maxStreak = this.streak;
+          this.progressSlots[this.currentIndex] = 'correct';
+          this.recordHistory(true);
+
+          this.spawnConfetti();
+          this.showCelebration = true;
+
+          setTimeout(() => {
+            this.showCelebration = false;
+            this.advanceToNextQuestion();
+          }, this.config.celebrationDuration);
+        },
+
+        handleWrongAnswer(reason = 'wrong') {
+          PlaySound(reason === 'timeout' ? 'timeout' : 'wrong');
+          this.feedbackState = 'wrong';
+          this.wrongReason = reason;
+          this.streak = 0;
+          this.progressSlots[this.currentIndex] = 'wrong';
+          this.recordHistory(false);
+
+          this.showWrongModal = true;
+          this.modalProgress = 100;
+          const startModalTime = performance.now();
+          const duration = this.config.wrongModalDuration;
+
+          this.modalTimerInterval = setInterval(() => {
+            const elapsed = performance.now() - startModalTime;
+            this.modalProgress = Math.max(0, 100 - (elapsed / duration) * 100);
+            if (elapsed >= duration) {
+              clearInterval(this.modalTimerInterval);
+              this.modalTimerInterval = null;
+              this.showWrongModal = false;
+              this.advanceToNextQuestion();
+            }
+          }, 40);
+        },
+
+        handleTimeout() {
+          if (this.isLocked) return;
+          this.isLocked = true;
+          this.clearMainTimer();
+          this.handleWrongAnswer('timeout');
+        },
+
+        recordHistory(isCorrect) {
+          const q = this.currentQuestion;
+          this.answerHistory.push({
+            idiom: q.idiom,
+            chars: q.chars,
+            missingIndex: q.missingIndex,
+            meaning: q.meaning,
+            example: q.example,
+            isCorrect
+          });
+        },
+
+        advanceToNextQuestion() {
+          if (this.currentIndex + 1 < this.config.totalQuestions) {
+            this.currentIndex += 1;
+            this.loadCurrentQuestion();
+          } else {
+            this.finishGame();
+          }
+        },
+
+        finishGame() {
+          this.resetTimers();
+          this.saveBestScore(this.score);
+          this.gameState = 'result';
+          PlaySound('fanfare');
+        },
+
+        spawnConfetti() {
+          const colors = ['#facc15', '#34d399', '#38bdf8', '#f472b6', '#fb923c', '#a78bfa'];
+          this.confettiPieces = Array.from({ length: 26 }, (_, idx) => ({
+            id: idx + '-' + Date.now(),
+            left: Math.floor(Math.random() * 90) + 5,
+            top: Math.floor(Math.random() * 25) + 5,
+            color: colors[idx % colors.length],
+            delay: (Math.random() * 0.25).toFixed(2)
+          }));
+        },
+
+        getSlotStyle(idx) {
+          const isMissing = idx === this.currentQuestion.missingIndex;
+          if (!isMissing) {
+            return 'bg-slate-800/90 border-2 border-slate-600 text-white shadow-inner';
+          }
+          if (this.feedbackState === 'correct') {
+            return 'bg-emerald-500/25 border-4 border-emerald-400 text-emerald-300 shadow-[0_0_25px_rgba(52,211,153,0.6)]';
+          }
+          if (this.feedbackState === 'wrong') {
+            return 'bg-rose-500/25 border-4 border-rose-400 text-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.6)]';
+          }
+          return 'bg-amber-500/20 border-4 border-amber-400 text-amber-300 animate-pulse-glow';
+        },
+
+        getOptionButtonStyle(optionChar) {
+          if (!this.isLocked) {
+            return 'bg-slate-800 hover:bg-indigo-950/90 text-white border-2 border-indigo-400/50 hover:border-amber-400 shadow-[0_6px_0_#1e1b4b] active:shadow-[0_2px_0_#1e1b4b] cursor-pointer';
+          }
+          const isCorrectOption = optionChar === this.currentQuestion.correctChar;
+          const isChosen = optionChar === this.selectedOption;
+
+          if (isCorrectOption) {
+            return 'bg-emerald-500 text-slate-950 border-2 border-emerald-200 shadow-[0_6px_0_#065f46] scale-105 cursor-not-allowed';
+          }
+          if (isChosen && !isCorrectOption) {
+            return 'bg-rose-600 text-white border-2 border-rose-300 shadow-[0_2px_0_#881337] translate-y-1 cursor-not-allowed';
+          }
+          return 'bg-slate-800/40 text-slate-500 border-2 border-slate-700/40 opacity-50 cursor-not-allowed';
+        },
+
+        clearMainTimer() {
+          if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+          }
+        },
+
+        resetTimers() {
+          this.clearMainTimer();
+          if (this.modalTimerInterval) {
+            clearInterval(this.modalTimerInterval);
+            this.modalTimerInterval = null;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>披薩烘焙王國：平分與分數切片大冒險 (三上數學第8單元)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@600;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #fff1f2;
+      color: #4c0519;
+      margin: 0;
+      padding: 0;
+    }
+    .font-comic { font-family: 'Fredoka', 'Noto Sans TC', sans-serif; }
+
+    /* 捲軸美化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #ffe4e6; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #fda4af; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f43f5e; }
+
+    /* 彈跳按鈕效果 */
+    .bouncy-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bouncy-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .bouncy-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* 柔和發光與卡片陰影 */
+    .bakery-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px -5px rgba(225, 29, 72, 0.16), 0 0 0 1.5px rgba(244, 63, 94, 0.24);
+    }
+
+    /* 平滑動畫過渡 */
+    .trans-smooth {
+      transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 標準直立分數排版 (分子在上、分數線在中、分母在下) */
+    .frac-box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      line-height: 1.05;
+      margin: 0 3px;
+      font-weight: 900;
+    }
+    .frac-box .num {
+      border-bottom: 2px solid currentColor;
+      padding: 0 4px 1px;
+      min-width: 1.2em;
+      text-align: center;
+    }
+    .frac-box .den {
+      padding: 1px 4px 0;
+      min-width: 1.2em;
+      text-align: center;
+    }
+
+    /* 互動切片懸浮效果 */
+    .pizza-slice-interactive {
+      cursor: pointer;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s;
+      transform-origin: 110px 110px;
+    }
+    .pizza-slice-interactive:hover {
+      filter: brightness(1.06);
+    }
+  </style>
+</head>
+<body class="bg-rose-50/70 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- =========================================================================
+       1. 頂部導覽列與單元題號導航
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-rose-200 sticky top-0 z-40 px-3 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題與標籤 -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-rose-300">
+          🍕
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm md:text-base font-black text-rose-950 flex items-center gap-1.5 leading-tight">
+              三上第 8 單元：分數
+            </h1>
+            <span class="bg-rose-100 text-rose-800 text-[11px] px-2.5 py-0.5 rounded-full border border-rose-300 font-extrabold hidden sm:inline">
+              翰林版 115上
+            </span>
+          </div>
+          <span id="stageBadge" class="text-xs font-black text-rose-700 inline-block mt-0.5">
+            第 1 區：認識平分與單位分數（幾分之一）
+          </span>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕列 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <!-- 切換模式 -->
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1 border border-rose-400">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <!-- 看解析 -->
+        <button onclick="showCurrentExplanation()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+          <span>💡</span>
+          <span>看解析</span>
+        </button>
+
+        <!-- 自動下一題 -->
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <!-- 星星積分 -->
+        <div class="flex items-center bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs">
+          <span class="text-amber-500 text-sm mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0 分</span>
+        </div>
+
+        <!-- 音效開關 -->
+        <button id="muteBtn" onclick="toggleMute()" title="切換音效" class="bouncy-btn w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-sm shadow-xs">
+          🔊
+        </button>
+
+        <!-- 分數秘笈重點卡 -->
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-gradient-to-r from-amber-400 to-rose-400 text-rose-950 border border-amber-300 shadow-sm flex items-center gap-1">
+          <span>📜</span>
+          <span>分數秘笈</span>
+        </button>
+
+        <!-- 返回 3D 地圖按鈕 (支援 iframe 或獨立分頁) -->
+        <button onclick="returnToMainMap()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-slate-800 hover:bg-slate-900 text-white border border-slate-700 shadow-sm flex items-center gap-1">
+          <span>🏝️</span>
+          <span>回 3D 地圖</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元分段與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-rose-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 上下題切換條 (單題模式時顯示) -->
+    <div id="singleNavControls" class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0 flex items-center gap-1">
+        <span>◀</span>
+        <span>上一題</span>
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-rose-800 font-bold mb-0.5 px-0.5">
+          <span id="progressPercentText">進度：第 1 / 20 題</span>
+          <span id="accuracyText">正確率：100%</span>
+        </div>
+        <div class="w-full bg-rose-100 rounded-full h-2 overflow-hidden border border-rose-200">
+          <div id="progressBar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-2 rounded-full transition-all duration-300" style="width: 5%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white shrink-0 shadow-xs flex items-center gap-1">
+        <span>下一題</span>
+        <span>▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. 主要作答主體區 (單題闖關模式)
+       ========================================================================= -->
+  <main id="singleQuestionView" class="max-w-5xl mx-auto w-full px-3 py-4 flex-1 flex flex-col justify-center">
+    <div class="bakery-card rounded-3xl p-4 sm:p-6 border-2 border-rose-200 shadow-xl flex flex-col gap-4">
+
+      <!-- 頂部題目標籤與迷思提醒 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 border-b border-rose-100 pb-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="questionTag" class="bg-rose-600 text-white font-black text-xs px-3 py-1 rounded-xl shadow-xs">
+            Q1 認識平分
+          </span>
+          <span id="stageNameTag" class="bg-rose-100 text-rose-800 font-extrabold text-xs px-2.5 py-1 rounded-xl border border-rose-200">
+            第 1 區：認識平分與單位分數
+          </span>
+        </div>
+        <div id="misconceptionBadge" class="text-xs font-bold text-amber-950 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
+          <span>⚠️ 迷思防禦：</span>
+          <span id="misconceptionText">一定要「每一份一樣大（平分）」才能用分數表示喔！</span>
+        </div>
+      </div>
+
+      <!-- 題目文字陳述 -->
+      <div class="text-base sm:text-lg font-black text-slate-800 leading-relaxed">
+        <span class="text-rose-600 mr-1.5" id="qNumberPrefix">第 1 題.</span>
+        <span id="questionText">題目載入中...</span>
+      </div>
+
+      <!-- 視覺互動展演舞台 (SVG 動態披薩切片 / 分數長條教具) -->
+      <div id="interactiveStage" class="w-full bg-amber-50/50 rounded-2xl border-2 border-rose-200 p-3 sm:p-4 min-h-[225px] flex flex-col items-center justify-center relative overflow-hidden transition-all">
+        <!-- 動態由 buildQuestionVisualHTML 填入 -->
+      </div>
+
+      <!-- 操作輔助按鈕列與思考提示 (Hint 1 / Hint 2) -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+        <div class="flex items-center gap-2 flex-wrap" id="actionToolsArea">
+          <!-- 互動教具按鈕 (分離切片觀察 / 顯示分數標籤) -->
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="revealHint(1)" class="bouncy-btn text-xs font-bold text-rose-800 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-300">
+            💡 提示 1
+          </button>
+          <button onclick="revealHint(2)" class="bouncy-btn text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+            🔍 提示 2
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示內容顯示區塊 (預設收起) -->
+      <div id="hintDisplayArea" class="hidden text-xs font-bold text-slate-700 bg-rose-50/80 p-2.5 rounded-xl border border-rose-200 transition-all"></div>
+
+      <!-- 選項按鈕區 (4 選 1) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1" id="optionsGrid">
+        <!-- 動態填入選項 -->
+      </div>
+
+      <!-- 作答反饋提示卡 (答對綠色 / 答錯溫馨提示) -->
+      <div id="feedbackBox" class="hidden rounded-2xl p-4 transition-all duration-300">
+        <div class="flex items-start gap-3">
+          <div id="feedbackIcon" class="text-2xl shrink-0">🎉</div>
+          <div>
+            <h4 id="feedbackTitle" class="font-black text-sm md:text-base">答對了！太厲害了！</h4>
+            <p id="feedbackDetail" class="text-xs md:text-sm font-bold mt-0.5 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       3. 全題目一覽模式 (一次檢視全部 20 題，含圖、選項與完整詳解)
+       ========================================================================= -->
+  <section id="allQuestionsView" class="hidden max-w-5xl mx-auto w-full px-3 py-4 flex-1">
+    <div class="bakery-card rounded-3xl p-5 border-2 border-rose-200 mb-4 bg-white/95">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-lg font-black text-rose-950 flex items-center gap-2">
+            <span>📚</span>
+            <span>三上第 8 單元：分數 全 20 題題庫全景一覽</span>
+          </h2>
+          <p class="text-xs font-bold text-slate-500 mt-0.5">適合課堂投影講解、觀察平分切片與同分母比較，點選任一題可直接跳至單題模式練習！</p>
+        </div>
+        <button onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-rose-600 hover:bg-rose-700 text-white">
+          返回單題闖關模式
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4" id="allQuestionsContainer">
+      <!-- 動態填入全部題目卡片 -->
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. 彈出視窗：看解析 Modal
+       ========================================================================= -->
+  <div id="explanationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-rose-300 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-rose-100">
+        <h3 id="modalExpTitle" class="text-base font-black text-rose-950 flex items-center gap-2">
+          <span>💡</span>
+          <span>本題深度詳解</span>
+        </h3>
+        <button onclick="closeExplanationModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div id="modalExpBody" class="mt-4 text-sm leading-relaxed"></div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeExplanationModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs">
+          我知道了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. 彈出視窗：分數秘笈重點卡 Modal
+       ========================================================================= -->
+  <div id="formulaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-200">
+        <h3 class="text-lg font-black text-rose-950 flex items-center gap-2">
+          <span>📜</span>
+          <span>三年級分數烘焙主廚大秘笈（翰林版第 8 單元精華）</span>
+        </h3>
+        <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div class="mt-4 space-y-4 text-xs sm:text-sm text-slate-700 font-bold">
+        <!-- 秘笈 1 -->
+        <div class="p-3.5 bg-rose-50 rounded-2xl border border-rose-200">
+          <h4 class="font-black text-rose-900 text-sm mb-1">🍕 1. 黃金前提：一定要「平分」才算分數！</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li>把一個披薩或一條緞帶分成好幾份時，必須<span class="text-rose-700 font-black">「每一份都一樣大（平分）」</span>，其中的一份或幾份才能用分數表示。</li>
+            <li>如果切得有大有小（沒有平分），就<span class="underline font-black text-rose-700">不能</span>說其中一塊是幾分之一喔！</li>
+          </ul>
+        </div>
+        <!-- 秘笈 2 -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
+          <h4 class="font-black text-amber-900 text-sm mb-1">👩‍👧 2. 分母與分子：誰在樓下？誰在樓上？</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li>口訣：<span class="text-amber-900 font-black">「分母在下面，媽媽背小孩（分子在上面）」</span>！</li>
+            <li><span class="text-rose-700 font-black">分母（下面）</span>：代表全部被<span class="font-black">平分成幾份</span>；<span class="text-indigo-700 font-black">分子（上面）</span>：代表拿了或塗色了<span class="font-black">其中的幾份</span>。</li>
+            <li>讀法順序：<span class="font-black text-slate-900">先讀下面的分母，再讀上面的分子</span>。例如 3/8 讀作「八分之三」，千萬不可讀成三分之八！</li>
+          </ul>
+        </div>
+        <!-- 秘笈 3 -->
+        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <h4 class="font-black text-emerald-900 text-sm mb-1">🌕 3. 分數與「1」的變身魔法</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li>當<span class="text-emerald-800 font-black">「分子和分母一樣大」</span>時，代表把平分的每一份全部合起來，剛好就是完整的<span class="font-black text-emerald-950">「1」</span>！</li>
+            <li>例如：<span class="font-black text-emerald-800">1 ＝ 4/4 ＝ 6/6 ＝ 8/8 ＝ 10/10</span>。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 4 -->
+        <div class="p-3.5 bg-sky-50 rounded-2xl border border-sky-200">
+          <h4 class="font-black text-sky-900 text-sm mb-1">⚖️ 4. 同分母分數比大小 ＆ 單位名稱陷阱</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-sky-800 font-black">同分母比大小</span>：分母一樣時，每一小份一樣大，所以<span class="font-black text-rose-600">「分子越大，分數就越大」</span>（例如 7/10 ＞ 5/10）。</li>
+            <li><span class="text-rose-700 font-black">段考單位陷阱</span>：1 條繩子平分成 5 段，每 1「段」是 <span class="font-black">1/5「條」</span>繩子（看清楚題目問的是幾段還是幾條！）。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs">
+          記住秘笈了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       6. 闖關完成結算彈窗 (3 星通關，可點擊返回 3D 群島)
+       ========================================================================= -->
+  <div id="completionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-rose-400 text-center transform transition-all scale-100">
+      <div class="text-5xl mb-2 animate-bounce">🏆</div>
+      <h3 class="text-2xl font-black text-rose-950">恭喜完成披薩烘焙王國試煉！</h3>
+      <p class="text-xs font-bold text-slate-500 mt-1">三年級數學第 8 單元：分數 實力認證</p>
+
+      <div class="my-5 p-4 bg-rose-50 rounded-2xl border-2 border-rose-200">
+        <div class="text-3xl text-amber-500 mb-1" id="endStarsDisplay">⭐⭐⭐</div>
+        <div class="text-lg font-black text-slate-800" id="endScoreDisplay">最終得分：100 分</div>
+        <div class="text-xs text-rose-800 font-bold mt-1" id="endAccDisplay">正確率：100%（20/20）</div>
+      </div>
+
+      <p class="text-xs text-slate-600 font-bold mb-5 leading-relaxed">
+        你已經徹底掌握「平分」的核心意義、分子與分母、分數與 1 的換算以及同分母分數比大小！
+        快帶著熱騰騰的榮耀返回 3D 數學夢幻群島吧！
+      </p>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="returnToMainMap(true)" class="bouncy-btn w-full py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-black text-sm shadow-lg flex items-center justify-center gap-2">
+          <span>🏝️</span>
+          <span>領取 3 顆星並返回 3D 冒險群島</span>
+        </button>
+        <button onclick="restartQuiz()" class="bouncy-btn w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+          🔄 重新挑戰披薩烘焙王國
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       7. 頁尾資訊
+       ========================================================================= -->
+  <footer class="bg-white/80 border-t border-rose-100 py-2 px-3 text-center text-[11px] text-rose-900 font-bold">
+    三年級數學冒險群島系列教材・第 08 單元【分數】・符合臺灣教育部 108 課綱與 115上 翰林版
+  </footer>
+
+  <!-- =========================================================================
+       8. 核心 JavaScript 邏輯與題庫系統
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       Web Audio API 音效合成器 (100% 離線純合成，無外部音源依賴)
+       ------------------------------------------------------------------------- */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(500, now);
+          osc.frequency.exponentialRampToValueAtTime(760, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'slice') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(360, now);
+          osc.frequency.exponentialRampToValueAtTime(680, now + 0.11);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.11);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.26);
+          });
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(185, now);
+          osc.frequency.linearRampToValueAtTime(115, now + 0.22);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.23);
+        } else if (type === 'victory') {
+          const freqs = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+          freqs.forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.1);
+            gain.gain.setValueAtTime(0.25, now + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.42);
+          });
+        }
+      } catch (e) {
+        console.warn('Audio error:', e);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       小工具：把文字中的 a/b 渲染為美觀直立分數或保留清晰格式
+       ------------------------------------------------------------------------- */
+    function fracHTML(num, den, colorClass = '') {
+      return `<span class="frac-box ${colorClass}"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       20 道精選題庫資料庫 (翰林版 115上 第 8 單元：分數)
+       ------------------------------------------------------------------------- */
+    const QUESTIONS_DB = [
+      // ================= 第 1 區：認識平分與單位分數（幾分之一）(Q1 ~ Q4) =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "認識平分與單位分數",
+        tag: "Q1 什麼叫做平分？",
+        misconception: "不是只要切成 4 塊就是 1/4，一定要「每一塊一樣大（平分）」才行！",
+        visualType: "equal_parts_check",
+        question: "烘焙主廚烤了甲、乙兩個一樣大的圓形鬆餅，都切成了 4 塊（如下圖）。請問哪一個鬆餅的其中 1 塊，可以用「四分之一（1/4）個鬆餅」來表示？",
+        options: [
+          { text: "只有【甲鬆餅】可以，因為甲有「平分」成 4 個一樣大的扇形", correct: true, note: "完全正確！只有把鬆餅「平分」（每塊一樣大）時，其中 1 塊才是 1/4 個！" },
+          { text: "只有【乙鬆餅】可以，因為乙是用直線切的", correct: false, note: "看仔細喔！乙鬆餅切出來的左右兩邊較小、中間兩塊較大，沒有平分就不能說是 1/4 喔！" },
+          { text: "甲和乙都可以，因為都是切成 4 塊", correct: false, note: "小心陷阱！切成 4 塊但大小不同時，不叫做「平分」，不能用 1/4 表示喔！" },
+          { text: "甲和乙都不可以", correct: false, note: "甲鬆餅透過圓心十字對稱切開，4 塊一模一樣大，是有平分的喔！" }
+        ],
+        hint1: "分數的第一條鐵則：必須「平分」（每一份都一樣大）才能用幾分之一表示。",
+        hint2: "觀察甲（十字過圓心平分）與乙（平行直切導致旁邊小、中間大），哪一個每塊一樣大？",
+        explanation: "要使用分數（如 1/4）表示部分量，前提是一定要「平分」（每一份一樣大）。\n・甲鬆餅：通過圓心十字切開，4 塊大小完全相同，每塊是 1/4 個。\n・乙鬆餅：雖然切成 4 塊，但中間大、兩側小，沒有平分，所以不能說是 1/4 個！"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "認識平分與單位分數",
+        tag: "Q2 認識單位分數 1/6",
+        misconception: "平分成幾份，分母就是幾；拿其中 1 份，分子就是 1",
+        visualType: "pizza_circle",
+        totalSlices: 6,
+        activeSlices: 1,
+        pizzaFlavor: "夏威夷鳳梨披薩",
+        question: "把 1 個香噴噴的夏威夷披薩「平分成 6 塊」，小妍拿了其中的 1 塊（彩色塗色部分）。請問小妍拿了幾個披薩？",
+        options: [
+          { text: "六分之一（1/6）個披薩", correct: true, note: "太棒了！平分成 6 塊，其中的 1 塊就是「六分之一（1/6）」個披薩！" },
+          { text: "一分之六（6/1）個披薩", correct: false, note: "分子和分母顛倒囉！平分成 6 份，6 要寫在下面的分母，讀作「六分之一」！" },
+          { text: "五分之一（1/5）個披薩", correct: false, note: "雖然剩下 5 塊，但全部是平分成「6 塊」，所以分母是 6 不是 5 喔！" },
+          { text: "六分之五（5/6）個披薩", correct: false, note: "5/6 個是盤子裡「剩下」的 5 塊，小妍只有拿 1 塊（1/6 個）喔！" }
+        ],
+        hint1: "先數一數整個披薩一共被平分成幾塊？（包含拿走的跟剩下的）",
+        hint2: "全部平分成 6 塊（分母是 6），拿走其中 1 塊（分子是 1），所以是 1/6 個。",
+        explanation: "1 個披薩平分成 6 塊，每一塊都一樣大。\n其中的 1 塊就是「六分之一（1/6）」個披薩。\n（注意：分母是全部的總份數 6，而不是剩下的份數 5 喔！）"
+      },
+      {
+        id: 3,
+        stage: 1,
+        stageName: "認識平分與單位分數",
+        tag: "Q3 段考必考單位陷阱！",
+        misconception: "看清楚題目問的是「幾段」還是「幾條」緞帶！",
+        visualType: "ribbon_strip",
+        totalParts: 5,
+        coloredParts: 1,
+        itemName: "玫瑰紅包裝緞帶",
+        unitName: "條",
+        partName: "段",
+        question: "【段考超常考陷阱】烘焙坊把「1 條」玫瑰紅緞帶平分成 5 段來綁禮盒。請問「1 段」緞帶是【幾條】緞帶？",
+        options: [
+          { text: "五分之一（1/5）條緞帶", correct: true, note: "太細心了！1 條緞帶平分成 5 段，每 1 段就是 1/5「條」緞帶！" },
+          { text: "1 條緞帶", correct: false, note: "小心單位！是「1 段」緞帶，換成「幾條」時只有 1/5 條喔！" },
+          { text: "五分之一（1/5）段緞帶", correct: false, note: "注意題目最後問的是「幾條」緞帶！它是「1 段」，也就是「1/5 條」喔！" },
+          { text: "5 條緞帶", correct: false, note: "是把 1 條平分成 5 段，不是變出 5 條緞帶喔！" }
+        ],
+        hint1: "看清楚單位名稱：一整條叫做「1 條」，剪開後的每一小份叫做「1 段」。",
+        hint2: "把 1 條平分成 5 段，所以「1 段」＝「1/5 條」緞帶！",
+        explanation: "這是三年級段考最常失分的單位題：\n・如果問「塗色部分是幾【段】？」答案是「1 段」。\n・如果問「塗色部分是幾【條】？」因為把 1 條平分成 5 段，所以 1 段就是「1/5 條」緞帶！"
+      },
+      {
+        id: 4,
+        stage: 1,
+        stageName: "認識平分與單位分數",
+        tag: "Q4 一盒甜點的幾分之一",
+        misconception: "1 盒有 8 顆時，每 1 顆就是 1/8「盒」",
+        visualType: "box_items",
+        totalItems: 8,
+        activeItems: 1,
+        itemEmoji: "🍓",
+        itemName: "草莓大福",
+        boxUnit: "盒",
+        pieceUnit: "顆",
+        question: "1 盒甜點禮盒裡裝了 8 顆草莓大福。妹妹吃了其中的 1 顆，請問妹妹吃了【幾盒】草莓大福？",
+        options: [
+          { text: "八分之一（1/8）盒", correct: true, note: "完全正確！1 盒有 8 顆，吃掉 1 顆就是吃掉「1/8 盒」草莓大福！" },
+          { text: "八分之一（1/8）顆", correct: false, note: "妹妹是吃掉整整「1 顆」，換算成「盒」才是「1/8 盒」喔！" },
+          { text: "七分之一（1/7）盒", correct: false, note: "分母要看原本一整盒有幾顆（8 顆），不是看剩下的 7 顆喔！" },
+          { text: "1 盒", correct: false, note: "1 盒有 8 顆，妹妹只吃了 1 顆，是 1/8 盒喔！" }
+        ],
+        hint1: "1 盒有 8 顆，代表把「1 盒」平分成 8 份，每一份是 1 顆。",
+        hint2: "因此「1 顆」草莓大福，就等於「1/8 盒」草莓大福！",
+        explanation: "離散量（一盒有好幾個）的分數概念：\n1 盒草莓大福有 8 顆，表示把 1 盒平分成 8 份。\n每 1 顆就是「1/8 盒」草莓大福。"
+      },
+
+      // ================= 第 2 區：認識真分數（幾分之幾）與分子分母 (Q5 ~ Q8) =================
+      {
+        id: 5,
+        stage: 2,
+        stageName: "認識幾分之幾與分子分母",
+        tag: "Q5 認識幾分之幾",
+        misconception: "分母是全部平分的塊數，分子是塗色（拿走）的塊數",
+        visualType: "pizza_circle",
+        totalSlices: 8,
+        activeSlices: 5,
+        pizzaFlavor: "經典雙層起司披薩",
+        question: "把 1 個雙層起司披薩平分成 8 塊，下圖中塗上起司橘色的有 5 塊。請問塗色部分是幾個披薩？讀作什麼？",
+        options: [
+          { text: "8/5 個？不對，是 5/8 個，讀作「八分之五」個披薩", correct: true, note: "太棒了！平分成 8 塊（分母 8），其中的 5 塊（分子 5），寫作 5/8，讀作八分之五！" },
+          { text: "8/5 個，讀作「五分之八」個披薩", correct: false, note: "分母和分子寫反囉！全部平分成 8 塊，8 要寫在分母（下面）喔！" },
+          { text: "3/8 個，讀作「八分之三」個披薩", correct: false, note: "3/8 個是沒有塗色的 3 塊，題目問的是有塗色的 5 塊喔！" },
+          { text: "5/3 個，讀作「三分之五」個披薩", correct: false, note: "分母必須是全部的總塊數（8 塊），不能只寫沒塗色的 3 塊喔！" }
+        ],
+        hint1: "全部平分成 8 塊 ➜ 分母（下面）是 8；塗色有 5 塊 ➜ 分子（上面）是 5。",
+        hint2: "5 個 1/8 合起來是 5/8，讀分數時「先讀下面的分母、再讀上面的分子」：八分之五。",
+        explanation: "1 個披薩平分成 8 塊，每 1 塊是 1/8 個。\n5 塊就是 5 個 1/8，記作「5/8」（讀作八分之五）個披薩。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "認識幾分之幾與分子分母",
+        tag: "Q6 分子與分母大考驗",
+        misconception: "記住口訣：分母（媽媽）在下面，分子（孩子）在上面！",
+        visualType: "fraction_anatomy",
+        num: 4,
+        den: 9,
+        question: "觀察分數「九分之四（4/9）」，關於分數線上面與下面的數字名稱，下列哪一個說法完全正確？",
+        options: [
+          { text: "下面的 9 叫做「分母」，上面的 4 叫做「分子」", correct: true, note: "完全正確！媽媽（分母 9）在下面撐起小孩（分子 4）！" },
+          { text: "上面的 4 叫做「分母」，下面的 9 叫做「分子」", correct: false, note: "記反囉！在下面的是「分母」（9），在上面的是「分子」（4）喔！" },
+          { text: "這個分數應該讀作「四分之九」", correct: false, note: "讀分數時要從下面的分母先讀，所以 4/9 讀作「九分之四」喔！" },
+          { text: "代表把 1 個東西平分成 4 份，拿了其中的 9 份", correct: false, note: "分母 9 才代表平分成 9 份，分子 4 代表拿了其中的 4 份喔！" }
+        ],
+        hint1: "想像媽媽背小孩：「分母」在分數線的下面，「分子」在分數線的上面。",
+        hint2: "4/9 當中，9 在下面所以是分母（平分成 9 份），4 在上面所以是分子（其中的 4 份）。",
+        explanation: "分數的構造：\n・分數線下面的數叫做「分母」（9），表示全部平分成 9 份。\n・分數線上面的數叫做「分子」（4），表示拿了其中的 4 份。\n・讀作「九分之四」。"
+      },
+      {
+        id: 7,
+        stage: 2,
+        stageName: "認識幾分之幾與分子分母",
+        tag: "Q7 幾個單位分數合起來",
+        misconception: "幾個 1/10 合起來，分子就是幾",
+        visualType: "chocolate_bar",
+        totalCols: 10,
+        activeCols: 7,
+        question: "1 條長條牛奶巧克力平分成 10 格，每 1 格是「1/10 條」。請問「7/10 條」巧克力是由幾個「1/10 條」合起來的？",
+        options: [
+          { text: "7 個", correct: true, note: "答對了！1 個 1/10 是 1/10，7 個 1/10 合起來就是 7/10！" },
+          { text: "10 個", correct: false, note: "10 個 1/10 條合起來是 10/10 條（也就是整整 1 條）喔！" },
+          { text: "3 個", correct: false, note: "3 個 1/10 是 3/10，題目問的是 7/10 條喔！" },
+          { text: "17 個", correct: false, note: "分母 10 和分子 7 不用加起來喔！分子是 7 就代表有 7 個 1/10。" }
+        ],
+        hint1: "1 格是 1 個 1/10 條，2 格是 2 個 1/10 條（2/10 條）……",
+        hint2: "觀察分子的數字是 7，代表有 7 個 1/10 條合起來。",
+        explanation: "真分數是由單位分數累加而成的：\n1 個 1/10 是 1/10，2 個 1/10 是 2/10，……，7 個 1/10 合起來就是「7/10」。"
+      },
+      {
+        id: 8,
+        stage: 2,
+        stageName: "認識幾分之幾與分子分母",
+        tag: "Q8 吃掉後還剩下幾分之幾",
+        misconception: "看清楚題目問的是「吃掉共幾條」還是「還剩下幾條」！",
+        visualType: "ribbon_strip",
+        totalParts: 9,
+        coloredParts: 4,
+        itemName: "抹茶紅豆瑞士捲",
+        unitName: "條",
+        partName: "片",
+        customLabel: "吃掉 5 片（灰色），還剩下 4 片（綠色）",
+        question: "媽媽把 1 條抹茶瑞士捲平分成 9 片。哥哥吃了 2 片、姐姐吃了 3 片，請問還【剩下】幾條抹茶瑞士捲？",
+        options: [
+          { text: "九分之四（4/9）條", correct: true, note: "太厲害了！9 片減掉吃掉的 5 片（2+3），還剩下 4 片，也就是 4/9 條！" },
+          { text: "九分之五（5/9）條", correct: false, note: "小心！5/9 條是哥哥和姐姐「一共吃掉」的，題目問的是「還剩下」幾條喔！" },
+          { text: "4 條", correct: false, note: "剩下的是 4「片」，換成「條」是 4/9 條，不是 4 整條喔！" },
+          { text: "九分之七（7/9）條", correct: false, note: "除了哥哥吃的 2 片，還要扣掉姐姐吃的 3 片喔！9 - 2 - 3 = 4 片。" }
+        ],
+        hint1: "先算哥哥和姐姐一共吃了幾片：2 ＋ 3 ＝ 5（片）。",
+        hint2: "原本有 9 片，剩下：9 － 5 ＝ 4（片）。1 片是 1/9 條，4 片就是 4/9 條！",
+        explanation: "1. 全部平分成 9 片，每 1 片是 1/9 條。\n2. 哥哥和姐姐共吃掉：2 ＋ 3 ＝ 5（片）。\n3. 還剩下：9 － 5 ＝ 4（片），也就是「4/9 條」瑞士捲。"
+      },
+
+      // ================= 第 3 區：分數與「1」的等值關係 (Q9 ~ Q12) =================
+      {
+        id: 9,
+        stage: 3,
+        stageName: "分數與「1」的等值關係",
+        tag: "Q9 分子等於分母就是 1",
+        misconception: "把平分的 6 塊全部合起來是 6/6 個，剛好就是完整的 1 個！",
+        visualType: "pizza_circle",
+        totalSlices: 6,
+        activeSlices: 6,
+        pizzaFlavor: "義式臘腸總匯披薩",
+        question: "把 1 個圓形披薩平分成 6 塊，每 1 塊是 1/6 個。如果把這 6 塊全部拼回盤子裡，合起來是「6/6 個」披薩，也就是幾個披薩？",
+        options: [
+          { text: "1 個完整的披薩（6/6 ＝ 1）", correct: true, note: "完全正確！6 個 1/6 合起來是 6/6，剛好就是原本完整的 1 個披薩！" },
+          { text: "6 個披薩", correct: false, note: "是 6「塊」切片合起來，拼回去是「1 個」完整的披薩，不是 6 個大披薩喔！" },
+          { text: "12 個披薩", correct: false, note: "分子 6 和分母 6 一樣大時，代表全部湊齊了，等於 1 喔！" },
+          { text: "0 個披薩", correct: false, note: "6 塊都在盤子裡，合起來是 1 個完整的披薩喔！" }
+        ],
+        hint1: "原本 1 個披薩切成 6 塊，現在 6 塊通通都在，有沒有少掉任何一塊？",
+        hint2: "一塊都沒少！所以「6/6 個披薩」就等於「1 個披薩」（分子和分母相同時等於 1）。",
+        explanation: "當分子和分母一樣大時（如 4/4、6/6、8/8），代表把平分成的所有份數全部合起來，剛好就是完整的「1」！"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "分數與「1」的等值關係",
+        tag: "Q10 1 的分數百變魔法",
+        misconception: "不管分母是幾，只要分子和分母一樣大，都等於 1",
+        visualType: "one_equivalence",
+        question: "在數學算式「1 ＝ ( ？ )/8 ＝ 12/( ？ )」當中，兩個括號裡依序應該填入什麼數字？",
+        options: [
+          { text: "第一個填 8，第二個填 12", correct: true, note: "太聰明了！1 ＝ 8/8 ＝ 12/12，分子和分母一樣大就等於 1！" },
+          { text: "第一個填 1，第二個填 1", correct: false, note: "1/8 只有八分之一，不等於 1 喔！要 8/8 才等於 1！" },
+          { text: "第一個填 8，第二個填 8", correct: false, note: "第二個分數的分子是 12，所以分母也要是 12（12/12）才會等於 1 喔！" },
+          { text: "第一個填 10，第二個填 10", correct: false, note: "要讓每個分數自己的「分子＝分母」才會等於 1 喔！" }
+        ],
+        hint1: "記得黃金法則：1 可以換成任何「分子和分母相同」的分數。",
+        hint2: "分母是 8 時，分子也要是 8（8/8 ＝ 1）；分子是 12 時，分母也要是 12（12/12 ＝ 1）。",
+        explanation: "完整的「1」平分成 8 份，全部拿是 8/8；平分成 12 份，全部拿是 12/12。\n所以 1 ＝ 8/8 ＝ 12/12，兩個括號分別填 8 與 12。"
+      },
+      {
+        id: 11,
+        stage: 3,
+        stageName: "分數與「1」的等值關係",
+        tag: "Q11 還差多少湊成 1？",
+        misconception: "先把 1 想成 7/7，再看已經有幾個 1/7",
+        visualType: "chocolate_bar",
+        totalCols: 7,
+        activeCols: 3,
+        showMissingForOne: true,
+        question: "桌上有「3/7 盒」手工餅乾（橘色部分），請問還要再放入【幾盒】手工餅乾，合起來才會剛好是完整的「1 盒」？",
+        options: [
+          { text: "四分之七？不對，是「七分之四（4/7）盒」", correct: true, note: "賓果！1 盒就是 7/7 盒，已經有 3/7 盒，還差 4 個 1/7 盒，也就是 4/7 盒！" },
+          { text: "七分之三（3/7）盒", correct: false, note: "3/7 盒加 3/7 盒只有 6/7 盒，還差 1/7 盒才滿 1 盒（7/7 盒）喔！" },
+          { text: "七分之七（7/7）盒", correct: false, note: "桌上已經有 3/7 盒了，只需要再補上空白的 4 格（4/7 盒）就滿 1 盒囉！" },
+          { text: "十分之四（4/10）盒", correct: false, note: "這盒餅乾是平分成 7 份，分母一直都是 7 喔！" }
+        ],
+        hint1: "完整的「1 盒」餅乾可以想成「7/7 盒」（7 個 1/7 盒）。",
+        hint2: "已經有 3 個 1/7 盒，還差 7 － 3 ＝ 4 個 1/7 盒，也就是「4/7 盒」！",
+        explanation: "因為 1 盒 ＝ 7/7 盒（7 個 1/7 盒）。\n目前已有 3/7 盒（3 個 1/7 盒），還差 7 － 3 ＝ 4 個 1/7 盒，也就是還要再放入「4/7 盒」。"
+      },
+      {
+        id: 12,
+        stage: 3,
+        stageName: "分數與「1」的等值關係",
+        tag: "Q12 4/4 和 8/8 誰比較大？",
+        misconception: "看到 8 比 4 大就選 8/8，卻忘了 4/4 和 8/8 其實都等於 1！",
+        visualType: "same_whole_compare",
+        question: "【高頻迷思題】小華和小明各買了 1 個「一模一樣大」的圓形披薩。小華把披薩平分成 4 塊並全部吃完（吃了 4/4 個）；小明把披薩平分成 8 塊也全部吃完（吃了 8/8 個）。請問誰吃的披薩比較多？",
+        options: [
+          { text: "一樣多！因為 4/4 個和 8/8 個都剛好是「1 個」完整的披薩", correct: true, note: "太優秀了！沒有被數字 8 騙倒！4/4 ＝ 1、8/8 ＝ 1，兩個人都吃了整整 1 個披薩，一樣多！" },
+          { text: "小明吃得比較多，因為 8 比 4 大", correct: false, note: "小心陷阱！小明雖然吃了 8 塊，但他的每一塊比較小；兩個人的披薩原本一樣大且都全部吃完（都是 1 個）喔！" },
+          { text: "小華吃得比較多，因為 1/4 比 1/8 大", correct: false, note: "雖然 1 塊 1/4 比 1 塊 1/8 大，但小華吃了 4 塊（4/4＝1），小明吃了 8 塊（8/8＝1），總量一樣多喔！" },
+          { text: "無法比較", correct: false, note: "題目說兩個披薩原本「一模一樣大」，而且兩人都吃光一整個（＝1），所以一樣多！" }
+        ],
+        hint1: "想一想：4/4 個披薩等於幾個披薩？8/8 個披薩又等於幾個披薩？",
+        hint2: "4/4 ＝ 1，8/8 ＝ 1！兩個人都是把「1 個一樣大的披薩」全部吃光光！",
+        explanation: "這是非常經典的素養觀念題！\n・小華吃了 4/4 個 ＝ 1 個披薩。\n・小明吃了 8/8 個 ＝ 1 個披薩。\n因為兩個披薩原本一樣大，所以 4/4 個 ＝ 8/8 個 ＝ 1 個，兩人吃得一樣多！"
+      },
+
+      // ================= 第 4 區：同分母分數的大小比較 (Q13 ~ Q16) =================
+      {
+        id: 13,
+        stage: 4,
+        stageName: "同分母分數的大小比較",
+        tag: "Q13 視覺長條比大小",
+        misconception: "分母相同時，每一格一樣大，塗色格數越多（分子越大）就越大",
+        visualType: "dual_bars_compare",
+        den: 8,
+        numA: 5,
+        numB: 3,
+        labelA: "紅緞帶 (5/8 條)",
+        labelB: "藍緞帶 (3/8 條)",
+        question: "觀察下圖兩條一樣長的緞帶：紅緞帶長「5/8 條」，藍緞帶長「3/8 條」。請問哪一條緞帶比較長？",
+        options: [
+          { text: "紅緞帶比較長，因為 5/8 ＞ 3/8", correct: true, note: "完全正確！5 個 1/8 比 3 個 1/8 多，所以 5/8 ＞ 3/8！" },
+          { text: "藍緞帶比較長，因為 3/8 ＞ 5/8", correct: false, note: "分母都是 8 時，分子 5 比 3 大，所以是 5/8 ＞ 3/8 喔！" },
+          { text: "兩條緞帶一樣長，因為分母都是 8", correct: false, note: "分母都是 8 只代表都平分成 8 小段，紅緞帶有 5 段、藍緞帶只有 3 段喔！" },
+          { text: "無法比較", correct: false, note: "同分母分數可以直接比較分子大小：5 ＞ 3，所以 5/8 ＞ 3/8！" }
+        ],
+        hint1: "兩條緞帶都平分成 8 等份，每一小段都是 1/8 條。",
+        hint2: "紅緞帶有 5 個 1/8 條，藍緞帶只有 3 個 1/8 條，所以 5/8 ＞ 3/8。",
+        explanation: "【同分母分數比大小法則】\n當分母相同時，代表每一小份都一樣大。分子越大（份數越多），分數就越大！\n因為 5 ＞ 3，所以 5/8 ＞ 3/8。"
+      },
+      {
+        id: 14,
+        stage: 4,
+        stageName: "同分母分數的大小比較",
+        tag: "Q14 框框裡可以填哪些數？",
+        misconception: "注意題目限制是「真分數（小於 1）」還是可以包含分母",
+        visualType: "inequality_puzzle",
+        den: 9,
+        lowNum: 5,
+        highNum: 8,
+        question: "已知分數不等式：「5/9 ＜ ( □ )/9 ＜ 8/9」，請問 □ 裡可以填入哪些整數？",
+        options: [
+          { text: "6 或 7", correct: true, note: "太棒了！分母都是 9，只要找出比 5 大、比 8 小的整數，就是 6 和 7！" },
+          { text: "5、6、7、8", correct: false, note: "題目是「＜（小於）」，不包含 5 和 8 本身喔！" },
+          { text: "只有 6", correct: false, note: "除了 6 以外，7 也比 5 大而且比 8 小喔（5/9 ＜ 7/9 ＜ 8/9）！" },
+          { text: "7、8、9", correct: false, note: "□ 要小於 8，所以不能填 8 和 9 喔！" }
+        ],
+        hint1: "三個分數的分母都是 9，所以只要比較上面的「分子」即可：5 ＜ □ ＜ 8。",
+        hint2: "比 5 大而且比 8 小的整數有 6 和 7。",
+        explanation: "因為分母都是 9，比較大小時直接看分子：\n5 ＜ □ ＜ 8\n介於 5 和 8 之間的整數有 6 和 7（即 6/9 與 7/9）。"
+      },
+      {
+        id: 15,
+        stage: 4,
+        stageName: "同分母分數的大小比較",
+        tag: "Q15 與「1」一起比大小",
+        misconception: "看到 1 要先換成跟大家同分母的 10/10 再比大小！",
+        visualType: "dual_bars_compare",
+        den: 10,
+        numA: 10,
+        numB: 9,
+        labelA: "1 盒 (＝10/10 盒)",
+        labelB: "9/10 盒",
+        question: "比較「1 盒巧克力」和「9/10 盒巧克力」的大小，下列哪一個關係式是正確的？",
+        options: [
+          { text: "1 盒 ＞ 9/10 盒（因為 1 ＝ 10/10，而 10/10 ＞ 9/10）", correct: true, note: "完全正確！把 1 換成 10/10，10 個 1/10 比 9 個 1/10 大！" },
+          { text: "1 盒 ＜ 9/10 盒（因為 1 比 9 和 10 都小）", correct: false, note: "千萬別拿整數 1 直接跟分子 9 比喔！「1 盒」是整整一盒（10/10 盒），比 9/10 盒還要多 1/10 盒！" },
+          { text: "1 盒 ＝ 9/10 盒", correct: false, note: "10/10 盒才等於 1 盒，9/10 盒還少 1 格喔！" },
+          { text: "無法比較", correct: false, note: "把 1 換成 10/10 就能輕鬆比較囉！" }
+        ],
+        hint1: "不能拿整數「1」直接跟分子「9」比大小喔！先把「1」換成分母是 10 的分數。",
+        hint2: "1 ＝ 10/10。因為 10/10 ＞ 9/10，所以 1 盒 ＞ 9/10 盒！",
+        explanation: "遇到整數「1」與真分數比大小時：\n先把 1 換成同分母分數：1 ＝ 10/10。\n因為 10/10 ＞ 9/10，所以 1 盒 ＞ 9/10 盒（所有分子小於分母的真分數都比 1 小！）。"
+      },
+      {
+        id: 16,
+        stage: 4,
+        stageName: "同分母分數的大小比較",
+        tag: "Q16 三個分數排大小",
+        misconception: "注意題目要求是「由大到小」還是「由小到大」排列！",
+        visualType: "three_bars_compare",
+        den: 12,
+        items: [
+          { name: "小妍", num: 7, color: "#f43f5e" },
+          { name: "小宇", num: 11, color: "#f59e0b" },
+          { name: "小安", num: 5, color: "#10b981" }
+        ],
+        question: "美術課發下同樣長的彩帶，小妍用了「7/12 條」、小宇用了「11/12 條」、小安用了「5/12 條」。請把三人用掉的彩帶長度【由大到小（由長到短）】排列出來：",
+        options: [
+          { text: "11/12 條 ＞ 7/12 條 ＞ 5/12 條（小宇 ＞ 小妍 ＞ 小安）", correct: true, note: "完全正確！分母都是 12，分子 11 ＞ 7 ＞ 5，由大到小排列完全無誤！" },
+          { text: "5/12 條 ＜ 7/12 條 ＜ 11/12 條", correct: false, note: "看清楚題目喔！題目要求「由大到小」排列，這個選項是由小到大喔！" },
+          { text: "7/12 條 ＞ 5/12 條 ＞ 11/12 條", correct: false, note: "11 比 7 和 5 都大，所以 11/12 應該排在最前面喔！" },
+          { text: "11/12 條 ＞ 5/12 條 ＞ 7/12 條", correct: false, note: "7/12 比 5/12 大，中間兩個順序反囉！" }
+        ],
+        hint1: "三個分數的分母都是 12，直接比較分子：11、7、5。",
+        hint2: "題目規定「由大到小」：11 ＞ 7 ＞ 5，所以是 11/12 ＞ 7/12 ＞ 5/12。",
+        explanation: "同分母分數排列大小：\n1. 分母皆為 12，比較分子：11 ＞ 7 ＞ 5。\n2. 依題意「由大到小」排列：11/12 條 ＞ 7/12 條 ＞ 5/12 條（小宇 ＞ 小妍 ＞ 小安）。"
+      },
+
+      // ================= 第 5 區：分數數線、量杯與生活素養應用 (Q17 ~ Q20) =================
+      {
+        id: 17,
+        stage: 5,
+        stageName: "分數數線與生活烘焙素養",
+        tag: "Q17 分數數線刻度報讀",
+        misconception: "先數 0 到 1 之間被平分成「幾大格」（分母），千萬別數刻度線有幾條！",
+        visualType: "fraction_number_line",
+        den: 6,
+        targetNum: 5,
+        question: "觀察下方的分數數線，0 到 1 之間被平分成 6 等份。請問紅色小青蛙跳到的「？」位置，代表哪一個分數？",
+        options: [
+          { text: "六分之五（5/6）", correct: true, note: "太棒了！0 到 1 平分成 6 格，每 1 格是 1/6，往右跳 5 格就是 5/6！" },
+          { text: "五分之六（6/5）", correct: false, note: "分母是平分的總格數 6（寫下面），分子是第 5 格（寫上面），所以是 5/6 喔！" },
+          { text: "七分之五（5/7）", correct: false, note: "數線要數「間隔有幾格」（6 格），不是數直線刻度有幾條喔！" },
+          { text: "六分之四（4/6）", correct: false, note: "再數一次！小青蛙在 1 的左邊第 1 格，也就是第 5 格（5/6）喔！" }
+        ],
+        hint1: "0 到 1 平分成 6 小格，代表每一小格的長度都是「1/6」。",
+        hint2: "從 0 開始往右數：1/6、2/6、3/6、4/6、5/6！",
+        explanation: "在分數數線上，0 到 1 平分成 6 等份，每 1 小格代表 1/6。\n小青蛙從 0 往右跳了 5 格，就是 5 個 1/6，也就是「5/6」。"
+      },
+      {
+        id: 18,
+        stage: 5,
+        stageName: "分數數線與生活烘焙素養",
+        tag: "Q18 烘焙量杯刻度與分數",
+        misconception: "1 公升平分成 10 格，每 1 格是 1/10 公升",
+        visualType: "measuring_cup",
+        den: 10,
+        num: 6,
+        unit: "公升",
+        question: "烘焙師傅拿了一個「1 公升」的透明量杯，從底部到 1 公升刻度之間平分成 10 小格。倒入鮮奶後，液面剛好在「第 6 格」的位置，請問量杯裡有幾公升的鮮奶？",
+        options: [
+          { text: "十分之六（6/10）公升", correct: true, note: "完全正確！1 公升平分成 10 格，每 1 格是 1/10 公升，6 格就是 6/10 公升！" },
+          { text: "六分之十（10/6）公升", correct: false, note: "分母要放總格數 10，分子放目前的格數 6，是 6/10 公升喔！" },
+          { text: "十分之四（4/10）公升", correct: false, note: "4/10 公升是上面還沒裝滿的 4 格，鮮奶有 6 格（6/10 公升）喔！" },
+          { text: "6 公升", correct: false, note: "整個量杯最大才 1 公升，第 6 小格是 6/10 公升喔！" }
+        ],
+        hint1: "1 公升平分成 10 小格，每 1 小格就是「1/10 公升」。",
+        hint2: "鮮奶裝到第 6 小格，6 個 1/10 公升就是「6/10 公升」。",
+        explanation: "量杯上的 1 公升被平分為 10 小格，代表每 1 格是 1/10 公升。\n液面上升到第 6 格，代表有 6 個 1/10 公升，即「6/10 公升」。"
+      },
+      {
+        id: 19,
+        stage: 5,
+        stageName: "分數數線與生活烘焙素養",
+        tag: "Q19 披薩派對綜合推理",
+        misconception: "把「幾片」和「幾分之幾盒」統一換成同一個單位再計算與比較！",
+        visualType: "pizza_circle",
+        totalSlices: 12,
+        activeSlices: 9,
+        pizzaFlavor: "皇家總匯大披薩（平分12片）",
+        question: "1 盒皇家大披薩平分成 12 片。爸爸吃了「4/12 盒」、媽媽吃了「3/12 盒」、小寶吃了「2 片」。請問全家吃掉後，盒子裡還【剩下幾盒】披薩？",
+        options: [
+          { text: "十二分之三（3/12）盒", correct: true, note: "太強了！爸爸 4 片＋媽媽 3 片＋小寶 2 片＝吃掉 9 片（9/12 盒），還剩 12－9＝3 片，也就是 3/12 盒！" },
+          { text: "十二分之九（9/12）盒", correct: false, note: "9/12 盒是全家「一共吃掉」的量，題目問的是盒子裡「還剩下」幾盒喔！" },
+          { text: "十二分之五（5/12）盒", correct: false, note: "別忘了把小寶吃的 2 片（2/12 盒）也扣掉喔！12 - 4 - 3 - 2 = 3 片（3/12 盒）。" },
+          { text: "3 盒", correct: false, note: "剩下的是 3「片」，換成「盒」是 3/12 盒，不是 3 大盒喔！" }
+        ],
+        hint1: "1 盒有 12 片，所以 1 片＝1/12 盒。爸爸吃 4/12 盒（4 片）、媽媽吃 3/12 盒（3 片）、小寶吃 2 片（2/12 盒）。",
+        hint2: "全家共吃了 4 ＋ 3 ＋ 2 ＝ 9（片），剩下 12 － 9 ＝ 3（片），也就是「3/12 盒」！",
+        explanation: "素養題解題步驟：\n1. 1 盒平分成 12 片，每 1 片 ＝ 1/12 盒。\n2. 爸爸吃 4 片（4/12 盒）、媽媽吃 3 片（3/12 盒）、小寶吃 2 片（2/12 盒），共吃掉 4 ＋ 3 ＋ 2 ＝ 9 片。\n3. 還剩下 12 － 9 ＝ 3 片，也就是「3/12 盒」披薩！"
+      },
+      {
+        id: 20,
+        stage: 5,
+        stageName: "分數數線與生活烘焙素養",
+        tag: "Q20 彩繪玻璃花窗設計",
+        misconception: "九宮格平分成 9 格，算出剩餘格數後寫成九分之幾",
+        visualType: "stained_glass_grid",
+        redCount: 4,
+        blueCount: 3,
+        yellowCount: 2,
+        question: "教堂的彩繪玻璃花窗是一個正方形，被平分成 9 個一樣大的小方格（如下圖）。其中貼紅玻璃的占「4/9 個花窗」，貼藍玻璃的占「3/9 個花窗」，剩下的全部貼上黃玻璃。請問【黃玻璃】占幾個花窗？",
+        options: [
+          { text: "九分之二（2/9）個花窗", correct: true, note: "完美通關！9 格扣掉紅玻璃 4 格與藍玻璃 3 格，剩下 2 格貼黃玻璃，占 2/9 個花窗！" },
+          { text: "九分之七（7/9）個花窗", correct: false, note: "7/9 個是紅玻璃（4 格）和藍玻璃（3 格）合起來的部分，黃玻璃只占剩下的 2 格（2/9）喔！" },
+          { text: "二分之九（9/2）個花窗", correct: false, note: "分母是總格數 9（在下面），分子是黃玻璃格數 2（在上面），寫作 2/9 喔！" },
+          { text: "九分之三（3/9）個花窗", correct: false, note: "9 － 4 － 3 ＝ 2 格，所以是 2/9 個花窗喔！" }
+        ],
+        hint1: "整個花窗平分成 9 格：紅玻璃 4/9 個就是 4 格，藍玻璃 3/9 個就是 3 格。",
+        hint2: "剩下的黃玻璃有：9 － 4 － 3 ＝ 2（格），也就是「2/9 個花窗」！",
+        explanation: "1. 花窗平分成 9 格，每 1 格是 1/9 個花窗。\n2. 紅玻璃占 4/9 個（4 格），藍玻璃占 3/9 個（3 格）。\n3. 黃玻璃占剩下的 9 － 4 － 3 ＝ 2 格，也就是「2/9 個花窗」。"
+      }
+    ];
+
+    /* -------------------------------------------------------------------------
+       全域狀態管理
+       ------------------------------------------------------------------------- */
+    let currentQIndex = 0;
+    let userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+    let totalScore = 0;
+    let autoNextEnabled = false;
+    let isOverviewMode = false;
+    let sliceExploded = false; // 控制披薩切片是否分離彈出展示
+
+    /* -------------------------------------------------------------------------
+       互動操作：切換披薩切片彈出/合攏
+       ------------------------------------------------------------------------- */
+    function toggleSliceExplode() {
+      playSound('slice');
+      sliceExploded = !sliceExploded;
+      const q = QUESTIONS_DB[currentQIndex];
+      const stage = document.getElementById('interactiveStage');
+      if (stage) {
+        stage.innerHTML = buildQuestionVisualHTML(q, true);
+      }
+      renderActionTools(q);
+    }
+
+    /* -------------------------------------------------------------------------
+       SVG 幾何扇形路徑產生器 (繪製圓形披薩切片)
+       ------------------------------------------------------------------------- */
+    function createPizzaSVG(totalSlices, activeSlices, explodeActive = false, titleLabel = "") {
+      const cx = 110, cy = 110, r = 82, crustR = 90;
+      let slicesPaths = '';
+
+      for (let i = 0; i < totalSlices; i++) {
+        const startDeg = -90 + (i * 360 / totalSlices);
+        const endDeg = -90 + ((i + 1) * 360 / totalSlices);
+        const midDeg = (startDeg + endDeg) / 2;
+        const startRad = (startDeg * Math.PI) / 180;
+        const endRad = (endDeg * Math.PI) / 180;
+        const midRad = (midDeg * Math.PI) / 180;
+
+        const isActive = i < activeSlices;
+        const offsetDist = (explodeActive && isActive) ? 10 : 0;
+        const dx = Math.cos(midRad) * offsetDist;
+        const dy = Math.sin(midRad) * offsetDist;
+
+        const x1 = cx + crustR * Math.cos(startRad);
+        const y1 = cy + crustR * Math.sin(startRad);
+        const x2 = cx + crustR * Math.cos(endRad);
+        const y2 = cy + crustR * Math.sin(endRad);
+
+        const ix1 = cx + r * Math.cos(startRad);
+        const iy1 = cy + r * Math.sin(startRad);
+        const ix2 = cx + r * Math.cos(endRad);
+        const iy2 = cy + r * Math.sin(endRad);
+
+        const largeArc = (360 / totalSlices) > 180 ? 1 : 0;
+
+        const crustPath = `M ${cx} ${cy} L ${x1} ${y1} A ${crustR} ${crustR} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+        const cheesePath = `M ${cx} ${cy} L ${ix1} ${iy1} A ${r} ${r} 0 ${largeArc} 1 ${ix2} ${iy2} Z`;
+
+        // 餡料小圓點座標
+        const pepDist = r * 0.58;
+        const px = cx + pepDist * Math.cos(midRad);
+        const py = cy + pepDist * Math.sin(midRad);
+
+        // 切片文字座標
+        const lblDist = r * 0.62;
+        const lx = cx + lblDist * Math.cos(midRad);
+        const ly = cy + lblDist * Math.sin(midRad);
+
+        if (isActive) {
+          slicesPaths += `
+            <g transform="translate(${dx.toFixed(1)}, ${dy.toFixed(1)})" class="pizza-slice-interactive" onclick="toggleSliceExplode()">
+              <path d="${crustPath}" fill="#d97706" stroke="#78350f" stroke-width="2" />
+              <path d="${cheesePath}" fill="#fbbf24" stroke="#92400e" stroke-width="1.8" />
+              <circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${totalSlices >= 10 ? 5 : 7}" fill="#e11d48" opacity="0.88" />
+              <text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" font-size="${totalSlices >= 10 ? 9 : 11}" font-weight="900" fill="#fff" text-anchor="middle" style="text-shadow:0 1px 2px #881337;">1/${totalSlices}</text>
+            </g>
+          `;
+        } else {
+          slicesPaths += `
+            <g>
+              <path d="${crustPath}" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 2" />
+              <text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" font-size="${totalSlices >= 10 ? 9 : 10}" font-weight="800" fill="#94a3b8" text-anchor="middle">1/${totalSlices}</text>
+            </g>
+          `;
+        }
+      }
+
+      return `
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full select-none">
+          <div class="relative flex items-center justify-center bg-white rounded-3xl p-2 border-2 border-amber-200 shadow-sm">
+            <svg width="220" height="220" viewBox="0 0 220 220" class="overflow-visible">
+              <!-- 木托盤底圈 -->
+              <circle cx="110" cy="110" r="102" fill="#fef3c7" stroke="#f59e0b" stroke-width="3" />
+              ${slicesPaths}
+              <circle cx="110" cy="110" r="4" fill="#78350f" />
+            </svg>
+          </div>
+
+          <div class="flex flex-col gap-2 max-w-xs text-left bg-white/95 p-3.5 rounded-2xl border-2 border-rose-200 shadow-xs">
+            <div class="text-xs font-black text-rose-800 flex items-center gap-1.5">
+              <span>🍕</span>
+              <span>${titleLabel || '圓形平分披薩轉盤'}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-center my-1">
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-2">
+                <div class="text-[11px] font-bold text-amber-800">平分總塊數 (分母)</div>
+                <div class="text-lg font-black text-amber-950">${totalSlices} 塊</div>
+              </div>
+              <div class="bg-rose-50 border border-rose-200 rounded-xl p-2">
+                <div class="text-[11px] font-bold text-rose-800">塗色塊數 (分子)</div>
+                <div class="text-lg font-black text-rose-600">${activeSlices} 塊</div>
+              </div>
+            </div>
+            <div class="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 flex items-center justify-between">
+              <span>代表分數：</span>
+              <span class="text-base font-black text-rose-600">${fracHTML(activeSlices, totalSlices)} 個披薩</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* -------------------------------------------------------------------------
+       根據題目類型產生互動視覺 HTML (buildQuestionVisualHTML)
+       ------------------------------------------------------------------------- */
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      // 1. Q1 平分 vs 不平分對照圖
+      if (q.visualType === 'equal_parts_check') {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl select-none">
+            <!-- 甲鬆餅：十字平分 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-emerald-300 flex flex-col items-center shadow-xs">
+              <span class="bg-emerald-100 text-emerald-900 text-xs font-black px-3 py-0.5 rounded-full border border-emerald-300 mb-2">
+                🥞 甲鬆餅（通過圓心十字切 4 塊）
+              </span>
+              <svg width="145" height="145" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="58" fill="#fde68a" stroke="#d97706" stroke-width="4" />
+                <path d="M 70 70 L 70 12 A 58 58 0 0 1 128 70 Z" fill="#fb7185" stroke="#be123c" stroke-width="2" />
+                <line x1="70" y1="12" x2="70" y2="128" stroke="#92400e" stroke-width="3" />
+                <line x1="12" y1="70" x2="128" y2="70" stroke="#92400e" stroke-width="3" />
+                <text x="93" y="52" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">1/4</text>
+              </svg>
+              <span class="text-xs font-extrabold text-emerald-700 mt-1">✓ 4 塊一樣大（有平分！）</span>
+            </div>
+
+            <!-- 乙鬆餅：直線不平分 -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-rose-300 flex flex-col items-center shadow-xs">
+              <span class="bg-rose-100 text-rose-900 text-xs font-black px-3 py-0.5 rounded-full border border-rose-300 mb-2">
+                🥞 乙鬆餅（隨意直切 4 塊）
+              </span>
+              <svg width="145" height="145" viewBox="0 0 140 140">
+                <clipPath id="pancakeClip">
+                  <circle cx="70" cy="70" r="58" />
+                </clipPath>
+                <g clip-path="url(#pancakeClip)">
+                  <rect x="10" y="10" width="120" height="120" fill="#fde68a" />
+                  <rect x="10" y="10" width="26" height="120" fill="#fda4af" />
+                  <line x1="36" y1="10" x2="36" y2="130" stroke="#92400e" stroke-width="3" />
+                  <line x1="70" y1="10" x2="70" y2="130" stroke="#92400e" stroke-width="3" />
+                  <line x1="104" y1="10" x2="104" y2="130" stroke="#92400e" stroke-width="3" />
+                </g>
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#d97706" stroke-width="4" />
+                <text x="24" y="74" font-size="12" font-weight="900" fill="#9f1239" text-anchor="middle">？</text>
+              </svg>
+              <span class="text-xs font-extrabold text-rose-700 mt-1">✗ 旁邊小、中間大（沒有平分！）</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. 圓形披薩切片 (Q2, Q5, Q9, Q19)
+      if (q.visualType === 'pizza_circle') {
+        return createPizzaSVG(q.totalSlices, q.activeSlices, isInteractive && sliceExploded, q.pizzaFlavor);
+      }
+
+      // 3. 連續量緞帶/瑞士捲長條圖 (Q3, Q8)
+      if (q.visualType === 'ribbon_strip') {
+        let cells = '';
+        for (let i = 0; i < q.totalParts; i++) {
+          const isColored = i < q.coloredParts;
+          cells += `
+            <div class="flex-1 h-14 border-r-2 last:border-r-0 border-rose-900 flex flex-col items-center justify-center transition-all ${
+              isColored ? 'bg-gradient-to-b from-rose-500 to-rose-600 text-white font-black' : 'bg-slate-100 text-slate-400 font-bold'
+            }">
+              <span class="text-xs">1/${q.totalParts}</span>
+              <span class="text-[10px] opacity-85">1${q.partName}</span>
+            </div>
+          `;
+        }
+        return `
+          <div class="flex flex-col items-center justify-center w-full max-w-xl p-2 select-none">
+            <div class="text-xs font-black text-rose-900 mb-2 bg-rose-100 px-3 py-1 rounded-full border border-rose-300">
+              🎀 整條合起來是「1 ${q.unitName}${q.itemName}」，平分成 ${q.totalParts} ${q.partName}
+            </div>
+            <div class="w-full flex rounded-2xl overflow-hidden border-3 border-rose-900 shadow-md">
+              ${cells}
+            </div>
+            <div class="mt-2.5 flex items-center justify-between w-full text-xs font-black text-slate-700 px-1 flex-wrap gap-2">
+              <span class="text-rose-700">✨ ${q.customLabel || `塗色部分：${q.coloredParts} ${q.partName} ＝ ${q.coloredParts}/${q.totalParts} ${q.unitName}`}</span>
+              <span class="bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                1 ${q.partName} ＝ 1/${q.totalParts} ${q.unitName}
+              </span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 離散量禮盒模型 (Q4)
+      if (q.visualType === 'box_items') {
+        let itemsHTML = '';
+        for (let i = 0; i < q.totalItems; i++) {
+          const active = i < q.activeItems;
+          itemsHTML += `
+            <div class="rounded-2xl p-2.5 border-2 flex flex-col items-center justify-center transition-all ${
+              active
+                ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-300 scale-105'
+                : 'bg-white border-amber-200 opacity-85'
+            }">
+              <span class="text-2xl">${q.itemEmoji}</span>
+              <span class="text-[11px] font-black mt-1 ${active ? 'text-rose-700' : 'text-slate-500'}">
+                1/${q.totalItems}${q.boxUnit}
+              </span>
+              ${active ? `<span class="text-[10px] bg-rose-600 text-white px-1.5 rounded-full font-black mt-0.5">吃掉這1${q.pieceUnit}</span>` : ''}
+            </div>
+          `;
+        }
+        return `
+          <div class="flex flex-col items-center justify-center w-full max-w-md p-2 select-none">
+            <div class="text-xs font-black text-amber-950 bg-amber-100 px-3.5 py-1 rounded-full border border-amber-300 mb-2">
+              🎁 1 ${q.boxUnit}${q.itemName}共有 ${q.totalItems} ${q.pieceUnit}（平分成 ${q.totalItems} 份）
+            </div>
+            <div class="grid grid-cols-4 gap-2.5 w-full bg-amber-50/90 p-3 rounded-2xl border-2 border-amber-300 shadow-inner">
+              ${itemsHTML}
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. 分子與分母構造解剖卡 (Q6)
+      if (q.visualType === 'fraction_anatomy') {
+        return `
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-6 p-3 select-none">
+            <div class="bg-white rounded-3xl p-5 border-3 border-rose-400 shadow-md flex items-center gap-5">
+              <div class="flex flex-col items-center">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-100 border-2 border-indigo-400 flex items-center justify-center text-3xl font-black text-indigo-800">
+                  ${q.num}
+                </div>
+                <div class="w-20 h-1.5 bg-slate-800 rounded-full my-2"></div>
+                <div class="w-16 h-16 rounded-2xl bg-rose-100 border-2 border-rose-400 flex items-center justify-center text-3xl font-black text-rose-800">
+                  ${q.den}
+                </div>
+              </div>
+
+              <div class="flex flex-col justify-between h-36 py-1 text-left">
+                <div class="bg-indigo-50 border border-indigo-200 px-3 py-2 rounded-xl">
+                  <div class="text-xs font-black text-indigo-900">⬅ 上面的數叫做【分子】</div>
+                  <div class="text-[11px] font-bold text-slate-600">代表拿了其中的 <b>${q.num}</b> 份</div>
+                </div>
+                <div class="text-xs font-black text-slate-500 pl-2">⬅ 中間這條線叫做【分數線】</div>
+                <div class="bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+                  <div class="text-xs font-black text-rose-900">⬅ 下面的數叫做【分母】</div>
+                  <div class="text-[11px] font-bold text-slate-600">代表全部平分成 <b>${q.den}</b> 份</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 6. 巧克力格數模型 (Q7, Q11)
+      if (q.visualType === 'chocolate_bar') {
+        let blocks = '';
+        for (let i = 0; i < q.totalCols; i++) {
+          const isPresent = i < q.activeCols;
+          blocks += `
+            <div class="flex-1 h-16 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
+              isPresent
+                ? 'bg-gradient-to-b from-amber-600 to-amber-800 border-amber-950 text-amber-100 shadow-inner'
+                : 'bg-amber-50 border-dashed border-rose-400 text-rose-600 animate-pulse'
+            }">
+              <span class="text-xs font-black">1/${q.totalCols}</span>
+              <span class="text-[10px] font-bold">${isPresent ? '已有' : '還差這格'}</span>
+            </div>
+          `;
+        }
+        return `
+          <div class="flex flex-col items-center justify-center w-full max-w-xl p-2 select-none">
+            <div class="text-xs font-black text-amber-950 mb-2 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+              🍫 1 整條/盒平分成 ${q.totalCols} 格（1 ＝ ${q.totalCols}/${q.totalCols}）
+            </div>
+            <div class="w-full flex gap-1.5 bg-white p-2.5 rounded-2xl border-2 border-amber-300 shadow-sm">
+              ${blocks}
+            </div>
+            <div class="mt-2 text-xs font-black text-slate-700">
+              已有 <span class="text-amber-800">${q.activeCols} 個 1/${q.totalCols}（${q.activeCols}/${q.totalCols}）</span>
+              ${q.showMissingForOne ? `，還差 <span class="text-rose-600">${q.totalCols - q.activeCols} 個 1/${q.totalCols}（${q.totalCols - q.activeCols}/${q.totalCols}）</span> 就湊滿 1！` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // 7. 分數與 1 的等值展示 (Q10)
+      if (q.visualType === 'one_equivalence') {
+        return `
+          <div class="flex flex-wrap items-center justify-center gap-3 p-2 select-none">
+            <div class="bg-amber-100 border-2 border-amber-400 rounded-2xl px-4 py-3 text-center">
+              <div class="text-xs font-bold text-amber-900">完整的 1 個整體</div>
+              <div class="text-3xl font-black text-amber-950 mt-1">1</div>
+            </div>
+            <span class="text-2xl font-black text-rose-500">＝</span>
+            <div class="bg-white border-2 border-rose-300 rounded-2xl px-4 py-2 text-center shadow-xs">
+              <div class="text-[11px] font-bold text-slate-500">平分成 8 份</div>
+              <div class="text-xl font-black text-rose-600">${fracHTML('？', 8)}</div>
+            </div>
+            <span class="text-2xl font-black text-rose-500">＝</span>
+            <div class="bg-white border-2 border-indigo-300 rounded-2xl px-4 py-2 text-center shadow-xs">
+              <div class="text-[11px] font-bold text-slate-500">平分成 12 份</div>
+              <div class="text-xl font-black text-indigo-600">${fracHTML(12, '？')}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 8. 4/4 與 8/8 等大披薩比較 (Q12)
+      if (q.visualType === 'same_whole_compare') {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl select-none">
+            <div class="bg-white rounded-2xl p-3 border-2 border-amber-300 flex flex-col items-center">
+              <span class="text-xs font-black text-amber-950 bg-amber-100 px-3 py-0.5 rounded-full mb-2">小華：平分 4 塊全吃完（4/4 個）</span>
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="55" fill="#fbbf24" stroke="#b45309" stroke-width="4"/>
+                <line x1="65" y1="10" x2="65" y2="120" stroke="#78350f" stroke-width="2.5"/>
+                <line x1="10" y1="65" x2="120" y2="65" stroke="#78350f" stroke-width="2.5"/>
+                <text x="65" y="70" font-size="16" font-weight="900" fill="#78350f" text-anchor="middle">4/4 ＝ 1</text>
+              </svg>
+            </div>
+            <div class="bg-white rounded-2xl p-3 border-2 border-rose-300 flex flex-col items-center">
+              <span class="text-xs font-black text-rose-950 bg-rose-100 px-3 py-0.5 rounded-full mb-2">小明：平分 8 塊全吃完（8/8 個）</span>
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="55" fill="#fbbf24" stroke="#b45309" stroke-width="4"/>
+                <line x1="65" y1="10" x2="65" y2="120" stroke="#78350f" stroke-width="2"/>
+                <line x1="10" y1="65" x2="120" y2="65" stroke="#78350f" stroke-width="2"/>
+                <line x1="26" y1="26" x2="104" y2="104" stroke="#78350f" stroke-width="2"/>
+                <line x1="104" y1="26" x2="26" y2="104" stroke="#78350f" stroke-width="2"/>
+                <text x="65" y="70" font-size="16" font-weight="900" fill="#78350f" text-anchor="middle">8/8 ＝ 1</text>
+              </svg>
+            </div>
+          </div>
+        `;
+      }
+
+      // 9. 雙長條同分母比大小 (Q13, Q15)
+      if (q.visualType === 'dual_bars_compare') {
+        const buildRow = (num, den, label, colorCls) => {
+          let cells = '';
+          for (let i = 0; i < den; i++) {
+            cells += `<div class="flex-1 h-9 border-r last:border-r-0 border-slate-300 flex items-center justify-center text-[10px] font-black ${
+              i < num ? colorCls + ' text-white' : 'bg-slate-100 text-slate-300'
+            }">1/${den}</div>`;
+          }
+          return `
+            <div class="w-full">
+              <div class="flex justify-between text-xs font-black text-slate-700 mb-1">
+                <span>${label}</span>
+                <span>${num} 個 1/${den}</span>
+              </div>
+              <div class="w-full flex rounded-xl overflow-hidden border-2 border-slate-700">${cells}</div>
+            </div>
+          `;
+        };
+        return `
+          <div class="flex flex-col gap-3 w-full max-w-xl p-2 select-none">
+            ${buildRow(q.numA, q.den, q.labelA, 'bg-rose-500')}
+            ${buildRow(q.numB, q.den, q.labelB, 'bg-sky-500')}
+          </div>
+        `;
+      }
+
+      // 10. 不等式填空圖 (Q14)
+      if (q.visualType === 'inequality_puzzle') {
+        return `
+          <div class="flex items-center justify-center gap-4 p-4 bg-white rounded-2xl border-2 border-rose-200 shadow-xs select-none">
+            <div class="text-2xl font-black text-slate-800 bg-slate-100 px-4 py-2 rounded-2xl border border-slate-300">
+              ${fracHTML(q.lowNum, q.den)}
+            </div>
+            <span class="text-2xl font-black text-rose-600">＜</span>
+            <div class="text-2xl font-black text-rose-600 bg-rose-50 px-5 py-2 rounded-2xl border-2 border-rose-400 animate-pulse">
+              ${fracHTML('□', q.den)}
+            </div>
+            <span class="text-2xl font-black text-rose-600">＜</span>
+            <div class="text-2xl font-black text-slate-800 bg-slate-100 px-4 py-2 rounded-2xl border border-slate-300">
+              ${fracHTML(q.highNum, q.den)}
+            </div>
+          </div>
+        `;
+      }
+
+      // 11. 三人分數長條排行 (Q16)
+      if (q.visualType === 'three_bars_compare') {
+        return `
+          <div class="flex flex-col gap-2.5 w-full max-w-xl p-2 select-none">
+            ${q.items.map(item => `
+              <div class="w-full bg-white p-2 rounded-xl border border-rose-200">
+                <div class="flex justify-between text-xs font-black mb-1">
+                  <span>🎀 ${item.name}：${item.num}/${q.den} 條</span>
+                  <span class="text-slate-500">${item.num} 個 1/${q.den}</span>
+                </div>
+                <div class="w-full grid grid-cols-12 gap-0.5 bg-slate-200 p-0.5 rounded-lg">
+                  ${Array.from({length: q.den}).map((_, idx) => `
+                    <div class="h-5 rounded-xs" style="background:${idx < item.num ? item.color : '#f8fafc'}"></div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // 12. 分數數線 (Q17)
+      if (q.visualType === 'fraction_number_line') {
+        let ticks = '';
+        for (let i = 0; i <= q.den; i++) {
+          const x = 40 + (i / q.den) * 320;
+          const isTarget = i === q.targetNum;
+          const label = i === 0 ? '0' : (i === q.den ? '1 (6/6)' : `${i}/${q.den}`);
+          ticks += `
+            <line x1="${x}" y1="75" x2="${x}" y2="${i === 0 || i === q.den ? 52 : 60}" stroke="#1e293b" stroke-width="${i === 0 || i === q.den ? 3.5 : 2.5}" />
+            <text x="${x}" y="98" font-size="12" font-weight="900" fill="${isTarget ? '#e11d48' : '#334155'}" text-anchor="middle">
+              ${isTarget ? '？' : label}
+            </text>
+            ${isTarget ? `
+              <circle cx="${x}" cy="34" r="15" fill="#ffe4e6" stroke="#e11d48" stroke-width="2.5" />
+              <text x="${x}" y="39" font-size="16" text-anchor="middle">🐸</text>
+              <polygon points="${x},56 ${x-5},48 ${x+5},48" fill="#e11d48" />
+            ` : ''}
+          `;
+        }
+        return `
+          <div class="flex flex-col items-center justify-center w-full p-2 select-none">
+            <svg width="410" height="115" viewBox="0 0 410 115" class="max-w-full overflow-visible">
+              <line x1="25" y1="75" x2="385" y2="75" stroke="#1e293b" stroke-width="3.5" />
+              <polygon points="392,75 380,69 380,81" fill="#1e293b" />
+              <!-- 跳躍弧線 -->
+              ${Array.from({length: q.targetNum}).map((_, idx) => {
+                const sx = 40 + (idx / q.den) * 320;
+                const ex = 40 + ((idx + 1) / q.den) * 320;
+                const mx = (sx + ex) / 2;
+                return `<path d="M ${sx} 73 Q ${mx} 52 ${ex} 73" fill="none" stroke="#fb7185" stroke-width="2" stroke-dasharray="3 2" />`;
+              }).join('')}
+              ${ticks}
+            </svg>
+          </div>
+        `;
+      }
+
+      // 13. 烘焙量杯模型 (Q18)
+      if (q.visualType === 'measuring_cup') {
+        const fillHeight = (q.num / q.den) * 120;
+        const fillY = 145 - fillHeight;
+        let lines = '';
+        for (let i = 1; i <= q.den; i++) {
+          const y = 145 - (i / q.den) * 120;
+          const isMajor = i === 5 || i === 10;
+          const isTarget = i === q.num;
+          lines += `
+            <line x1="75" y1="${y}" x2="${isMajor ? 105 : 92}" y2="${y}" stroke="${isTarget ? '#e11d48' : '#334155'}" stroke-width="${isTarget || isMajor ? 2.5 : 1.5}" />
+            ${isMajor ? `<text x="112" y="${y + 4}" font-size="10" font-weight="900" fill="#1e293b">${i === 10 ? '1公升 (10/10)' : '5/10'}</text>` : ''}
+            ${isTarget ? `<text x="35" y="${y + 4}" font-size="11" font-weight="900" fill="#e11d48">第${i}格 ➔</text>` : ''}
+          `;
+        }
+        return `
+          <div class="flex items-center justify-center p-2 select-none">
+            <svg width="240" height="170" viewBox="0 0 240 170" class="overflow-visible">
+              <!-- 鮮奶液體 -->
+              <rect x="75" y="${fillY}" width="80" height="${fillHeight}" fill="#fda4af" opacity="0.75" rx="2" />
+              <!-- 量杯外框 -->
+              <path d="M 70 20 L 75 145 L 155 145 L 160 20" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" />
+              <!-- 把手 -->
+              <path d="M 159 40 L 182 40 L 182 115 L 156 115" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" />
+              ${lines}
+            </svg>
+          </div>
+        `;
+      }
+
+      // 14. 九宮格彩繪玻璃花窗 (Q20)
+      if (q.visualType === 'stained_glass_grid') {
+        const colors = [
+          ...Array(q.redCount).fill({ bg: 'bg-rose-500 text-white', name: '紅 1/9' }),
+          ...Array(q.blueCount).fill({ bg: 'bg-sky-500 text-white', name: '藍 1/9' }),
+          ...Array(q.yellowCount).fill({ bg: 'bg-amber-300 text-amber-950 animate-pulse', name: '黃 ？' })
+        ];
+        return `
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-5 p-2 select-none">
+            <div class="grid grid-cols-3 gap-1.5 bg-slate-800 p-2 rounded-2xl shadow-md w-44 h-44">
+              ${colors.map(c => `
+                <div class="${c.bg} rounded-lg flex items-center justify-center text-xs font-black shadow-inner">
+                  ${c.name}
+                </div>
+              `).join('')}
+            </div>
+            <div class="text-xs font-bold text-slate-700 space-y-1.5 bg-white p-3.5 rounded-2xl border border-rose-200">
+              <div class="font-black text-rose-900 text-sm mb-1">🎨 彩繪玻璃花窗（共平分成 9 格）</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-rose-500 inline-block"></span>紅玻璃：4 格 ＝ <b>4/9 個花窗</b></div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-sky-500 inline-block"></span>藍玻璃：3 格 ＝ <b>3/9 個花窗</b></div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-amber-300 inline-block"></span>黃玻璃：剩下 <b>2 格 ＝ ？個花窗</b></div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="text-xs text-slate-400 font-bold">分數視覺展示</div>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       渲染互動教具按鈕列 (renderActionTools)
+       ------------------------------------------------------------------------- */
+    function renderActionTools(q) {
+      const area = document.getElementById('actionToolsArea');
+      if (!area) return;
+
+      if (q.visualType === 'pizza_circle') {
+        area.innerHTML = `
+          <button onclick="toggleSliceExplode()" class="bouncy-btn px-3 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-black shadow-xs flex items-center gap-1">
+            <span>🍕</span>
+            <span>${sliceExploded ? '把披薩切片拼回圓盤' : '拿起塗色切片觀察'}</span>
+          </button>
+          <span class="text-[11px] font-bold text-slate-500 hidden sm:inline">✨ 點擊披薩或按鈕可分離切片觀察每一份的 1/${q.totalSlices}！</span>
+        `;
+      } else {
+        area.innerHTML = `
+          <span class="text-xs font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+            🍕 烘焙口訣：分母在下面（平分幾份），分子在上面（拿了幾份）！
+          </span>
+        `;
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       畫面渲染：頂部題號導覽、當前題目與選項
+       ------------------------------------------------------------------------- */
+    function renderTopUnitNav() {
+      const container = document.getElementById('unitQuestionNav');
+      if (!container) return;
+
+      const stages = [
+        { id: 1, name: "1. 平分與幾分之一", range: [0, 3] },
+        { id: 2, name: "2. 幾分之幾與分子分母", range: [4, 7] },
+        { id: 3, name: "3. 分數與 1 的關係", range: [8, 11] },
+        { id: 4, name: "4. 同分母比大小", range: [12, 15] },
+        { id: 5, name: "5. 數線與生活烘焙素養", range: [16, 19] }
+      ];
+
+      let html = '';
+      stages.forEach(st => {
+        const isCurrentStage = (currentQIndex >= st.range[0] && currentQIndex <= st.range[1]);
+        html += `
+          <div class="bg-white/90 border ${isCurrentStage ? 'border-rose-400 ring-2 ring-rose-200' : 'border-slate-200'} rounded-xl p-1.5 flex flex-col justify-between">
+            <span class="text-[10px] font-black ${isCurrentStage ? 'text-rose-800' : 'text-slate-500'} mb-1 truncate">${st.name}</span>
+            <div class="grid grid-cols-4 gap-1">
+              ${Array.from({length: st.range[1] - st.range[0] + 1}).map((_, i) => {
+                const qIdx = st.range[0] + i;
+                const ans = userAnswers[qIdx];
+                let btnClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                if (ans !== null) {
+                  btnClass = ans.correct ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-rose-500 text-white border-rose-600';
+                }
+                if (qIdx === currentQIndex) {
+                  btnClass += ' ring-2 ring-rose-500 ring-offset-1 font-black scale-105';
+                }
+                return `
+                  <button onclick="jumpToQuestion(${qIdx})" class="bouncy-btn text-[11px] font-bold py-1 rounded-md border text-center transition ${btnClass}">
+                    ${qIdx + 1}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderCurrentQuestion() {
+      const q = QUESTIONS_DB[currentQIndex];
+      sliceExploded = false;
+
+      document.getElementById('questionTag').textContent = q.tag;
+      document.getElementById('stageNameTag').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('stageBadge').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('misconceptionText').textContent = q.misconception;
+      document.getElementById('qNumberPrefix').textContent = `第 ${q.id} 題.`;
+      document.getElementById('questionText').textContent = q.question;
+
+      // 渲染視覺展演舞台與教具按鈕
+      const stage = document.getElementById('interactiveStage');
+      stage.innerHTML = buildQuestionVisualHTML(q, true);
+      renderActionTools(q);
+
+      // 隱藏提示卡與作答反饋
+      document.getElementById('hintDisplayArea').classList.add('hidden');
+      document.getElementById('hintDisplayArea').textContent = '';
+      const fbBox = document.getElementById('feedbackBox');
+      fbBox.classList.add('hidden');
+
+      // 渲染選項按鈕
+      const grid = document.getElementById('optionsGrid');
+      let optionsHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const currentAns = userAnswers[currentQIndex];
+
+      q.options.forEach((opt, idx) => {
+        let optBtnClass = 'bg-white hover:bg-rose-50/80 border-slate-200 text-slate-800';
+        let checkIcon = letters[idx];
+
+        if (currentAns !== null) {
+          if (opt.correct) {
+            optBtnClass = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-black';
+            checkIcon = '✓';
+          } else if (currentAns.selectedIndex === idx) {
+            optBtnClass = 'bg-rose-50 border-rose-400 text-rose-950 font-bold';
+            checkIcon = '✗';
+          }
+        }
+
+        optionsHTML += `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between shadow-xs ${optBtnClass}">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-900 font-black text-xs flex items-center justify-center shrink-0 border border-rose-200">
+                ${letters[idx]}
+              </span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800 leading-snug">${opt.text}</span>
+            </div>
+            <span id="opt-check-${idx}" class="text-sm font-black px-1.5 text-rose-600">${checkIcon}</span>
+          </button>
+        `;
+      });
+      grid.innerHTML = optionsHTML;
+
+      // 如果已經作答過，重新顯示反饋資訊
+      if (currentAns !== null) {
+        showFeedback(currentAns.correct, currentAns.selected);
+      }
+
+      // 更新進度條
+      const progressPct = ((currentQIndex + 1) / QUESTIONS_DB.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPct}%`;
+      document.getElementById('progressPercentText').textContent = `進度：第 ${currentQIndex + 1} / ${QUESTIONS_DB.length} 題`;
+
+      // 更新正確率與頂部分段題號
+      updateStats();
+      renderTopUnitNav();
+    }
+
+    /* -------------------------------------------------------------------------
+       作答判斷 (selectOption)
+       ------------------------------------------------------------------------- */
+    function selectOption(optIndex) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const selected = q.options[optIndex];
+      const isFirstAttempt = (userAnswers[currentQIndex] === null);
+
+      if (isFirstAttempt) {
+        if (selected.correct) {
+          totalScore += 5;
+        }
+      }
+
+      userAnswers[currentQIndex] = {
+        selectedIndex: optIndex,
+        selected: selected,
+        correct: selected.correct
+      };
+
+      showFeedback(selected.correct, selected);
+      updateStats();
+      renderTopUnitNav();
+
+      if (selected.correct) {
+        playSound('correct');
+        confetti({
+          particleCount: 28,
+          spread: 50,
+          origin: { y: 0.7 }
+        });
+
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 font-black flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✓';
+        }
+
+        if (autoNextEnabled) {
+          setTimeout(() => {
+            nextQuestion();
+          }, 1200);
+        }
+      } else {
+        playSound('wrong');
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 text-rose-950 font-bold flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✗';
+        }
+      }
+
+      checkCompletion();
+    }
+
+    function showFeedback(isCorrect, selected) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const fbBox = document.getElementById('feedbackBox');
+      const fbIcon = document.getElementById('feedbackIcon');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbDetail = document.getElementById('feedbackDetail');
+
+      fbBox.classList.remove('hidden');
+      if (isCorrect) {
+        fbBox.className = 'rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 block transition-all duration-300';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '太棒了！回答完全正確！';
+        fbDetail.textContent = selected.note || q.explanation;
+      } else {
+        fbBox.className = 'rounded-2xl p-4 bg-amber-50 border-2 border-amber-300 text-amber-950 block transition-all duration-300';
+        fbIcon.textContent = '💡';
+        fbTitle.textContent = '差一點點！檢查看看平分份數與單位喔：';
+        fbDetail.textContent = selected.note || q.hint1 || '再確認一次分母是平分幾份、分子是拿了幾份喔！';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scoreText').textContent = `${totalScore} 分`;
+      const answeredCount = userAnswers.filter(a => a !== null).length;
+      if (answeredCount > 0) {
+        const correctCount = userAnswers.filter(a => a && a.correct).length;
+        const acc = Math.round((correctCount / answeredCount) * 100);
+        document.getElementById('accuracyText').textContent = `正確率：${acc}%`;
+      }
+    }
+
+    function checkCompletion() {
+      const allDone = userAnswers.every(a => a !== null);
+      if (allDone) {
+        setTimeout(() => {
+          showCompletionModal();
+        }, 800);
+      }
+    }
+
+    function showCompletionModal() {
+      playSound('victory');
+      confetti({
+        particleCount: 85,
+        spread: 75,
+        origin: { y: 0.6 }
+      });
+
+      const correctCount = userAnswers.filter(a => a && a.correct).length;
+      const acc = Math.round((correctCount / QUESTIONS_DB.length) * 100);
+
+      let stars = '⭐⭐⭐';
+      if (totalScore < 70) stars = '⭐☆☆';
+      else if (totalScore < 90) stars = '⭐⭐☆';
+
+      document.getElementById('endStarsDisplay').textContent = stars;
+      document.getElementById('endScoreDisplay').textContent = `最終得分：${totalScore} 分`;
+      document.getElementById('endAccDisplay').textContent = `正確率：${acc}%（${correctCount}/${QUESTIONS_DB.length}）`;
+
+      document.getElementById('completionModal').classList.remove('hidden');
+    }
+
+    function restartQuiz() {
+      document.getElementById('completionModal').classList.add('hidden');
+      currentQIndex = 0;
+      userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+      totalScore = 0;
+      updateStats();
+      renderCurrentQuestion();
+    }
+
+    /* -------------------------------------------------------------------------
+       跳題與切換
+       ------------------------------------------------------------------------- */
+    function jumpToQuestion(idx) {
+      playSound('click');
+      currentQIndex = idx;
+      if (isOverviewMode) {
+        toggleAllQuestionsView();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        playSound('click');
+        currentQIndex--;
+        renderCurrentQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < QUESTIONS_DB.length - 1) {
+        playSound('click');
+        currentQIndex++;
+        renderCurrentQuestion();
+      } else {
+        checkCompletion();
+      }
+    }
+
+    function toggleAutoNext() {
+      autoNextEnabled = !autoNextEnabled;
+      const btn = document.getElementById('autoNextBtn');
+      if (autoNextEnabled) {
+        btn.textContent = '⏭️ 自動下一題：開';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-rose-600 text-white border border-rose-500';
+      } else {
+        btn.textContent = '⏭️ 自動下一題：關';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200';
+      }
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       提示與詳解 Modal
+       ------------------------------------------------------------------------- */
+    function revealHint(num) {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      const area = document.getElementById('hintDisplayArea');
+      area.classList.remove('hidden');
+      if (num === 1) {
+        area.innerHTML = `<span class="text-rose-800 font-black">💡 提示 1：</span>${q.hint1}`;
+      } else {
+        area.innerHTML = `<span class="text-amber-800 font-black">🔍 提示 2：</span>${q.hint2}`;
+      }
+    }
+
+    function showCurrentExplanation() {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('modalExpTitle').textContent = `第 ${q.id} 題詳解：${q.tag}`;
+      document.getElementById('modalExpBody').innerHTML = `
+        <div class="p-3 bg-rose-50 rounded-xl border border-rose-200 mb-3">
+          <div class="font-black text-rose-950 text-xs mb-1">題目：${q.question}</div>
+          <div class="text-xs text-emerald-700 font-black">正確解答：${q.options.find(o => o.correct)?.text}</div>
+        </div>
+        <div class="font-bold text-slate-700 leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+          ${q.explanation}
+        </div>
+      `;
+      document.getElementById('explanationModal').classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('explanationModal').classList.add('hidden');
+    }
+
+    function toggleFormulaModal() {
+      playSound('click');
+      const modal = document.getElementById('formulaModal');
+      modal.classList.toggle('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       全題目一覽模式
+       ------------------------------------------------------------------------- */
+    function toggleAllQuestionsView() {
+      playSound('click');
+      isOverviewMode = !isOverviewMode;
+      const singleView = document.getElementById('singleQuestionView');
+      const allView = document.getElementById('allQuestionsView');
+      const singleNav = document.getElementById('singleNavControls');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        singleView.classList.add('hidden');
+        singleNav.classList.add('hidden');
+        allView.classList.remove('hidden');
+        btnText.textContent = '返回單題闖關模式';
+        renderAllQuestionsList();
+      } else {
+        singleView.classList.remove('hidden');
+        singleNav.classList.remove('hidden');
+        allView.classList.add('hidden');
+        btnText.textContent = '一次瀏覽全部題目 (含圖)';
+        renderCurrentQuestion();
+      }
+      renderTopUnitNav();
+    }
+
+    function renderAllQuestionsList() {
+      const container = document.getElementById('allQuestionsContainer');
+      if (!container) return;
+
+      sliceExploded = false;
+      let html = '';
+      QUESTIONS_DB.forEach(q => {
+        const visualHTML = buildQuestionVisualHTML(q, false);
+        html += `
+          <div class="bakery-card rounded-3xl p-5 border-2 border-rose-200 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-rose-100 pb-2 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-rose-600 text-white text-xs px-2.5 py-0.5 rounded-lg font-black">第 ${q.id} 題</span>
+                <span class="text-xs font-black text-rose-950">${q.tag}</span>
+                <span class="bg-rose-100 text-rose-800 text-[11px] px-2 py-0.5 rounded-full font-bold">第 ${q.stage} 區・${q.stageName}</span>
+              </div>
+              <button onclick="jumpToQuestion(${q.id - 1})" class="bouncy-btn text-xs font-black text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-xl border border-rose-200">
+                🚀 跳到這題練習
+              </button>
+            </div>
+
+            <h3 class="font-black text-base text-slate-800 leading-snug">${q.question}</h3>
+
+            <div class="w-full bg-amber-50/40 rounded-2xl border border-dashed border-rose-200 p-3 flex flex-col items-center justify-center">
+              ${visualHTML}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              ${q.options.map((opt, i) => `
+                <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${opt.correct ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black' : 'bg-white border-slate-200 text-slate-600'}">
+                  <span>${['A','B','C','D'][i]}. ${opt.text}</span>
+                  ${opt.correct ? '<span class="text-emerald-600 font-black">✓ 正確解答</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-rose-50/80 rounded-xl border border-rose-200 text-xs text-rose-950 leading-relaxed font-bold whitespace-pre-line">
+              💡 詳解：${q.explanation}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       回 3D 冒險群島地圖 (同時支援 math_island_adventure.html 的按鈕 ID)
+       ------------------------------------------------------------------------- */
+    function returnToMainMap(isCompleted = false) {
+      playSound('click');
+      try {
+        if (window.parent && window.parent !== window) {
+          if (isCompleted) {
+            const parentCompleteBtn =
+              window.parent.document.getElementById('btn-complete-game') ||
+              window.parent.document.getElementById('btn-complete-and-back');
+            if (parentCompleteBtn) {
+              parentCompleteBtn.click();
+              return;
+            }
+          }
+          const parentCloseBtn = window.parent.document.getElementById('btn-close-game');
+          if (parentCloseBtn) {
+            parentCloseBtn.click();
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Parent interaction restricted, falling back to direct navigation', e);
+      }
+      window.location.href = './math_island_adventure.html';
+    }
+
+    /* -------------------------------------------------------------------------
+       頁面載入初始化
+       ------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+    });
+  </script>
+</body>
+</html>

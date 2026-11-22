@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>規律神探事務所：生活表格與密碼規律大冒險 (三上數學第9單元)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@600;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #eef2ff;
+      color: #1e1b4b;
+      margin: 0;
+      padding: 0;
+    }
+    .font-comic { font-family: 'Fredoka', 'Noto Sans TC', sans-serif; }
+
+    /* 捲軸美化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #e0e7ff; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #818cf8; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+
+    /* 彈跳按鈕效果 */
+    .bouncy-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bouncy-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .bouncy-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* 柔和發光與卡片陰影 */
+    .detective-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px -5px rgba(79, 70, 229, 0.16), 0 0 0 1.5px rgba(99, 102, 241, 0.25);
+    }
+
+    /* 平滑動畫過渡 */
+    .trans-smooth {
+      transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 十字交會高光呼吸特效 */
+    @keyframes pulse-target {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    }
+    .cell-target-glow {
+      animation: pulse-target 1.6s infinite;
+    }
+  </style>
+</head>
+<body class="bg-indigo-50/70 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- =========================================================================
+       1. 頂部導覽列與單元題號導航
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-indigo-200 sticky top-0 z-40 px-3 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題與標籤 -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-sky-500 text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-indigo-300">
+          📊
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm md:text-base font-black text-indigo-950 flex items-center gap-1.5 leading-tight">
+              三上第 9 單元：列表與規律
+            </h1>
+            <span class="bg-indigo-100 text-indigo-800 text-[11px] px-2.5 py-0.5 rounded-full border border-indigo-300 font-extrabold hidden sm:inline">
+              翰林版 115上
+            </span>
+          </div>
+          <span id="stageBadge" class="text-xs font-black text-indigo-700 inline-block mt-0.5">
+            第 1 區：報讀一維與生活統計表
+          </span>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕列 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <!-- 切換模式 -->
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1 border border-indigo-400">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <!-- 看解析 -->
+        <button onclick="showCurrentExplanation()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+          <span>💡</span>
+          <span>看解析</span>
+        </button>
+
+        <!-- 自動下一題 -->
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <!-- 星星積分 -->
+        <div class="flex items-center bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs">
+          <span class="text-amber-500 text-sm mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0 分</span>
+        </div>
+
+        <!-- 音效開關 -->
+        <button id="muteBtn" onclick="toggleMute()" title="切換音效" class="bouncy-btn w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-sm shadow-xs">
+          🔊
+        </button>
+
+        <!-- 規律秘笈重點卡 -->
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-amber-950 border border-amber-300 shadow-sm flex items-center gap-1">
+          <span>📜</span>
+          <span>規律秘笈</span>
+        </button>
+
+        <!-- 返回 3D 地圖按鈕 (支援 iframe 或獨立分頁) -->
+        <button onclick="returnToMainMap()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-rose-500 hover:bg-rose-600 text-white border border-rose-400 shadow-sm flex items-center gap-1">
+          <span>🏝️</span>
+          <span>回 3D 地圖</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元分段與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-indigo-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 上下題切換條 (單題模式時顯示) -->
+    <div id="singleNavControls" class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0 flex items-center gap-1">
+        <span>◀</span>
+        <span>上一題</span>
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-indigo-800 font-bold mb-0.5 px-0.5">
+          <span id="progressPercentText">進度：第 1 / 20 題</span>
+          <span id="accuracyText">正確率：100%</span>
+        </div>
+        <div class="w-full bg-indigo-100 rounded-full h-2 overflow-hidden border border-indigo-200">
+          <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-sky-500 h-2 rounded-full transition-all duration-300" style="width: 5%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 shadow-xs flex items-center gap-1">
+        <span>下一題</span>
+        <span>▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. 主要作答主體區 (單題闖關模式)
+       ========================================================================= -->
+  <main id="singleQuestionView" class="max-w-5xl mx-auto w-full px-3 py-4 flex-1 flex flex-col justify-center">
+    <div class="detective-card rounded-3xl p-4 sm:p-6 border-2 border-indigo-200 shadow-xl flex flex-col gap-4">
+
+      <!-- 頂部題目標籤與迷思提醒 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 border-b border-indigo-100 pb-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="questionTag" class="bg-indigo-600 text-white font-black text-xs px-3 py-1 rounded-xl shadow-xs">
+            Q1 班級票選統計表
+          </span>
+          <span id="stageNameTag" class="bg-indigo-100 text-indigo-800 font-extrabold text-xs px-2.5 py-1 rounded-xl border border-indigo-200">
+            第 1 區：報讀一維與生活統計表
+          </span>
+        </div>
+        <div id="misconceptionBadge" class="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
+          <span>🕵️ 神探提醒：</span>
+          <span id="misconceptionText">先對齊橫列與直欄標題，再讀交叉格的數字！</span>
+        </div>
+      </div>
+
+      <!-- 題目文字陳述 -->
+      <div class="text-base sm:text-lg font-black text-slate-800 leading-snug">
+        <span class="text-indigo-600 mr-1.5" id="qNumberPrefix">第 1 題.</span>
+        <span id="questionText">題目載入中...</span>
+      </div>
+
+      <!-- 視覺互動展演舞台 (互動表格十字雷射 / 圖形規律分組框 / 數列跳躍弧線) -->
+      <div id="interactiveStage" class="w-full bg-slate-50/90 rounded-2xl border-2 border-indigo-200 p-3 sm:p-4 min-h-[210px] flex flex-col items-center justify-center relative overflow-hidden transition-all">
+        <!-- 動態由 buildQuestionVisualHTML 填入 -->
+      </div>
+
+      <!-- 操作輔助按鈕列與思考提示 (Hint 1 / Hint 2) -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+        <div class="flex items-center gap-2 flex-wrap" id="actionToolsArea">
+          <!-- 互動教具按鈕 (十字雷射對焦 / 框出規律小組 / 顯示差額箭頭) -->
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="revealHint(1)" class="bouncy-btn text-xs font-bold text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-300">
+            💡 提示 1
+          </button>
+          <button onclick="revealHint(2)" class="bouncy-btn text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+            🔍 提示 2
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示內容顯示區塊 (預設收起) -->
+      <div id="hintDisplayArea" class="hidden text-xs font-bold text-slate-700 bg-indigo-50/80 p-2.5 rounded-xl border border-indigo-200 transition-all"></div>
+
+      <!-- 選項按鈕區 (4 選 1) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1" id="optionsGrid">
+        <!-- 動態填入選項 -->
+      </div>
+
+      <!-- 作答反饋提示卡 (答對綠色 / 答錯溫馨提示) -->
+      <div id="feedbackBox" class="hidden rounded-2xl p-4 transition-all duration-300">
+        <div class="flex items-start gap-3">
+          <div id="feedbackIcon" class="text-2xl shrink-0">🎉</div>
+          <div>
+            <h4 id="feedbackTitle" class="font-black text-sm md:text-base">答對了！太厲害了！</h4>
+            <p id="feedbackDetail" class="text-xs md:text-sm font-bold mt-0.5 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       3. 全題目一覽模式 (一次檢視全部 20 題，含圖、選項與完整詳解)
+       ========================================================================= -->
+  <section id="allQuestionsView" class="hidden max-w-5xl mx-auto w-full px-3 py-4 flex-1">
+    <div class="detective-card rounded-3xl p-5 border-2 border-indigo-200 mb-4 bg-white/95">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-lg font-black text-indigo-950 flex items-center gap-2">
+            <span>📚</span>
+            <span>三上第 9 單元：列表與規律 全 20 題題庫全景一覽</span>
+          </h2>
+          <p class="text-xs font-bold text-slate-500 mt-0.5">適合課堂投影講解、觀察表格交叉格與規律分組，點選每題可直接跳至單題模式練習！</p>
+        </div>
+        <button onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
+          返回單題闖關模式
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4" id="allQuestionsContainer">
+      <!-- 動態填入全部題目卡片 -->
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. 彈出視窗：看解析 Modal
+       ========================================================================= -->
+  <div id="explanationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-indigo-300 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-indigo-100">
+        <h3 id="modalExpTitle" class="text-base font-black text-indigo-950 flex items-center gap-2">
+          <span>💡</span>
+          <span>本題深度詳解</span>
+        </h3>
+        <button onclick="closeExplanationModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div id="modalExpBody" class="mt-4 text-sm leading-relaxed"></div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeExplanationModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs">
+          我知道了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. 彈出視窗：規律秘笈重點卡 Modal
+       ========================================================================= -->
+  <div id="formulaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-200">
+        <h3 class="text-lg font-black text-amber-950 flex items-center gap-2">
+          <span>📜</span>
+          <span>三年級列表與規律神探大秘笈（翰林版精華考點）</span>
+        </h3>
+        <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div class="mt-4 space-y-4 text-xs sm:text-sm text-slate-700 font-bold">
+        <!-- 秘笈 1 -->
+        <div class="p-3.5 bg-indigo-50 rounded-2xl border border-indigo-200">
+          <h4 class="font-black text-indigo-900 text-sm mb-1">🎯 1. 二維表格報讀「十字交叉法」</h4>
+          <p class="text-indigo-950 text-base font-black mb-1">
+            先找「橫列」➔ 再找「直欄」➔ 兩線交叉格就是答案！
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-rose-600 font-black">階梯式火車票價表</span>：先找到兩個車站名稱，一個往橫走、一個往直走，在轉角相交的那一格就是兩站之間的單程票價。</li>
+            <li><span class="text-indigo-700 font-black">注意附加條件</span>：看清楚題目問的是「全票」還是「孩童/愛心優待票」，或是買「來回票（要乘以 2）」還是「2 張全票加 1 張半票」！</li>
+          </ul>
+        </div>
+        <!-- 秘笈 2 -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
+          <h4 class="font-black text-amber-900 text-sm mb-1">🔄 2. 圖案與顏色的「重複循環規律」</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-amber-800 font-black">先圈出「幾個一組」</span>：例如「🔴🟡🔵 🔴🟡🔵」是每 <span class="font-black text-rose-600">3 個一組</span> 重複出現；「⭐🌙🌙☀️ ⭐🌙🌙☀️」是每 <span class="font-black text-rose-600">4 個一組</span> 重複出現。</li>
+            <li><span class="text-amber-800 font-black">預測第 N 個圖案</span>：可以幾個一組繼續往下數，也可以用除法想（例如每 3 個一組，第 10 個就是 10 ÷ 3 ＝ 3 組 … 餘 1，代表和每一組的「第 1 個」相同！）。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 3 -->
+        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <h4 class="font-black text-emerald-900 text-sm mb-1">🔢 3. 數字規律「相鄰差額法」</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-emerald-700 font-black">越來越大（加法規律）</span>：算出相鄰兩數相差多少（例如 15 ➔ 20 ➔ 25 ➔ 30，每次 <span class="font-black text-emerald-900">＋5</span>）。</li>
+            <li><span class="text-emerald-700 font-black">越來越小（減法規律）</span>：例如 92 ➔ 88 ➔ 84 ➔ 80，每次 <span class="font-black text-rose-600">－4</span>。</li>
+            <li><span class="text-emerald-700 font-black">單雙號門牌規律</span>：馬路同一邊的門牌通常是奇數（1, 3, 5, 7... 每次＋2）或偶數（2, 4, 6, 8... 每次＋2）。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 4 -->
+        <div class="p-3.5 bg-sky-50 rounded-2xl border border-sky-200">
+          <h4 class="font-black text-sky-900 text-sm mb-1">🧩 4. 百數表與月曆格子的上下左右密碼</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-sky-700 font-black">一列有 10 格（百數表）</span>：往右 1 格是 <span class="font-black">＋1</span>，往左 1 格是 <span class="font-black">－1</span>；往下 1 列是 <span class="font-black text-rose-600">＋10</span>，往上 1 列是 <span class="font-black text-rose-600">－10</span>。</li>
+            <li><span class="text-sky-700 font-black">一星期有 7 天（月曆）</span>：同一個星期幾往下 1 週是 <span class="font-black text-indigo-700">＋7</span>；車廂一排有 4 個座位時，往下 1 排同位置是 <span class="font-black text-indigo-700">＋4</span>。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs">
+          記住秘笈了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       6. 闖關完成結算彈窗 (3 星通關，可點擊返回 3D 群島)
+       ========================================================================= -->
+  <div id="completionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-indigo-400 text-center transform transition-all scale-100">
+      <div class="text-5xl mb-2 animate-bounce">🏆</div>
+      <h3 class="text-2xl font-black text-indigo-950">恭喜成為規律大神探！</h3>
+      <p class="text-xs font-bold text-slate-500 mt-1">三年級數學第 9 單元：列表與規律 實力認證</p>
+
+      <div class="my-5 p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-200">
+        <div class="text-3xl text-amber-500 mb-1" id="endStarsDisplay">⭐⭐⭐</div>
+        <div class="text-lg font-black text-slate-800" id="endScoreDisplay">最終得分：100 分</div>
+        <div class="text-xs text-indigo-800 font-bold mt-1" id="endAccDisplay">正確率：100%（20/20）</div>
+      </div>
+
+      <p class="text-xs text-slate-600 font-bold mb-5 leading-relaxed">
+        你已經徹底掌握一維與二維表格交叉報讀、火車票價與時刻表查詢、圖形重複循環與數字階梯規律推理！
+        快將這份榮耀帶回 3D 數學冒險群島吧！
+      </p>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="returnToMainMap(true)" class="bouncy-btn w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-500 text-white font-black text-sm shadow-lg flex items-center justify-center gap-2">
+          <span>🏝️</span>
+          <span>領取 3 顆星並返回 3D 冒險群島</span>
+        </button>
+        <button onclick="restartQuiz()" class="bouncy-btn w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+          🔄 重新挑戰規律神探事務所
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       7. 頁尾資訊
+       ========================================================================= -->
+  <footer class="bg-white/80 border-t border-indigo-100 py-2 px-3 text-center text-[11px] text-indigo-900 font-bold">
+    三年級數學冒險群島系列教材・第 09 單元【列表與規律】・符合臺灣教育部 108 課綱與 115上 翰林版
+  </footer>
+
+  <!-- =========================================================================
+       8. 核心 JavaScript 邏輯與 20 題完整題庫系統
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       Web Audio API 音效合成器 (100% 離線純合成，無載入依賴)
+       ------------------------------------------------------------------------- */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(500, now);
+          osc.frequency.exponentialRampToValueAtTime(760, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.26);
+          });
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(185, now);
+          osc.frequency.linearRampToValueAtTime(115, now + 0.22);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.23);
+        } else if (type === 'victory') {
+          const freqs = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+          freqs.forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.1);
+            gain.gain.setValueAtTime(0.24, now + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.42);
+          });
+        } else if (type === 'scan') {
+          // 神探雷射對焦與規律掃描音效
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(380, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.11);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        }
+      } catch (e) {
+        console.warn('Audio error:', e);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       20 道精選題庫資料庫 (翰林版 115上 第 9 單元：列表與規律)
+       ------------------------------------------------------------------------- */
+    const QUESTIONS_DB = [
+      // ================= 第 1 區：報讀一維與生活統計表 (Q1 ~ Q4) =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "報讀一維與生活統計表",
+        tag: "Q1 最喜歡的水果統計表",
+        misconception: "看清題目問的是「最多和最少相差幾人」，不是直接選最多的人數！",
+        visualType: "table_1d",
+        tableTitle: "🍓 三年甲班最喜歡的水果人數統計表",
+        headers: ["水果種類", "🍎 蘋果", "🍌 香蕉", "🍓 草莓", "🍇 葡萄"],
+        rows: [
+          ["票數（人）", "7", "5", "12", "4"]
+        ],
+        highlightCol: 3,
+        highlightCol2: 4,
+        question: "下表是三年甲班同學票選「最喜歡的水果」統計表。請問喜歡「最多人」的水果和「最少人」的水果，相差幾個人？",
+        options: [
+          { text: "8 個人", correct: true, note: "太棒了！最多是草莓 12 人，最少是葡萄 4 人，12 － 4 ＝ 8 個人！" },
+          { text: "12 個人", correct: false, note: "12 人是喜歡草莓的人數，題目問的是最多和最少「相差」幾人喔！" },
+          { text: "7 個人", correct: false, note: "草莓 12 人減掉香蕉 5 人是 7 人，但最少人的是葡萄（4 人）喔！" },
+          { text: "16 個人", correct: false, note: "16 人是把 12 和 4 加起來了，求「相差」要用減法（12 － 4）喔！" }
+        ],
+        hint1: "先從表格找出票數最多的是哪一種水果（12 人），票數最少的是哪一種水果（4 人）。",
+        hint2: "把最多的人數減掉最少的人數：12 － 4 ＝ 8 個人。",
+        explanation: "從表格中可以看到：\n最多人喜歡的是草莓（12 人），最少人喜歡的是葡萄（4 人）。\n兩者相差：12 － 4 ＝ 8（人）。"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "報讀一維與生活統計表",
+        tag: "Q2 班級圖書借閱合計反推",
+        misconception: "已知「合計總數」求其中一欄時，要用總數減去其他已知項目",
+        visualType: "table_1d",
+        tableTitle: "📚 班級圖書角本週借閱數量表",
+        headers: ["類別", "🧪 自然科學", "🏰 童話故事", "🕵️ 偵探推理", "合計"],
+        rows: [
+          ["本數（本）", "14", "20", "？", "45"]
+        ],
+        highlightCol: 3,
+        highlightCol2: 4,
+        question: "班級圖書角統計本週借出的書，「合計」共借出 45 本。如果不小心把「偵探推理」那一格塗髒了，請問偵探推理借出了幾本？",
+        options: [
+          { text: "11 本", correct: true, note: "完全正確！45 － 14 － 20 ＝ 11 本，神探推理成功！" },
+          { text: "34 本", correct: false, note: "34 本是自然科學（14）加童話故事（20）的和，還要再用總數 45 去減喔！" },
+          { text: "25 本", correct: false, note: "45 只減掉 20 是 25，別忘了還要減掉自然科學的 14 本喔！" },
+          { text: "79 本", correct: false, note: "45 本已經是全部加起來的「合計」，不能把 45 跟 14、20 又加起來喔！" }
+        ],
+        hint1: "「合計 45 本」代表自然科學 ＋ 童話故事 ＋ 偵探推理 ＝ 45 本。",
+        hint2: "先算 14 ＋ 20 ＝ 34 本，再用合計減去它們：45 － 34 ＝ 11 本。",
+        explanation: "表格中的「合計」是所有項目的總和：\n自然科學（14 本）＋ 童話故事（20 本）＝ 34 本。\n全部合計 45 本 － 34 本 ＝ 11 本（偵探推理）。"
+      },
+      {
+        id: 3,
+        stage: 1,
+        stageName: "報讀一維與生活統計表",
+        tag: "Q3 功課表橫列直欄查詢",
+        misconception: "看功課表時，先找上面「星期幾（直欄）」，再對照左邊「第幾節（橫列）」",
+        visualType: "table_2d_grid",
+        tableTitle: "🏫 三年乙班每週功課表（節選）",
+        headers: ["節次 \\ 星期", "星期一", "星期二", "星期三", "星期四", "星期五"],
+        rows: [
+          ["第 1 節", "國語", "數學", "國語", "自然", "國語"],
+          ["第 2 節", "數學", "國語", "英語", "數學", "社會"],
+          ["第 3 節", "體育", "音樂", "社會", "美勞", "體育"],
+          ["第 4 節", "自然", "社會", "數學", "國語", "音樂"]
+        ],
+        targetRow: 2,
+        targetCol: 4,
+        question: "查看三年乙班的功課表，請問「星期四」的「第 3 節」是什麼課？而且這一週（星期一到五的前 4 節）一共有幾節「數學課」？",
+        options: [
+          { text: "美勞課；共有 4 節數學課", correct: true, note: "太精準了！星期四第 3 節是美勞課，且表內共有 4 節數學課！" },
+          { text: "社會課；共有 4 節數學課", correct: false, note: "社會課是星期三第 3 節（或星期二第 4 節），星期四第 3 節是美勞課喔！" },
+          { text: "美勞課；共有 3 節數學課", correct: false, note: "再仔細數數看：星期一第2節、星期二第1節、星期三第4節、星期四第2節，共有 4 節數學喔！" },
+          { text: "自然課；共有 5 節數學課", correct: false, note: "自然課是星期四第 1 節，對準第 3 節橫列看過去是美勞課喔！" }
+        ],
+        hint1: "先從最上面找到「星期四」往下看，再從最左邊找到「第 3 節」往右看，交叉的那一格是什麼課？",
+        hint2: "逐一檢查星期一到星期五每一欄裡出現幾個「數學」。",
+        explanation: "1. 找「星期四（直欄）」與「第 3 節（橫列）」的交會格，答案是【美勞課】。\n2. 數一數表內的「數學」：週一第2節、週二第1節、週三第4節、週四第2節，總共【4 節】數學課。"
+      },
+      {
+        id: 4,
+        stage: 1,
+        stageName: "報讀一維與生活統計表",
+        tag: "Q4 烘焙坊雙向庫存表",
+        misconception: "賣出數量 ＝ 原有數量 － 剩下數量",
+        visualType: "table_2d_grid",
+        tableTitle: "🥐 幸福烘焙坊今日麵包銷售紀錄表",
+        headers: ["狀態 \\ 品項", "🍍 菠蘿麵包", "🍓 草莓餐包", "🧀 起司貝果"],
+        rows: [
+          ["早上出爐（個）", "50", "45", "36"],
+          ["下午剩下（個）", "12", "8", "16"],
+          ["今日賣出（個）", "38", "？", "20"]
+        ],
+        targetRow: 2,
+        targetCol: 2,
+        question: "幸福烘焙坊記錄了今天早上的出爐數量與下午剩下的數量。請問今天「草莓餐包」一共賣出幾個？",
+        options: [
+          { text: "37 個", correct: true, note: "完全正確！草莓餐包早上出爐 45 個，剩下 8 個，45 － 8 ＝ 37 個！" },
+          { text: "53 個", correct: false, note: "53 個是把 45 和 8 加起來了！賣出的數量應該用「出爐 － 剩下」喔！" },
+          { text: "38 個", correct: false, note: "38 個是隔壁「菠蘿麵包」賣出的數量，看清楚直欄是「草莓餐包」喔！" },
+          { text: "20 個", correct: false, note: "20 個是「起司貝果」賣出的數量喔！" }
+        ],
+        hint1: "先對準「🍓 草莓餐包」這一直欄：早上出爐 45 個，下午剩下 8 個。",
+        hint2: "賣出的數量 ＝ 早上出爐 － 下午剩下，算算看 45 － 8 等於多少？",
+        explanation: "對準「🍓 草莓餐包」直欄：\n早上出爐 45 個，下午剩下 8 個。\n今日賣出 ＝ 45 － 8 ＝ 37（個）。"
+      },
+
+      // ================= 第 2 區：報讀二維交叉表格：票價表與時刻表 (Q5 ~ Q8) =================
+      {
+        id: 5,
+        stage: 2,
+        stageName: "報讀二維交叉表格：票價與時刻表",
+        tag: "Q5 森林小火車階梯票價表",
+        misconception: "階梯式票價表：找起站與迄站的橫直交會格！",
+        visualType: "train_fare_triangle",
+        tableTitle: "🚂 阿里山森林小火車單程票價表（單位：元）",
+        stations: ["嘉義", "北門", "竹崎", "奮起湖", "阿里山"],
+        fares: [
+          // 嘉義列
+          ["嘉義", "-", "-", "-", "-"],
+          ["30", "北門", "-", "-", "-"],
+          ["70", "45", "竹崎", "-", "-"],
+          ["240", "210", "170", "奮起湖", "-"],
+          ["400", "370", "330", "180", "阿里山"]
+        ],
+        targetRow: 3, // 奮起湖
+        targetCol: 1, // 北門
+        question: "觀察上方的「森林小火車單程票價表」（可點擊下方【開啟十字座標光束】輔助）。請問從「北門」搭車到「奮起湖」，買 1 張單程票要多少元？",
+        options: [
+          { text: "210 元", correct: true, note: "太棒了！「北門」往下看、「奮起湖」往左看，交叉格正好是 210 元！" },
+          { text: "240 元", correct: false, note: "240 元是從「嘉義」到「奮起湖」的票價，看錯直欄囉！" },
+          { text: "170 元", correct: false, note: "170 元是從「竹崎」到「奮起湖」的票價喔！" },
+          { text: "370 元", correct: false, note: "370 元是從「北門」一路搭到終點「阿里山」的票價喔！" }
+        ],
+        hint1: "在階梯票價表上找到「北門」和「奮起湖」這兩個站名。",
+        hint2: "從「北門」往下對齊、從「奮起湖」往左對齊，兩條線交會的那一格數字就是票價！",
+        explanation: "報讀階梯式票價表時：\n1. 找到上方站名「北門」往下看（第 2 直欄）。\n2. 找到右方站名「奮起湖」往左看（第 4 橫列）。\n3. 兩條線交叉格的數字是 210，因此單程票價為 210 元。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "報讀二維交叉表格：票價與時刻表",
+        tag: "Q6 小火車「來回票」應用題",
+        misconception: "注意題目問的是「來回（去程＋回程）」，查出單程票價後要乘以 2！",
+        visualType: "train_fare_triangle",
+        tableTitle: "🚂 阿里山森林小火車單程票價表（單位：元）",
+        stations: ["嘉義", "北門", "竹崎", "奮起湖", "阿里山"],
+        fares: [
+          ["嘉義", "-", "-", "-", "-"],
+          ["30", "北門", "-", "-", "-"],
+          ["70", "45", "竹崎", "-", "-"],
+          ["240", "210", "170", "奮起湖", "-"],
+          ["400", "370", "330", "180", "阿里山"]
+        ],
+        targetRow: 4, // 阿里山
+        targetCol: 3, // 奮起湖
+        question: "承上表，阿公從「奮起湖」搭小火車到「阿里山」看日出，看完日出再搭同路線小火車回到「奮起湖」。請問阿公【來回一趟】共要付多少元車資？",
+        options: [
+          { text: "360 元", correct: true, note: "完全正確！奮起湖到阿里山單程是 180 元，來回兩趟 180 ＋ 180 ＝ 360 元！" },
+          { text: "180 元", correct: false, note: "180 元只是「單程（去程）」的票價，阿公還要搭車回奮起湖（來回 2 趟）喔！" },
+          { text: "660 元", correct: false, note: "330 元是「竹崎到阿里山」的票價，奮起湖到阿里山單程是 180 元喔！" },
+          { text: "400 元", correct: false, note: "400 元是嘉義到阿里山的單程票價喔！" }
+        ],
+        hint1: "先從表格查出「奮起湖」到「阿里山」的單程票價是多少元？（交會格是 180 元）",
+        hint2: "「來回一趟」代表去程 180 元 ＋ 回程 180 元（或 180 × 2）。",
+        explanation: "1. 查詢「奮起湖」與「阿里山」的交會格，單程票價為 180 元。\n2. 來回一趟包含去程與回程：180 ＋ 180 ＝ 360 元（或 180 × 2 ＝ 360 元）。"
+      },
+      {
+        id: 7,
+        stage: 2,
+        stageName: "報讀二維交叉表格：票價與時刻表",
+        tag: "Q7 火車時刻表車次挑選",
+        misconception: "要在指定時間「之前」抵達，且開車時間必須在到達車站「之後」",
+        visualType: "table_2d_grid",
+        tableTitle: "🚄 臺鐵自強號北上時刻表（臺中 ➔ 臺北）",
+        headers: ["車次", "102 次", "106 次", "112 次", "118 次"],
+        rows: [
+          ["臺中（開車時間）", "07 : 15", "08 : 10", "08 : 45", "09 : 30"],
+          ["新竹（開車時間）", "08 : 12", "09 : 05", "09 : 42", "10 : 28"],
+          ["臺北（抵達時間）", "09 : 10", "10 : 05", "10 : 40", "11 : 25"]
+        ],
+        targetRow: 0,
+        targetCol: 2,
+        question: "爸爸早上「08 : 00」到達臺中火車站，他想要在早上「10 : 30 以前」抵達臺北開會。請問爸爸應該搭乘哪一班車次最合適？",
+        options: [
+          { text: "106 次（08:10 開車，10:05 抵達臺北）", correct: true, note: "太聰明了！08:00 到車站趕得上 08:10 開車的 106 次，且 10:05 就到臺北了！" },
+          { text: "102 次（07:15 開車，09:10 抵達臺北）", correct: false, note: "爸爸 08:00 才到臺中火車站，07:15 的 102 次火車早就開走囉！" },
+          { text: "112 次（08:45 開車，10:40 抵達臺北）", correct: false, note: "112 次抵達臺北已經 10:40，超過爸爸開會的 10:30 了喔！" },
+          { text: "118 次（09:30 開車，11:25 抵達臺北）", correct: false, note: "118 次到臺北已經 11:25，來不及參加 10:30 的會議喔！" }
+        ],
+        hint1: "條件一：爸爸 08:00 到達臺中站，所以火車在臺中的「開車時間」必須比 08:00 晚（排除 102 次）。",
+        hint2: "條件二：必須在「10:30 以前」抵達臺北，看看剩下的車次哪一班抵達臺北早於 10:30？",
+        explanation: "同時檢查兩個時間條件：\n1. 臺中開車時間要比 08:00 晚 ➔ 106 次(08:10)、112 次(08:45)、118 次(09:30) 都可以搭。\n2. 臺北抵達時間要比 10:30 早 ➔ 只有【106 次】（10:05 抵達）符合條件！"
+      },
+      {
+        id: 8,
+        stage: 2,
+        stageName: "報讀二維交叉表格：票價與時刻表",
+        tag: "Q8 海洋公園全票與優待票表",
+        misconception: "看清楚「平日 vs 假日」以及「成人全票 vs 學童票」的交叉格",
+        visualType: "table_2d_grid",
+        tableTitle: "🐬 夢幻海洋公園門票價目表",
+        headers: ["票種 \\ 時段", "☀️ 平日票價", "🎈 假日票價", "🌙 星光票(16:00後)"],
+        rows: [
+          ["👨 成人全票", "350 元", "450 元", "250 元"],
+          ["🧒 學童優待票", "220 元", "300 元", "150 元"],
+          ["👵 敬老博愛票", "180 元", "200 元", "100 元"]
+        ],
+        targetRow: 1,
+        targetCol: 2,
+        question: "禮拜日（假日）早上，媽媽（1 張成人全票）帶著讀三年級的小明（1 張學童優待票）去海洋公園玩，請問買門票一共要付多少元？",
+        options: [
+          { text: "750 元", correct: true, note: "完全正確！假日成人票 450 元 ＋ 假日學童票 300 元 ＝ 750 元！" },
+          { text: "570 元", correct: false, note: "570 元是「平日」（350 ＋ 220）的票價，禮拜日是「假日」喔！" },
+          { text: "400 元", correct: false, note: "400 元是「星光票」（250 ＋ 150），他們是早上入園，要看「假日票價」喔！" },
+          { text: "650 元", correct: false, note: "650 元是假日成人票（450）加敬老票（200），小明要買學童優待票（300 元）喔！" }
+        ],
+        hint1: "禮拜日早上入園，要對準「🎈 假日票價」這一直欄。",
+        hint2: "假日成人全票是 450 元，假日學童優待票是 300 元，把兩個加起來！",
+        explanation: "對準「🎈 假日票價」直欄：\n1. 媽媽買 1 張成人全票：450 元\n2. 小明買 1 張學童優待票：300 元\n合計：450 ＋ 300 ＝ 750 元。"
+      },
+
+      // ================= 第 3 區：圖案、顏色與形狀的重複規律 (Q9 ~ Q12) =================
+      {
+        id: 9,
+        stage: 3,
+        stageName: "圖案、顏色與形狀的重複規律",
+        tag: "Q9 3個一組的彩色串珠",
+        misconception: "先找出「幾個一組」重複出現，即可推算下一個圖案",
+        visualType: "pattern_shapes",
+        patternTitle: "📿 小美製作的規律手鍊（每 3 顆一組重複）",
+        cycleLength: 3,
+        items: ["🔴紅", "🟡黃", "🔵藍", "🔴紅", "🟡黃", "🔵藍", "🔴紅", "？", "🔵藍"],
+        hiddenIndex: 7,
+        question: "小美按照「紅、黃、藍、紅、黃、藍……」的規律串手鍊（可點擊【框出重複循環小組】觀察）。請問第 8 顆「？」應該串上什麼顏色的珠子？",
+        options: [
+          { text: "🟡 黃色珠子", correct: true, note: "太棒了！每 3 顆（紅、黃、藍）一組，第 7 顆是紅，第 8 顆就是黃色！" },
+          { text: "🔴 紅色珠子", correct: false, note: "第 7 顆已經是紅色珠子了，紅色的下一顆應該是黃色喔！" },
+          { text: "🔵 藍色珠子", correct: false, note: "藍色珠子是每一組的第 3 顆（第 9 顆），第 8 顆是中間的黃色喔！" },
+          { text: "🟢 綠色珠子", correct: false, note: "這條手鍊只有紅、黃、藍三種顏色循環，沒有綠色喔！" }
+        ],
+        hint1: "先看看前面幾顆：「紅、黃、藍」、「紅、黃、藍」，每 3 顆珠子為一組重複出現。",
+        hint2: "第 7 顆是第 3 組的第 1 顆（紅），那麼接下來的第 8 顆就是該組的第 2 顆！",
+        explanation: "手鍊的規律是每 3 顆一組：【🔴紅、🟡黃、🔵藍】。\n第 1~3 顆：紅、黃、藍\n第 4~6 顆：紅、黃、藍\n第 7~9 顆：紅、【🟡黃】、藍\n因此第 8 顆是黃色珠子。"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "圖案、顏色與形狀的重複規律",
+        tag: "Q10 4個一組(A-B-B-C)圖形",
+        misconception: "注意同一組裡面可能有重複的圖案（例如 2 個月亮）！",
+        visualType: "pattern_shapes",
+        patternTitle: "✨ 星空走廊壁畫裝飾規律",
+        cycleLength: 4,
+        items: ["⭐星", "🌙月", "🌙月", "☀️日", "⭐星", "🌙月", "🌙月", "☀️日", "⭐星", "🌙月", "？", "☀️日"],
+        hiddenIndex: 10,
+        question: "觀察星空走廊壁畫的排列規律：「星、月、月、日、星、月、月、日……」。請問第 11 個位置「？」應該貼上哪一個圖案？",
+        options: [
+          { text: "🌙 月亮", correct: true, note: "完全正確！每一組是「星、月、月、日」有 2 個月亮，第 10 和第 11 個都是月亮！" },
+          { text: "☀️ 太陽", correct: false, note: "小心！每一組裡面有連續「2 個月亮」，第 10 個是第 1 個月亮，第 11 個還是月亮，第 12 個才是太陽喔！" },
+          { text: "⭐ 星星", correct: false, note: "星星是每一組的第 1 個（第 1、5、9 個），不是第 11 個喔！" },
+          { text: "☁️ 白雲", correct: false, note: "規律中只有星星、月亮、太陽三種圖案喔！" }
+        ],
+        hint1: "點擊下方【框出重複循環小組】按鈕，你會發現每 4 個一組是：「⭐星、🌙月、🌙月、☀️日」。",
+        hint2: "第 9~12 個是第 3 組：「⭐星(9)、🌙月(10)、🌙月(11)、☀️日(12)」。",
+        explanation: "這題是常考的 A-B-B-C 規律！\n每 4 個圖案為一組：【⭐星、🌙月、🌙月、☀️日】。\n第 9 個是⭐星、第 10 個是第 1 個🌙月，所以第 11 個是第 2 個【🌙月亮】！"
+      },
+      {
+        id: 11,
+        stage: 3,
+        stageName: "圖案、顏色與形狀的重複規律",
+        tag: "Q11 被墨水遮住的連兩格",
+        misconception: "從前後已知的圖案對照每一組的順序，還原被遮住的兩格",
+        visualType: "pattern_shapes",
+        patternTitle: "🐾 森林動物腳印地磚（每 4 塊一組）",
+        cycleLength: 4,
+        items: ["🐶狗", "🐱貓", "🐰兔", "🐻熊", "🐶狗", "？(第6)", "？(第7)", "🐻熊", "🐶狗", "🐱貓", "🐰兔", "🐻熊"],
+        hiddenIndex: 5,
+        hiddenIndex2: 6,
+        question: "森林步道地磚按照「狗、貓、兔、熊」每 4 塊一組重複排列。中間第 6 塊和第 7 塊地磚被落葉蓋住了，請問依序是什麼圖案？",
+        options: [
+          { text: "🐱 貓、🐰 兔", correct: true, note: "太厲害了！夾在「🐶狗」和「🐻熊」中間的兩塊，正好就是「🐱貓、🐰兔」！" },
+          { text: "🐰 兔、🐱 貓", correct: false, note: "順序顛倒囉！在「狗」後面的先是「貓」，再來才是「兔」喔！" },
+          { text: "🐶 狗、🐱 貓", correct: false, note: "第 5 塊已經是「🐶狗」了，所以第 6、7 塊是貓和兔喔！" },
+          { text: "🐱 貓、🐻 熊", correct: false, note: "第 8 塊已經是「🐻熊」了，第 7 塊應該是兔子喔！" }
+        ],
+        hint1: "觀察第 1~4 塊完整的一組是：「🐶狗 ➔ 🐱貓 ➔ 🐰兔 ➔ 🐻熊」。",
+        hint2: "被蓋住的第 6、7 塊剛好夾在第 5 塊「🐶狗」和第 8 塊「🐻熊」中間。",
+        explanation: "每一組的固定順序為：【1.🐶狗、2.🐱貓、3.🐰兔、4.🐻熊】。\n第 5~8 塊是第 2 組，已知第 5 塊是🐶狗、第 8 塊是🐻熊，因此中間的第 6、7 塊依序為【🐱貓、🐰兔】。"
+      },
+      {
+        id: 12,
+        stage: 3,
+        stageName: "圖案、顏色與形狀的重複規律",
+        tag: "Q12 預測第 14 面彩旗",
+        misconception: "利用「每 3 個一組」往下數，或用除法 14 ÷ 3 ＝ 4 組 … 餘 2 推理！",
+        visualType: "pattern_shapes",
+        patternTitle: "🚩 校慶運動會彩旗（每 3 面一組重複）",
+        cycleLength: 3,
+        items: ["🟥紅旗", "🟨黃旗", "🟩綠旗", "🟥紅旗", "🟨黃旗", "🟩綠旗", "🟥紅旗", "🟨黃旗", "🟩綠旗", "…(第14面？)"],
+        hiddenIndex: 9,
+        question: "操場掛著按照「紅旗、黃旗、綠旗」每 3 面一組重複排列的彩旗。如果不全部畫出來，你能推算出【第 14 面】彩旗是什麼顏色嗎？",
+        options: [
+          { text: "🟨 黃旗", correct: true, note: "神探級表現！14 ÷ 3 ＝ 4 組 … 餘 2，餘數是 2 代表跟每一組的第 2 面（黃旗）一樣！" },
+          { text: "🟥 紅旗", correct: false, note: "第 13 面才是紅旗（4 組 12 面＋第 1 面＝第 13 面），第 14 面是黃旗喔！" },
+          { text: "🟩 綠旗", correct: false, note: "綠旗是每一組的第 3 面（第 3、6、9、12、15 面），第 14 面在 15 的前面一格喔！" },
+          { text: "🟦 藍旗", correct: false, note: "彩旗只有紅、黃、綠三種顏色循環喔！" }
+        ],
+        hint1: "每 3 面一組：第 3 面、第 6 面、第 9 面、第 12 面都是每一組最後的「🟩綠旗」。",
+        hint2: "既然第 12 面是綠旗，那麼第 13 面是紅旗，第 14 面就是……（也可以想 14 ÷ 3 ＝ 4 … 2）！",
+        explanation: "方法一（分組倍數法）：\n每 3 面一組，4 組共有 3 × 4 ＝ 12 面（第 12 面是綠旗）。\n接著第 13 面是紅旗，【第 14 面就是黃旗】！\n\n方法二（除法餘數連結）：\n14 ÷ 3 ＝ 4（組）… 2（面），餘數 2 代表和每一組的第 2 面相同，即【🟨黃旗】。"
+      },
+
+      // ================= 第 4 區：單一數字規律與數列階梯 (Q13 ~ Q16) =================
+      {
+        id: 13,
+        stage: 4,
+        stageName: "單一數字規律與數列階梯",
+        tag: "Q13 等差遞增數列(＋15)",
+        misconception: "先算出相鄰兩個數字相差多少，再往後加！",
+        visualType: "number_sequence",
+        seqTitle: "🐸 數線跳跳蛙的荷葉編號（越來越大的規律）",
+        numbers: [25, 40, 55, 70, "？", 100],
+        hiddenIdx: 4,
+        stepDiff: "+15",
+        question: "觀察荷葉上的數字規律：「25 ➔ 40 ➔ 55 ➔ 70 ➔（ ？）➔ 100」（可點擊【顯示相鄰數字差額弧線】）。請問「？」荷葉上的數字是多少？",
+        options: [
+          { text: "85", correct: true, note: "完全正確！每次都加 15，所以 70 ＋ 15 ＝ 85，再加 15 剛好是 100！" },
+          { text: "80", correct: false, note: "如果是加 10 才會變 80，但 25 到 40、40 到 55 每次都是加 15 喔！" },
+          { text: "75", correct: false, note: "70 加 5 才是 75，這題的規律是每次加 15 喔！" },
+          { text: "90", correct: false, note: "70 加 15 是 85，不是 90 喔！" }
+        ],
+        hint1: "先算算看前兩個數字相差多少：40 － 25 ＝ 15；55 － 40 ＝ 15。",
+        hint2: "規律是「每次加 15（＋15）」，把 70 加上 15 就是答案囉！",
+        explanation: "觀察相鄰兩數的差：\n25 ＋ 15 ＝ 40\n40 ＋ 15 ＝ 55\n55 ＋ 15 ＝ 70\n規律是「每次 ＋15」，因此下一格為 70 ＋ 15 ＝【85】（驗算：85 ＋ 15 ＝ 100，完全吻合！）。"
+      },
+      {
+        id: 14,
+        stage: 4,
+        stageName: "單一數字規律與數列階梯",
+        tag: "Q14 等差遞減數列(－6)",
+        misconception: "數字變小時是「減法規律」，千萬別加錯方向！",
+        visualType: "number_sequence",
+        seqTitle: "🎈 熱氣球下降高度紀錄（越來越小的規律）",
+        numbers: [96, 90, 84, "？", 72, 66],
+        hiddenIdx: 3,
+        stepDiff: "-6",
+        question: "熱氣球緩緩下降，高度依序記錄為：「96 ➔ 90 ➔ 84 ➔（ ？）➔ 72 ➔ 66」。請問中間「？」的數字是多少？",
+        options: [
+          { text: "78", correct: true, note: "太棒了！每次減少 6，84 － 6 ＝ 78，78 再減 6 剛好是 72！" },
+          { text: "80", correct: false, note: "84 減 4 才是 80，但 96 到 90、90 到 84 每次都是減 6 喔！" },
+          { text: "76", correct: false, note: "計算小失誤：84 減 6，個位 14 － 6 ＝ 8，所以是 78 喔！" },
+          { text: "90", correct: false, note: "數字是越來越小的減法規律，84 要減 6 而不是加 6 喔！" }
+        ],
+        hint1: "數字越來越小，算算看每次減少多少：96 － 90 ＝ 6；90 － 84 ＝ 6。",
+        hint2: "規律是「每次減 6（－6）」，計算 84 － 6 ＝？",
+        explanation: "觀察相鄰兩數的變化：\n96 － 6 ＝ 90\n90 － 6 ＝ 84\n規律是「每次 －6」，因此 84 － 6 ＝【78】（驗算：78 － 6 ＝ 72，正確無誤！）。"
+      },
+      {
+        id: 15,
+        stage: 4,
+        stageName: "單一數字規律與數列階梯",
+        tag: "Q15 奇偶數門牌號碼規律",
+        misconception: "馬路同一側的門牌號碼只會有奇數（單號）或偶數（雙號），每次差 2！",
+        visualType: "number_sequence",
+        seqTitle: "🏠 幸福街單號側門牌號碼規律",
+        numbers: ["33號", "35號", "37號", "？", "41號", "43號"],
+        hiddenIdx: 3,
+        stepDiff: "+2",
+        question: "在臺灣的街道上，馬路同一邊的門牌號碼通常都是單號（奇數）或都是雙號（偶數）。小華走在幸福街單號側，依序看到「33號、35號、37號、（ ？）、41號」，請問被樹擋住的門牌是幾號？",
+        options: [
+          { text: "39 號", correct: true, note: "完全正確！單號門牌每次＋2，37 ＋ 2 ＝ 39 號！" },
+          { text: "38 號", correct: false, note: "38 號是雙號（偶數），會在馬路的對面那一側喔！" },
+          { text: "40 號", correct: false, note: "40 號也是雙號（偶數），單號側每次是加 2（37 ＋ 2 ＝ 39）喔！" },
+          { text: "36 號", correct: false, note: "門牌號碼往後走越來越大，且都是奇數喔！" }
+        ],
+        hint1: "觀察 33、35、37，它們全部都是奇數（單號），相鄰兩家相差幾號？",
+        hint2: "35 － 33 ＝ 2，每次加 2，所以 37 ＋ 2 ＝ 39 號。",
+        explanation: "馬路同一側的門牌號碼為連續奇數（單號），規律是「每次 ＋2」：\n33 ➔ 35 ➔ 37 ➔【39】➔ 41 ➔ 43。"
+      },
+      {
+        id: 16,
+        stage: 4,
+        stageName: "單一數字規律與數列階梯",
+        tag: "Q16 階梯漸增差數列(＋1,＋2,＋3...)",
+        misconception: "進階神探題：如果相鄰的差不是固定數字，看看「差額本身」有沒有規律！",
+        visualType: "number_sequence",
+        seqTitle: "🪜 魔法金字塔階梯密碼（差額遞增規律）",
+        numbers: [10, 11, 13, 16, 20, "？"],
+        hiddenIdx: 5,
+        stepDiff: "+1, +2, +3, +4, +5",
+        question: "【進階神探挑戰】魔法階梯上的數字依序是：「10 ➔ 11 ➔ 13 ➔ 16 ➔ 20 ➔（ ？）」。觀察每次增加的數量（＋1、＋2、＋3、＋4……），請問下一個數字「？」是多少？",
+        options: [
+          { text: "25", correct: true, note: "太強了！依序加 1、加 2、加 3、加 4，下一次就要「加 5」，20 ＋ 5 ＝ 25！" },
+          { text: "24", correct: false, note: "16 到 20 已經是「＋4」了，下一次應該要「＋5」（20 ＋ 5 ＝ 25）喔！" },
+          { text: "23", correct: false, note: "每次加的數越來越大（+1, +2, +3, +4, +5），不是加 3 喔！" },
+          { text: "26", correct: false, note: "＋4 的下一個是 ＋5，所以 20 ＋ 5 ＝ 25 喔！" }
+        ],
+        hint1: "先算出相鄰兩數的差：11－10＝1、13－11＝2、16－13＝3、20－16＝4。",
+        hint2: "每次增加的數是「＋1、＋2、＋3、＋4」，那麼下一步要「＋5」！",
+        explanation: "這題是經典的階梯差額規律：\n10 (＋1) ➔ 11 (＋2) ➔ 13 (＋3) ➔ 16 (＋4) ➔ 20 (＋5) ➔【25】！"
+      },
+
+      // ================= 第 5 區：二維百數表、座位表與規律素養挑戰 (Q17 ~ Q20) =================
+      {
+        id: 17,
+        stage: 5,
+        stageName: "百數表、座位表與規律素養挑戰",
+        tag: "Q17 百數表十字拼圖密碼",
+        misconception: "百數表一列有 10 個數：往右＋1、往左－1、往下＋10、往上－10！",
+        visualType: "grid_puzzle_100",
+        centerNum: 45,
+        topNum: 35,
+        bottomNum: "？",
+        leftNum: 44,
+        rightNum: 46,
+        question: "從「百數表（一橫列有 10 個數）」中剪下一塊十字形拼圖，正中間是「45」，上面是 35、左邊是 44、右邊是 46。請問 45 正下方的「？」是多少？",
+        options: [
+          { text: "55", correct: true, note: "完全正確！百數表每一橫列有 10 個數，往下一格就是 ＋10（45 ＋ 10 ＝ 55）！" },
+          { text: "47", correct: false, note: "47 是在 46 的右邊，正下方是下一列，要加 10 喔！" },
+          { text: "54", correct: false, note: "45 往下加 10 是 55，54 是在 55 的左邊喔！" },
+          { text: "65", correct: false, note: "65 是往下走兩列（＋20），正下方一格只要＋10 喔！" }
+        ],
+        hint1: "觀察 35 到 45：往下一列增加了 10（35 ＋ 10 ＝ 45）。",
+        hint2: "因為百數表每一橫列有 10 個數字，從 45 再往下一列也是「＋10」！",
+        explanation: "在標準百數表中（每列 10 個數）：\n左右相鄰相差 1（左－1、右＋1）；\n上下相鄰相差 10（上－10、下＋10）。\n因此 45 正下方的數為 45 ＋ 10 ＝【55】。"
+      },
+      {
+        id: 18,
+        stage: 5,
+        stageName: "百數表、座位表與規律素養挑戰",
+        tag: "Q18 觀光列車座位表規律",
+        misconception: "一排有 4 個座位，每往後一排同一個位置都「＋4」",
+        visualType: "seat_chart",
+        tableTitle: "🚆 環島觀光列車座位配置圖（每排 4 個座位）",
+        headers: ["排數", "靠窗(左)", "走道(左)", "走道(右)", "靠窗(右)"],
+        rows: [
+          ["第 1 排", "1 號", "2 號", "3 號", "4 號"],
+          ["第 2 排", "5 號", "6 號", "7 號", "8 號"],
+          ["第 3 排", "9 號", "10 號", "11 號", "12 號"],
+          ["第 4 排", "13 號", "14 號", "15 號", "？號"]
+        ],
+        targetRow: 3,
+        targetCol: 4,
+        question: "環島觀光列車每一排有 4 個座位（如上表）。請問「第 4 排靠窗(右)」是幾號？如果小琪買到「20 號」車票，她也是坐在哪一側？",
+        options: [
+          { text: "16 號；20 號也是「靠窗(右)」", correct: true, note: "太厲害了！靠窗(右)依序是 4、8、12、16、20 號（都是 4 的倍數）！" },
+          { text: "16 號；20 號是「走道(左)」", correct: false, note: "第 4 排是 16 號沒錯，但 16 再加 4 是 20 號，所以 20 號也在同一欄「靠窗(右)」喔！" },
+          { text: "17 號；20 號是「靠窗(右)」", correct: false, note: "15 號的右邊下一個號碼是 16 號（或 12 ＋ 4 ＝ 16 號），不是 17 號喔！" },
+          { text: "18 號；20 號是「靠窗(左)」", correct: false, note: "靠窗(右)每一排都＋4：4 ➔ 8 ➔ 12 ➔ 16 ➔ 20 號喔！" }
+        ],
+        hint1: "觀察最右邊「靠窗(右)」這一直欄：4 號 ➔ 8 號 ➔ 12 號，每次都加 4。",
+        hint2: "12 ＋ 4 ＝ 16 號（第 4 排靠窗右）；再往下一排 16 ＋ 4 ＝ 20 號，一樣在「靠窗(右)」這欄！",
+        explanation: "觀察「靠窗(右)」直欄的數字規律：\n第 1 排：4 號\n第 2 排：8 號（4＋4）\n第 3 排：12 號（8＋4）\n第 4 排：【16 號】（12＋4）\n第 5 排：【20 號】（16＋4），所以 20 號同樣位於「靠窗(右)」！"
+      },
+      {
+        id: 19,
+        stage: 5,
+        stageName: "百數表、座位表與規律素養挑戰",
+        tag: "Q19 花磚拼貼圖形數量規律",
+        misconception: "每多拼 1 朵小花，黃色花瓣就固定增加 4 片！",
+        visualType: "tile_flower_pattern",
+        question: "藝術家在牆上拼貼「太陽花磁磚」：\n【圖 1】有 1 顆紅花心、4 片黃花瓣；\n【圖 2】有 2 顆紅花心、8 片黃花瓣；\n【圖 3】有 3 顆紅花心、12 片黃花瓣。\n照這樣的規律，拼到【圖 5】（有 5 顆紅花心）時，需要幾片黃花瓣？",
+        options: [
+          { text: "20 片黃花瓣", correct: true, note: "完全正確！每多 1 朵花就多 4 片黃花瓣，4、8、12、16、20（或 4 × 5 ＝ 20 片）！" },
+          { text: "16 片黃花瓣", correct: false, note: "16 片是【圖 4】（12 ＋ 4 ＝ 16）的數量，題目問的是【圖 5】喔！" },
+          { text: "15 片黃花瓣", correct: false, note: "每朵花有 4 片黃花瓣，5 朵花是 4 × 5 ＝ 20 片，不是 3 × 5 喔！" },
+          { text: "24 片黃花瓣", correct: false, note: "24 片是【圖 6】的數量，圖 5 是 20 片喔！" }
+        ],
+        hint1: "觀察黃花瓣數量的規律：圖 1 是 4 片 ➔ 圖 2 是 8 片 ➔ 圖 3 是 12 片（每次 ＋4）。",
+        hint2: "繼續往下加 4：圖 4 是 12 ＋ 4 ＝ 16 片，那麼圖 5 是 16 ＋ 4 ＝？",
+        explanation: "整理成列表觀察規律：\n圖 1：4 片\n圖 2：8 片（＋4）\n圖 3：12 片（＋4）\n圖 4：16 片（＋4）\n圖 5：【20 片】（16 ＋ 4 ＝ 20，或直接用乘法 4 × 5 ＝ 20 片）。"
+      },
+      {
+        id: 20,
+        stage: 5,
+        stageName: "百數表、座位表與規律素養挑戰",
+        tag: "Q20 餐廳套餐優惠表格素養題",
+        misconception: "比較「單點加總」與「超值套餐價」，找出最省錢或差額",
+        visualType: "table_2d_grid",
+        tableTitle: "🍔 陽光漢堡店餐點價目與套餐表",
+        headers: ["組合編號", "主餐", "配餐", "飲料", "單點原價總和", "🎉 套餐特價"],
+        rows: [
+          ["A 號餐", "咔啦雞腿堡(75元)", "大薯條(45元)", "紅茶(25元)", "145 元", "125 元"],
+          ["B 號餐", "黃金魚排堡(65元)", "雞塊(40元)", "鮮奶茶(35元)", "140 元", "115 元"],
+          ["C 號餐", "雙層牛肉堡(85元)", "玉米湯(35元)", "柳橙汁(30元)", "150 元", "？ 元"]
+        ],
+        targetRow: 2,
+        targetCol: 5,
+        question: "【素養壓軸題】觀察陽光漢堡店的價目表，老闆設計套餐時有一個隱藏規律：A 號餐省 20 元（145➔125）、B 號餐省 25 元（140➔115）、C 號餐比原價總和【省 30 元】。請問 C 號餐的「🎉 套餐特價」是多少元？",
+        options: [
+          { text: "120 元", correct: true, note: "恭喜滿分通關！C 號餐原價總和 150 元，省下 30 元，150 － 30 ＝ 120 元！" },
+          { text: "110 元", correct: false, note: "150 元減去 30 元是 120 元，不是 110 元喔！" },
+          { text: "125 元", correct: false, note: "125 元只省了 25 元，C 號餐按照規律省了 30 元（150 － 30 ＝ 120 元）喔！" },
+          { text: "130 元", correct: false, note: "130 元只省了 20 元，C 號餐省下 30 元喔！" }
+        ],
+        hint1: "看看折扣規律：A 號餐便宜 20 元、B 號餐便宜 25 元、C 號餐便宜 30 元。",
+        hint2: "C 號餐的「單點原價總和」是 150 元，減去優惠的 30 元：150 － 30 ＝？",
+        explanation: "1. 觀察套餐優惠折扣規律：A 餐折 20 元、B 餐折 25 元、C 餐折 30 元（每次多折 5 元）。\n2. C 號餐單點原價總和 ＝ 85 ＋ 35 ＋ 30 ＝ 150 元。\n3. C 號餐套餐特價 ＝ 150 － 30 ＝【120 元】！"
+      }
+    ];
+
+    /* -------------------------------------------------------------------------
+       全域狀態管理
+       ------------------------------------------------------------------------- */
+    let currentQIndex = 0;
+    let userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+    let totalScore = 0;
+    let autoNextEnabled = false;
+    let isOverviewMode = false;
+
+    // 互動教具開關狀態（十字雷射對焦 / 規律分組框 / 差額跳躍箭頭）
+    let isHelperActive = true;
+
+    function toggleInteractiveHelper() {
+      playSound('scan');
+      isHelperActive = !isHelperActive;
+      const q = QUESTIONS_DB[currentQIndex];
+      const stage = document.getElementById('interactiveStage');
+      if (stage) {
+        stage.innerHTML = buildQuestionVisualHTML(q, true);
+      }
+      renderActionTools(q);
+    }
+
+    /* -------------------------------------------------------------------------
+       建立各題型專屬的視覺互動舞台 HTML (buildQuestionVisualHTML)
+       ------------------------------------------------------------------------- */
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      const showGuide = isInteractive ? isHelperActive : true;
+
+      // 1. 一維統計表 (Q1, Q2)
+      if (q.visualType === 'table_1d') {
+        return `
+          <div class="w-full max-w-2xl flex flex-col items-center select-none">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-2 bg-indigo-100/90 px-3.5 py-1 rounded-full border border-indigo-300 shadow-2xs">
+              ${q.tableTitle}
+            </div>
+            <div class="w-full overflow-x-auto rounded-2xl border-2 border-indigo-300 shadow-sm bg-white">
+              <table class="w-full text-center border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr class="bg-indigo-600 text-white font-black">
+                    ${q.headers.map((h, cIdx) => {
+                      const isHi = showGuide && (cIdx === q.highlightCol || cIdx === q.highlightCol2);
+                      return `<th class="py-2.5 px-2 border-r border-indigo-400 last:border-r-0 ${isHi ? 'bg-amber-500 text-slate-950' : ''}">${h}</th>`;
+                    }).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${q.rows.map(row => `
+                    <tr class="font-bold text-slate-800">
+                      ${row.map((cell, cIdx) => {
+                        const isHi = showGuide && (cIdx === q.highlightCol || cIdx === q.highlightCol2);
+                        const isQuestion = String(cell).includes('？');
+                        return `
+                          <td class="py-3 px-2 border-t border-r border-indigo-100 last:border-r-0 text-sm sm:text-base font-black ${
+                            isQuestion
+                              ? 'bg-rose-50 text-rose-600 text-lg cell-target-glow'
+                              : isHi
+                                ? 'bg-amber-50 text-amber-900 ring-2 ring-inset ring-amber-400'
+                                : cIdx === 0 ? 'bg-slate-100 text-slate-700 text-xs sm:text-sm' : 'bg-white'
+                          }">
+                            ${cell}
+                          </td>
+                        `;
+                      }).join('')}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            ${showGuide ? `
+              <div class="mt-2 text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                🎯 神探雷射已鎖定關鍵欄位！請觀察黃色醒目格的數字關係。
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 2. 二維標準交叉表格 (Q3, Q4, Q7, Q8, Q20)
+      if (q.visualType === 'table_2d_grid' || q.visualType === 'seat_chart') {
+        return `
+          <div class="w-full max-w-3xl flex flex-col items-center select-none">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-2 bg-indigo-100/90 px-3.5 py-1 rounded-full border border-indigo-300 shadow-2xs">
+              ${q.tableTitle}
+            </div>
+            <div class="w-full overflow-x-auto rounded-2xl border-2 border-indigo-300 shadow-sm bg-white">
+              <table class="w-full text-center border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr class="bg-indigo-600 text-white font-black">
+                    ${q.headers.map((h, cIdx) => {
+                      const isColMatch = showGuide && (cIdx === q.targetCol);
+                      return `<th class="py-2 px-2 border-r border-indigo-400 last:border-r-0 ${isColMatch ? 'bg-amber-400 text-slate-950' : ''}">${h}</th>`;
+                    }).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${q.rows.map((row, rIdx) => {
+                    const isRowMatch = showGuide && (rIdx === q.targetRow);
+                    return `
+                      <tr class="border-t border-indigo-100">
+                        ${row.map((cell, cIdx) => {
+                          const isColMatch = showGuide && (cIdx === q.targetCol);
+                          const isCrossTarget = isRowMatch && isColMatch;
+                          const isQuestion = String(cell).includes('？');
+                          let cellStyle = 'bg-white text-slate-700 font-bold';
+                          if (cIdx === 0) {
+                            cellStyle = isRowMatch ? 'bg-indigo-200 text-indigo-950 font-black' : 'bg-slate-100 text-slate-700 font-extrabold';
+                          } else if (isCrossTarget || isQuestion) {
+                            cellStyle = 'bg-amber-100 text-rose-700 font-black text-sm sm:text-base ring-2 ring-inset ring-amber-500 cell-target-glow';
+                          } else if (isRowMatch) {
+                            cellStyle = 'bg-indigo-50/90 text-indigo-900 font-extrabold';
+                          } else if (isColMatch) {
+                            cellStyle = 'bg-amber-50/80 text-amber-900 font-extrabold';
+                          }
+                          return `<td class="py-2.5 px-2 border-r border-indigo-100 last:border-r-0 trans-smooth ${cellStyle}">${cell}</td>`;
+                        }).join('')}
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+            ${showGuide ? `
+              <div class="mt-2 text-[11px] font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200 flex items-center gap-1.5">
+                <span>🔦</span>
+                <span>十字對焦光束：藍紫色「橫列」與金黃色「直欄」交叉的亮格就是關鍵資訊！</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 3. 階梯式火車票價表 (Q5, Q6)
+      if (q.visualType === 'train_fare_triangle') {
+        return `
+          <div class="w-full max-w-xl flex flex-col items-center select-none">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-2 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-300">
+              ${q.tableTitle}
+            </div>
+            <div class="w-full overflow-x-auto rounded-2xl border-2 border-indigo-300 bg-white p-2 shadow-sm">
+              <table class="w-full text-center border-collapse text-xs sm:text-sm">
+                <tbody>
+                  ${q.fares.map((row, rIdx) => `
+                    <tr>
+                      ${row.map((cell, cIdx) => {
+                        if (cell === '-') {
+                          return `<td class="py-2 px-2 bg-slate-50/40 text-slate-300 border border-slate-100"></td>`;
+                        }
+                        const isStation = q.stations.includes(cell);
+                        const isTargetCross = showGuide && (rIdx === q.targetRow && cIdx === q.targetCol);
+                        const isRowBeam = showGuide && (rIdx === q.targetRow && cIdx <= rIdx);
+                        const isColBeam = showGuide && (cIdx === q.targetCol && rIdx >= cIdx);
+
+                        if (isStation) {
+                          const isActiveSt = showGuide && (rIdx === q.targetRow || cIdx === q.targetCol);
+                          return `
+                            <td class="py-2.5 px-2 font-black border-2 border-indigo-300 ${
+                              isActiveSt ? 'bg-indigo-600 text-white shadow-xs' : 'bg-indigo-100 text-indigo-950'
+                            }">
+                              🚉 ${cell}
+                            </td>
+                          `;
+                        }
+
+                        return `
+                          <td class="py-2.5 px-2 border border-indigo-200 font-black trans-smooth ${
+                            isTargetCross
+                              ? 'bg-amber-300 text-rose-800 text-base ring-2 ring-rose-500 cell-target-glow'
+                              : (isRowBeam || isColBeam)
+                                ? 'bg-amber-50 text-indigo-900'
+                                : 'bg-white text-slate-700'
+                          }">
+                            $${cell}
+                          </td>
+                        `;
+                      }).join('')}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-2 text-[11px] font-bold text-slate-600 bg-white px-3 py-1 rounded-full border border-indigo-200">
+              💡 查表秘訣：從起站「往下走」、迄站「往左走」，轉角相交的格子就是單程票價！
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 圖案與顏色重複循環規律 (Q9, Q10, Q11, Q12)
+      if (q.visualType === 'pattern_shapes') {
+        const groups = [];
+        for (let i = 0; i < q.items.length; i += q.cycleLength) {
+          groups.push(q.items.slice(i, i + q.cycleLength));
+        }
+
+        return `
+          <div class="w-full flex flex-col items-center select-none py-1">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-3 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-300">
+              ${q.patternTitle}
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2.5 max-w-3xl">
+              ${groups.map((grp, gIdx) => `
+                <div class="flex flex-col items-center ${
+                  showGuide
+                    ? 'p-2 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50/60'
+                    : 'p-1'
+                } trans-smooth">
+                  ${showGuide ? `<span class="text-[10px] font-black text-indigo-700 mb-1 bg-white px-2 py-0.5 rounded-full border border-indigo-200">第 ${gIdx + 1} 組（${q.cycleLength}個一循環）</span>` : ''}
+                  <div class="flex items-center gap-1.5">
+                    ${grp.map((item, idxInGrp) => {
+                      const absIdx = gIdx * q.cycleLength + idxInGrp;
+                      const isHidden = (absIdx === q.hiddenIndex || absIdx === q.hiddenIndex2);
+                      return `
+                        <div class="px-2.5 py-2 rounded-xl border-2 font-black text-xs sm:text-sm flex flex-col items-center justify-center min-w-[54px] shadow-2xs ${
+                          isHidden
+                            ? 'bg-amber-200 border-rose-500 text-rose-700 cell-target-glow'
+                            : 'bg-white border-slate-200 text-slate-800'
+                        }">
+                          <span class="text-[10px] text-slate-400 font-bold">#${absIdx + 1}</span>
+                          <span class="mt-0.5">${item}</span>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. 數字數列與差額跳躍弧線 (Q13, Q14, Q15, Q16)
+      if (q.visualType === 'number_sequence') {
+        const stepLabels = q.stepDiff.includes(',')
+          ? q.stepDiff.split(',').map(s => s.trim())
+          : new Array(q.numbers.length - 1).fill(q.stepDiff);
+
+        return `
+          <div class="w-full flex flex-col items-center select-none py-2">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-3 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-300">
+              ${q.seqTitle}
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-3xl">
+              ${q.numbers.map((num, idx) => {
+                const isTarget = (idx === q.hiddenIdx);
+                const nextDiff = idx < q.numbers.length - 1 ? stepLabels[idx] : null;
+                return `
+                  <div class="flex items-center gap-1 sm:gap-1.5">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 flex flex-col items-center justify-center font-black shadow-xs ${
+                      isTarget
+                        ? 'bg-amber-200 border-rose-500 text-rose-700 text-lg cell-target-glow'
+                        : 'bg-white border-indigo-300 text-indigo-950 text-base sm:text-lg'
+                    }">
+                      <span class="text-[9px] font-bold text-slate-400">第${idx + 1}數</span>
+                      <span>${num}</span>
+                    </div>
+                    ${nextDiff ? `
+                      <div class="flex flex-col items-center">
+                        ${showGuide ? `<span class="text-[11px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 mb-0.5">${nextDiff}</span>` : ''}
+                        <span class="text-indigo-400 font-black text-sm">➔</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // 6. 百數表十字拼圖 (Q17)
+      if (q.visualType === 'grid_puzzle_100') {
+        return `
+          <div class="flex flex-col items-center select-none py-1">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-2 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-300">
+              🧩 百數表十字拼圖（一橫列有 10 個數）
+            </div>
+            <div class="grid grid-cols-3 gap-2 w-48 sm:w-56 text-center">
+              <div></div>
+              <div class="h-14 rounded-2xl bg-indigo-100 border-2 border-indigo-300 flex flex-col items-center justify-center font-black text-indigo-950">
+                <span class="text-[9px] text-indigo-600">${showGuide ? '往上 -10' : '上'}</span>
+                <span class="text-base">${q.topNum}</span>
+              </div>
+              <div></div>
+
+              <div class="h-14 rounded-2xl bg-sky-100 border-2 border-sky-300 flex flex-col items-center justify-center font-black text-sky-950">
+                <span class="text-[9px] text-sky-700">${showGuide ? '往左 -1' : '左'}</span>
+                <span class="text-base">${q.leftNum}</span>
+              </div>
+              <div class="h-14 rounded-2xl bg-indigo-600 border-2 border-indigo-800 flex flex-col items-center justify-center font-black text-white shadow-md">
+                <span class="text-[9px] text-indigo-200">中心</span>
+                <span class="text-lg">${q.centerNum}</span>
+              </div>
+              <div class="h-14 rounded-2xl bg-sky-100 border-2 border-sky-300 flex flex-col items-center justify-center font-black text-sky-950">
+                <span class="text-[9px] text-sky-700">${showGuide ? '往右 +1' : '右'}</span>
+                <span class="text-base">${q.rightNum}</span>
+              </div>
+
+              <div></div>
+              <div class="h-14 rounded-2xl bg-amber-200 border-2 border-rose-500 flex flex-col items-center justify-center font-black text-rose-700 cell-target-glow">
+                <span class="text-[9px] text-rose-800">${showGuide ? '往下 +10' : '下'}</span>
+                <span class="text-lg">${q.bottomNum}</span>
+              </div>
+              <div></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 7. 太陽花磁磚圖形規律 (Q19)
+      if (q.visualType === 'tile_flower_pattern') {
+        const stages = [
+          { idx: 1, hearts: 1, petals: 4 },
+          { idx: 2, hearts: 2, petals: 8 },
+          { idx: 3, hearts: 3, petals: 12 },
+          { idx: 4, hearts: 4, petals: 16 },
+          { idx: 5, hearts: 5, petals: "？" }
+        ];
+        return `
+          <div class="w-full flex flex-col items-center select-none py-1">
+            <div class="text-xs sm:text-sm font-black text-indigo-950 mb-2.5 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-300">
+              🌻 太陽花磁磚拼貼數量列表（每 1 朵花有 4 片黃花瓣）
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 w-full max-w-2xl">
+              ${stages.map(st => {
+                const isQ = st.petals === "？";
+                return `
+                  <div class="rounded-2xl border-2 p-2.5 flex flex-col items-center justify-between shadow-2xs ${
+                    isQ ? 'bg-amber-100 border-rose-500 cell-target-glow' : 'bg-white border-indigo-200'
+                  }">
+                    <span class="text-xs font-black text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded-full">圖 ${st.idx}</span>
+                    <div class="my-1.5 text-lg tracking-tighter">
+                      ${'🌻'.repeat(Math.min(st.hearts, 5))}
+                    </div>
+                    <div class="text-[11px] font-bold text-slate-600">紅花心：${st.hearts} 顆</div>
+                    <div class="text-xs font-black mt-0.5 ${isQ ? 'text-rose-700 text-sm' : 'text-amber-700'}">
+                      黃花瓣：${st.petals} 片
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            ${showGuide ? `
+              <div class="mt-2 text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                ✨ 規律發現：4 片 ➔(+4)➔ 8 片 ➔(+4)➔ 12 片 ➔(+4)➔ 16 片 ➔(+4)➔ ？
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      return `<div class="text-xs text-slate-400 font-bold">列表與規律互動展示</div>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       渲染互動教具按鈕列 (renderActionTools)
+       ------------------------------------------------------------------------- */
+    function renderActionTools(q) {
+      const area = document.getElementById('actionToolsArea');
+      if (!area) return;
+
+      let btnLabel = isHelperActive ? '🔦 隱藏神探輔助標記' : '🔦 開啟神探十字雷射 / 規律框';
+      if (q.visualType === 'pattern_shapes') {
+        btnLabel = isHelperActive ? '✨ 隱藏循環分組框' : '✨ 框出重複循環小組';
+      } else if (q.visualType === 'number_sequence') {
+        btnLabel = isHelperActive ? '🏹 隱藏差額跳躍標籤' : '🏹 顯示相鄰數字差額標籤';
+      }
+
+      area.innerHTML = `
+        <button onclick="toggleInteractiveHelper()" class="bouncy-btn px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-xs flex items-center gap-1">
+          <span>🕵️</span>
+          <span>${btnLabel}</span>
+        </button>
+        <span class="text-[11px] font-bold text-slate-500 hidden sm:inline">✨ 點擊可切換表格十字對焦或規律分組提示！</span>
+      `;
+    }
+
+    /* -------------------------------------------------------------------------
+       畫面渲染：頂部題號導覽、當前題目與選項
+       ------------------------------------------------------------------------- */
+    function renderTopUnitNav() {
+      const container = document.getElementById('unitQuestionNav');
+      if (!container) return;
+
+      const stages = [
+        { id: 1, name: "1. 一維與生活統計表", range: [0, 3] },
+        { id: 2, name: "2. 票價表與時刻表", range: [4, 7] },
+        { id: 3, name: "3. 圖形顏色重複規律", range: [8, 11] },
+        { id: 4, name: "4. 數列加減階梯規律", range: [12, 15] },
+        { id: 5, name: "5. 百數表與素養應用", range: [16, 19] }
+      ];
+
+      let html = '';
+      stages.forEach(st => {
+        const isCurrentStage = (currentQIndex >= st.range[0] && currentQIndex <= st.range[1]);
+        html += `
+          <div class="bg-white/90 border ${isCurrentStage ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200'} rounded-xl p-1.5 flex flex-col justify-between">
+            <span class="text-[10px] font-black ${isCurrentStage ? 'text-indigo-800' : 'text-slate-500'} mb-1 truncate">${st.name}</span>
+            <div class="grid grid-cols-4 gap-1">
+              ${Array.from({length: st.range[1] - st.range[0] + 1}).map((_, i) => {
+                const qIdx = st.range[0] + i;
+                const ans = userAnswers[qIdx];
+                let btnClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                if (ans !== null) {
+                  btnClass = ans.correct ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-rose-500 text-white border-rose-600';
+                }
+                if (qIdx === currentQIndex) {
+                  btnClass += ' ring-2 ring-indigo-500 ring-offset-1 font-black scale-105';
+                }
+                return `
+                  <button onclick="jumpToQuestion(${qIdx})" class="bouncy-btn text-[11px] font-bold py-1 rounded-md border text-center transition ${btnClass}">
+                    ${qIdx + 1}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderCurrentQuestion() {
+      const q = QUESTIONS_DB[currentQIndex];
+      isHelperActive = true;
+
+      document.getElementById('questionTag').textContent = q.tag;
+      document.getElementById('stageNameTag').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('stageBadge').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('misconceptionText').textContent = q.misconception;
+      document.getElementById('qNumberPrefix').textContent = `第 ${q.id} 題.`;
+      document.getElementById('questionText').textContent = q.question;
+
+      // 渲染視覺展演舞台與教具按鈕
+      const stage = document.getElementById('interactiveStage');
+      stage.innerHTML = buildQuestionVisualHTML(q, true);
+      renderActionTools(q);
+
+      // 隱藏提示卡與作答反饋
+      document.getElementById('hintDisplayArea').classList.add('hidden');
+      document.getElementById('hintDisplayArea').textContent = '';
+      const fbBox = document.getElementById('feedbackBox');
+      fbBox.classList.add('hidden');
+
+      // 渲染選項按鈕
+      const grid = document.getElementById('optionsGrid');
+      let optionsHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const currentAns = userAnswers[currentQIndex];
+
+      q.options.forEach((opt, idx) => {
+        let optBtnClass = 'bg-white hover:bg-indigo-50/80 border-slate-200 text-slate-800';
+        let checkIcon = letters[idx];
+
+        if (currentAns !== null) {
+          if (opt.correct) {
+            optBtnClass = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-black';
+            checkIcon = '✓';
+          } else if (currentAns.selectedIndex === idx) {
+            optBtnClass = 'bg-rose-50 border-rose-400 text-rose-950 font-bold';
+            checkIcon = '✗';
+          }
+        }
+
+        optionsHTML += `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between shadow-xs ${optBtnClass}">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-900 font-black text-xs flex items-center justify-center shrink-0 border border-indigo-200">
+                ${letters[idx]}
+              </span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800 leading-snug">${opt.text}</span>
+            </div>
+            <span id="opt-check-${idx}" class="text-sm font-black px-1.5 text-indigo-600">${checkIcon}</span>
+          </button>
+        `;
+      });
+      grid.innerHTML = optionsHTML;
+
+      // 如果已經作答過，重新顯示反饋資訊
+      if (currentAns !== null) {
+        showFeedback(currentAns.correct, currentAns.selected);
+      }
+
+      // 更新進度條
+      const progressPct = ((currentQIndex + 1) / QUESTIONS_DB.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPct}%`;
+      document.getElementById('progressPercentText').textContent = `進度：第 ${currentQIndex + 1} / ${QUESTIONS_DB.length} 題`;
+
+      // 更新正確率與頂部分段題號
+      updateStats();
+      renderTopUnitNav();
+    }
+
+    /* -------------------------------------------------------------------------
+       作答判斷 (selectOption)
+       ------------------------------------------------------------------------- */
+    function selectOption(optIndex) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const selected = q.options[optIndex];
+      const isFirstAttempt = (userAnswers[currentQIndex] === null);
+
+      if (isFirstAttempt) {
+        if (selected.correct) {
+          totalScore += 5;
+        }
+      }
+
+      userAnswers[currentQIndex] = {
+        selectedIndex: optIndex,
+        selected: selected,
+        correct: selected.correct
+      };
+
+      showFeedback(selected.correct, selected);
+      updateStats();
+      renderTopUnitNav();
+
+      if (selected.correct) {
+        playSound('correct');
+        confetti({
+          particleCount: 28,
+          spread: 50,
+          origin: { y: 0.7 }
+        });
+
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 font-black flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✓';
+        }
+
+        if (autoNextEnabled) {
+          setTimeout(() => {
+            nextQuestion();
+          }, 1200);
+        }
+      } else {
+        playSound('wrong');
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 text-rose-950 font-bold flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✗';
+        }
+      }
+
+      checkCompletion();
+    }
+
+    function showFeedback(isCorrect, selected) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const fbBox = document.getElementById('feedbackBox');
+      const fbIcon = document.getElementById('feedbackIcon');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbDetail = document.getElementById('feedbackDetail');
+
+      fbBox.classList.remove('hidden');
+      if (isCorrect) {
+        fbBox.className = 'rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 block transition-all duration-300';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '太棒了！神探推理完全正確！';
+        fbDetail.textContent = selected.note || q.explanation;
+      } else {
+        fbBox.className = 'rounded-2xl p-4 bg-amber-50 border-2 border-amber-300 text-amber-950 block transition-all duration-300';
+        fbIcon.textContent = '🕵️';
+        fbTitle.textContent = '差一點點！再觀察一次表格交會格或規律喔：';
+        fbDetail.textContent = selected.note || q.hint1 || '先對齊橫列與直欄，或看看幾個一組重複出現！';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scoreText').textContent = `${totalScore} 分`;
+      const answeredCount = userAnswers.filter(a => a !== null).length;
+      if (answeredCount > 0) {
+        const correctCount = userAnswers.filter(a => a && a.correct).length;
+        const acc = Math.round((correctCount / answeredCount) * 100);
+        document.getElementById('accuracyText').textContent = `正確率：${acc}%`;
+      }
+    }
+
+    function checkCompletion() {
+      const allDone = userAnswers.every(a => a !== null);
+      if (allDone) {
+        setTimeout(() => {
+          showCompletionModal();
+        }, 800);
+      }
+    }
+
+    function showCompletionModal() {
+      playSound('victory');
+      confetti({
+        particleCount: 85,
+        spread: 75,
+        origin: { y: 0.6 }
+      });
+
+      const correctCount = userAnswers.filter(a => a && a.correct).length;
+      const acc = Math.round((correctCount / QUESTIONS_DB.length) * 100);
+
+      let stars = '⭐⭐⭐';
+      if (totalScore < 70) stars = '⭐☆☆';
+      else if (totalScore < 90) stars = '⭐⭐☆';
+
+      document.getElementById('endStarsDisplay').textContent = stars;
+      document.getElementById('endScoreDisplay').textContent = `最終得分：${totalScore} 分`;
+      document.getElementById('endAccDisplay').textContent = `正確率：${acc}%（${correctCount}/${QUESTIONS_DB.length}）`;
+
+      document.getElementById('completionModal').classList.remove('hidden');
+    }
+
+    function restartQuiz() {
+      document.getElementById('completionModal').classList.add('hidden');
+      currentQIndex = 0;
+      userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+      totalScore = 0;
+      updateStats();
+      renderCurrentQuestion();
+    }
+
+    /* -------------------------------------------------------------------------
+       跳題與切換
+       ------------------------------------------------------------------------- */
+    function jumpToQuestion(idx) {
+      playSound('click');
+      currentQIndex = idx;
+      if (isOverviewMode) {
+        toggleAllQuestionsView();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        playSound('click');
+        currentQIndex--;
+        renderCurrentQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < QUESTIONS_DB.length - 1) {
+        playSound('click');
+        currentQIndex++;
+        renderCurrentQuestion();
+      } else {
+        checkCompletion();
+      }
+    }
+
+    function toggleAutoNext() {
+      autoNextEnabled = !autoNextEnabled;
+      const btn = document.getElementById('autoNextBtn');
+      if (autoNextEnabled) {
+        btn.textContent = '⏭️ 自動下一題：開';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white border border-indigo-500';
+      } else {
+        btn.textContent = '⏭️ 自動下一題：關';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200';
+      }
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       提示與詳解 Modal
+       ------------------------------------------------------------------------- */
+    function revealHint(num) {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      const area = document.getElementById('hintDisplayArea');
+      area.classList.remove('hidden');
+      if (num === 1) {
+        area.innerHTML = `<span class="text-indigo-800 font-black">💡 提示 1：</span>${q.hint1}`;
+      } else {
+        area.innerHTML = `<span class="text-amber-800 font-black">🔍 提示 2：</span>${q.hint2}`;
+      }
+    }
+
+    function showCurrentExplanation() {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('modalExpTitle').textContent = `第 ${q.id} 題詳解：${q.tag}`;
+      document.getElementById('modalExpBody').innerHTML = `
+        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200 mb-3">
+          <div class="font-black text-indigo-950 text-xs mb-1">題目：${q.question}</div>
+          <div class="text-xs text-emerald-700 font-black">正確解答：${q.options.find(o => o.correct)?.text}</div>
+        </div>
+        <div class="font-bold text-slate-700 leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+          ${q.explanation}
+        </div>
+      `;
+      document.getElementById('explanationModal').classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('explanationModal').classList.add('hidden');
+    }
+
+    function toggleFormulaModal() {
+      playSound('click');
+      const modal = document.getElementById('formulaModal');
+      modal.classList.toggle('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       全題目一覽模式
+       ------------------------------------------------------------------------- */
+    function toggleAllQuestionsView() {
+      playSound('click');
+      isOverviewMode = !isOverviewMode;
+      const singleView = document.getElementById('singleQuestionView');
+      const allView = document.getElementById('allQuestionsView');
+      const singleNav = document.getElementById('singleNavControls');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        singleView.classList.add('hidden');
+        singleNav.classList.add('hidden');
+        allView.classList.remove('hidden');
+        btnText.textContent = '返回單題闖關模式';
+        renderAllQuestionsList();
+      } else {
+        singleView.classList.remove('hidden');
+        singleNav.classList.remove('hidden');
+        allView.classList.add('hidden');
+        btnText.textContent = '一次瀏覽全部題目 (含圖)';
+        renderCurrentQuestion();
+      }
+      renderTopUnitNav();
+    }
+
+    function renderAllQuestionsList() {
+      const container = document.getElementById('allQuestionsContainer');
+      if (!container) return;
+
+      let html = '';
+      QUESTIONS_DB.forEach(q => {
+        const visualHTML = buildQuestionVisualHTML(q, false);
+        html += `
+          <div class="detective-card rounded-3xl p-5 border-2 border-indigo-200 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-indigo-100 pb-2 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-indigo-600 text-white text-xs px-2.5 py-0.5 rounded-lg font-black">第 ${q.id} 題</span>
+                <span class="text-xs font-black text-indigo-950">${q.tag}</span>
+                <span class="bg-indigo-100 text-indigo-800 text-[11px] px-2 py-0.5 rounded-full font-bold">第 ${q.stage} 區・${q.stageName}</span>
+              </div>
+              <button onclick="jumpToQuestion(${q.id - 1})" class="bouncy-btn text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-xl border border-indigo-200">
+                🚀 跳到這題練習
+              </button>
+            </div>
+
+            <h3 class="font-black text-base text-slate-800 leading-snug">${q.question}</h3>
+
+            <div class="w-full bg-slate-50/80 rounded-2xl border border-dashed border-indigo-200 p-3 flex flex-col items-center justify-center">
+              ${visualHTML}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              ${q.options.map((opt, i) => `
+                <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${opt.correct ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black' : 'bg-white border-slate-200 text-slate-600'}">
+                  <span>${['A','B','C','D'][i]}. ${opt.text}</span>
+                  ${opt.correct ? '<span class="text-emerald-600 font-black">✓ 正確解答</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-200 text-xs text-indigo-950 leading-relaxed font-bold whitespace-pre-line">
+              💡 詳解：${q.explanation}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       回 3D 冒險群島地圖 (同時支援 math_island_adventure.html 內嵌與獨立視窗)
+       ------------------------------------------------------------------------- */
+    function returnToMainMap(isCompleted = false) {
+      playSound('click');
+      try {
+        if (window.parent && window.parent !== window) {
+          if (isCompleted) {
+            const parentCompleteBtn =
+              window.parent.document.getElementById('btn-complete-game') ||
+              window.parent.document.getElementById('btn-complete-and-back');
+            if (parentCompleteBtn) {
+              parentCompleteBtn.click();
+              return;
+            }
+          }
+          const parentCloseBtn = window.parent.document.getElementById('btn-close-game');
+          if (parentCloseBtn) {
+            parentCloseBtn.click();
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Parent interaction restricted, falling back to direct navigation', e);
+      }
+      window.location.href = './math_island_adventure.html';
+    }
+
+    /* -------------------------------------------------------------------------
+       頁面載入初始化
+       ------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+    });
+  </script>
+</body>
+</html>

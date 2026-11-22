@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>王國果園除法大作戰：平分、包含除與直式挑戰 (三上數學第6單元)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@600;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #ecfeff;
+      color: #164e63;
+      margin: 0;
+      padding: 0;
+    }
+    .font-comic { font-family: 'Fredoka', 'Noto Sans TC', sans-serif; }
+    
+    /* 捲軸美化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #cffafe; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #67e8f9; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+
+    /* 彈跳按鈕效果 */
+    .bouncy-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bouncy-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .bouncy-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* 柔和發光與卡片陰影 */
+    .orchard-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px -5px rgba(6, 182, 212, 0.18), 0 0 0 1.5px rgba(6, 182, 212, 0.25);
+    }
+
+    /* 平滑過渡 */
+    .trans-smooth {
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 直式除法排版專用 */
+    .division-long {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      align-items: baseline;
+      font-family: 'Courier New', Courier, monospace, 'Noto Sans TC';
+    }
+  </style>
+</head>
+<body class="bg-cyan-50/70 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- =========================================================================
+       1. 頂部導覽列與單元題號導航
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-cyan-200 sticky top-0 z-40 px-3 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題與標籤 -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-600 text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-cyan-300">
+          ➗
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm md:text-base font-black text-cyan-950 flex items-center gap-1.5 leading-tight">
+              三上第 6 單元：除法
+            </h1>
+            <span class="bg-cyan-100 text-cyan-800 text-[11px] px-2.5 py-0.5 rounded-full border border-cyan-300 font-extrabold hidden sm:inline">
+              翰林版 115上
+            </span>
+          </div>
+          <span id="stageBadge" class="text-xs font-black text-cyan-700 inline-block mt-0.5">
+            第 1 區：平分的意義（等分除）
+          </span>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕列 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <!-- 切換模式 -->
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm flex items-center gap-1 border border-cyan-400">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <!-- 看解析 -->
+        <button onclick="showCurrentExplanation()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+          <span>💡</span>
+          <span>看解析</span>
+        </button>
+
+        <!-- 自動下一題 -->
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <!-- 星星積分 -->
+        <div class="flex items-center bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs">
+          <span class="text-amber-500 text-sm mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0 分</span>
+        </div>
+
+        <!-- 音效開關 -->
+        <button id="muteBtn" onclick="toggleMute()" title="切換音效" class="bouncy-btn w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-sm shadow-xs">
+          🔊
+        </button>
+
+        <!-- 除法秘笈重點卡 -->
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-amber-950 border border-amber-300 shadow-sm flex items-center gap-1">
+          <span>📜</span>
+          <span>除法秘笈</span>
+        </button>
+
+        <!-- 返回 3D 地圖按鈕 (支援 iframe 或獨立分頁) -->
+        <button onclick="returnToMainMap()" class="bouncy-btn px-2.5 py-1.5 text-xs font-black rounded-xl bg-rose-500 hover:bg-rose-600 text-white border border-rose-400 shadow-sm flex items-center gap-1">
+          <span>🏝️</span>
+          <span>回 3D 地圖</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元分段與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-cyan-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 上下題切換條 (單題模式時顯示) -->
+    <div id="singleNavControls" class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0 flex items-center gap-1">
+        <span>◀</span>
+        <span>上一題</span>
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-cyan-800 font-bold mb-0.5 px-0.5">
+          <span id="progressPercentText">進度：第 1 / 20 題</span>
+          <span id="accuracyText">正確率：100%</span>
+        </div>
+        <div class="w-full bg-cyan-100 rounded-full h-2 overflow-hidden border border-cyan-200">
+          <div id="progressBar" class="bg-gradient-to-r from-cyan-500 to-teal-500 h-2 rounded-full transition-all duration-300" style="width: 5%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="bouncy-btn px-3 py-1 text-xs font-bold rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white shrink-0 shadow-xs flex items-center gap-1">
+        <span>下一題</span>
+        <span>▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. 主要作答主體區 (單題闖關模式)
+       ========================================================================= -->
+  <main id="singleQuestionView" class="max-w-5xl mx-auto w-full px-3 py-4 flex-1 flex flex-col justify-center">
+    <div class="orchard-card rounded-3xl p-4 sm:p-6 border-2 border-cyan-200 shadow-xl flex flex-col gap-4">
+      
+      <!-- 頂部題目標籤與迷思提醒 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 border-b border-cyan-100 pb-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="questionTag" class="bg-cyan-600 text-white font-black text-xs px-3 py-1 rounded-xl shadow-xs">
+            Q1 平分紅蘋果
+          </span>
+          <span id="stageNameTag" class="bg-cyan-100 text-cyan-800 font-extrabold text-xs px-2.5 py-1 rounded-xl border border-cyan-200">
+            第 1 區：平分的意義（等分除）
+          </span>
+        </div>
+        <div id="misconceptionBadge" class="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
+          <span>⚠️ 迷思防禦：</span>
+          <span id="misconceptionText">每份分得一樣多才叫做「平分」</span>
+        </div>
+      </div>
+
+      <!-- 題目文字陳述 -->
+      <div class="text-base sm:text-lg font-black text-slate-800 leading-snug">
+        <span class="text-cyan-600 mr-1.5" id="qNumberPrefix">第 1 題.</span>
+        <span id="questionText">果園採收了 18 顆紅蘋果，平分裝在 3 個竹籃裡，每個竹籃裝有幾顆蘋果？</span>
+      </div>
+
+      <!-- 視覺互動展演舞台 (SVG + 教具動畫) -->
+      <div id="interactiveStage" class="w-full bg-slate-50/90 rounded-2xl border-2 border-cyan-200 p-3 sm:p-4 min-h-[190px] flex flex-col items-center justify-center relative overflow-hidden transition-all">
+        <!-- 動態由 buildQuestionVisualHTML 填入 -->
+      </div>
+
+      <!-- 操作輔助按鈕列與思考提示 (Hint 1 / Hint 2) -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+        <div class="flex items-center gap-2" id="actionToolsArea">
+          <!-- 互動教具按鈕 (如平分展示、裝箱分堆、旋轉天平等) -->
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="revealHint(1)" class="bouncy-btn text-xs font-bold text-cyan-800 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-lg border border-cyan-300">
+            💡 提示 1
+          </button>
+          <button onclick="revealHint(2)" class="bouncy-btn text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+            🔍 提示 2
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示內容顯示區塊 (預設收起) -->
+      <div id="hintDisplayArea" class="hidden text-xs font-bold text-slate-700 bg-cyan-50/80 p-2.5 rounded-xl border border-cyan-200 transition-all"></div>
+
+      <!-- 選項按鈕區 (4 選 1) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1" id="optionsGrid">
+        <!-- 動態填入選項 -->
+      </div>
+
+      <!-- 作答反饋提示卡 (答對綠色 / 答錯溫馨提示) -->
+      <div id="feedbackBox" class="hidden rounded-2xl p-4 transition-all duration-300">
+        <div class="flex items-start gap-3">
+          <div id="feedbackIcon" class="text-2xl shrink-0">🎉</div>
+          <div>
+            <h4 id="feedbackTitle" class="font-black text-sm md:text-base">答對了！太厲害了！</h4>
+            <p id="feedbackDetail" class="text-xs md:text-sm font-bold mt-0.5 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       3. 全題目一覽模式 (一次檢視全部 20 題，含圖、選項與完整詳解)
+       ========================================================================= -->
+  <section id="allQuestionsView" class="hidden max-w-5xl mx-auto w-full px-3 py-4 flex-1">
+    <div class="orchard-card rounded-3xl p-5 border-2 border-cyan-200 mb-4 bg-white/95">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-lg font-black text-cyan-950 flex items-center gap-2">
+            <span>📚</span>
+            <span>三上第 6 單元：除法 全 20 題題庫全景一覽</span>
+          </h2>
+          <p class="text-xs font-bold text-slate-500 mt-0.5">適合課堂投影、家長教學複習，點選每題可直接跳至單題模式練習！</p>
+        </div>
+        <button onclick="toggleAllQuestionsView()" class="bouncy-btn px-3 py-1.5 text-xs font-black rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white">
+          返回單題闖關模式
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4" id="allQuestionsContainer">
+      <!-- 動態填入全部題目卡片 -->
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. 彈出視窗：看解析 Modal
+       ========================================================================= -->
+  <div id="explanationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-cyan-300 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-cyan-100">
+        <h3 id="modalExpTitle" class="text-base font-black text-cyan-950 flex items-center gap-2">
+          <span>💡</span>
+          <span>本題深度詳解</span>
+        </h3>
+        <button onclick="closeExplanationModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div id="modalExpBody" class="mt-4 text-sm leading-relaxed"></div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeExplanationModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs">
+          我知道了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. 彈出視窗：除法秘笈重點卡 Modal
+       ========================================================================= -->
+  <div id="formulaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-200">
+        <h3 class="text-lg font-black text-amber-950 flex items-center gap-2">
+          <span>📜</span>
+          <span>三年級除法神探大秘笈（翰林版精華考點）</span>
+        </h3>
+        <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-slate-600 text-lg font-black px-2">✕</button>
+      </div>
+      <div class="mt-4 space-y-4 text-xs sm:text-sm text-slate-700 font-bold">
+        <!-- 秘笈 1 -->
+        <div class="p-3.5 bg-cyan-50 rounded-2xl border border-cyan-200">
+          <h4 class="font-black text-cyan-900 text-sm mb-1">🌟 1. 平分（等分除） vs 包含除（分裝）</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-cyan-700 font-black">平分（等分除）</span>：知道「平分成幾份」，求「每份分到多少」。例如：12 顆糖平分給 3 人，每人分到 4 顆（12 ÷ 3 = 4）。</li>
+            <li><span class="text-cyan-700 font-black">包含除（分裝）</span>：知道「每份有多少」，求「可以分裝成幾份」。例如：12 顆糖每 4 顆裝一包，共可裝 3 包（12 ÷ 4 = 3）。</li>
+          </ul>
+        </div>
+        <!-- 秘笈 2 -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
+          <h4 class="font-black text-amber-900 text-sm mb-1">🚨 2. 餘數的核心鐵則（絕對不可違背！）</h4>
+          <p class="text-amber-950">
+            算式中：<span class="bg-white px-2 py-0.5 rounded border border-amber-300 font-black">被除數 ÷ 除數 ＝ 商 ⋯ 餘數</span>
+          </p>
+          <p class="text-rose-600 font-black mt-1">
+            ⚠️ 鐵則：餘數一定要比除數小！（餘數 ＜ 除數）
+          </p>
+          <p class="text-slate-600 mt-0.5">例如除數是 5，餘數只能是 0, 1, 2, 3, 4。如果餘數算出來是 5 或 6，代表還能再分，商一定要再加 1！</p>
+        </div>
+        <!-- 秘笈 3 -->
+        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <h4 class="font-black text-emerald-900 text-sm mb-1">🔍 3. 除法三大檢查與驗算魔法</h4>
+          <p class="text-emerald-950 font-black">
+            驗算公式：除數 × 商 ＋ 餘數 ＝ 被除數
+          </p>
+          <p class="text-slate-600 mt-1">例如：29 ÷ 6 = 4 ... 5。驗算：6 × 4 + 5 = 24 + 5 = 29（答對！）。</p>
+        </div>
+        <!-- 秘笈 4 -->
+        <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200">
+          <h4 class="font-black text-purple-900 text-sm mb-1">🚌 4. 素養應用題的「進位」與「捨去」</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><span class="text-purple-700 font-black">至少需要（進位）</span>：租車、坐船、裝箱剩餘。剩下的餘數也需要再加一輛車或一個箱子！（商 ＋ 1）</li>
+            <li><span class="text-purple-700 font-black">最多可以（捨去）</span>：買文具、做蛋糕。剩下的錢或材料不夠再湊一份，餘數只能捨去！（取商）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="toggleFormulaModal()" class="bouncy-btn px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs">
+          記住秘笈了！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       6. 闖關完成結算彈窗 (3 星通關，可點擊返回 3D 群島)
+       ========================================================================= -->
+  <div id="completionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-cyan-400 text-center transform transition-all scale-100">
+      <div class="text-5xl mb-2 animate-bounce">🏆</div>
+      <h3 class="text-2xl font-black text-cyan-950">恭喜完成除法冒險試煉！</h3>
+      <p class="text-xs font-bold text-slate-500 mt-1">三年級數學第 6 單元：除法 實力認證</p>
+
+      <div class="my-5 p-4 bg-cyan-50 rounded-2xl border-2 border-cyan-200">
+        <div class="text-3xl text-amber-500 mb-1" id="endStarsDisplay">⭐⭐⭐</div>
+        <div class="text-lg font-black text-slate-800" id="endScoreDisplay">最終得分：100 分</div>
+        <div class="text-xs text-cyan-800 font-bold mt-1" id="endAccDisplay">正確率：100%（20/20）</div>
+      </div>
+
+      <p class="text-xs text-slate-600 font-bold mb-5 leading-relaxed">
+        你已經徹底掌握了等分除、包含除、乘除互逆、餘數鐵則與生活素養除法！
+        快將這份榮耀帶回 3D 數學冒險群島吧！
+      </p>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="returnToMainMap(true)" class="bouncy-btn w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-sm shadow-lg flex items-center justify-center gap-2">
+          <span>🏝️</span>
+          <span>領取 3 顆星並返回 3D 冒險群島</span>
+        </button>
+        <button onclick="restartQuiz()" class="bouncy-btn w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+          🔄 重新挑戰除法果園
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       7. 頁尾資訊
+       ========================================================================= -->
+  <footer class="bg-white/80 border-t border-cyan-100 py-2 px-3 text-center text-[11px] text-cyan-900 font-bold">
+    三年級數學冒險群島系列教材・第 06 單元【除法】・符合臺灣教育部 108 課綱與 115上 翰林版
+  </footer>
+
+  <!-- =========================================================================
+       8. 核心 JavaScript 邏輯與題庫系統
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       Web Audio API 音效合成器 (100% 離線純合成，無載入依賴)
+       ------------------------------------------------------------------------- */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(700, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.26);
+          });
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.22);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.23);
+        } else if (type === 'victory') {
+          const freqs = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+          freqs.forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.1);
+            gain.gain.setValueAtTime(0.25, now + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.42);
+          });
+        } else if (type === 'distribute') {
+          // 平分跳動音
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(900, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.09);
+        }
+      } catch (e) {
+        console.warn('Audio error:', e);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       20 道精選題庫資料庫 (翰林版 115上 第 6 單元：除法)
+       ------------------------------------------------------------------------- */
+    const QUESTIONS_DB = [
+      // ================= 階段 1：平分的意義（等分除 Q1 ~ Q4） =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "平分的意義（等分除）",
+        tag: "Q1 平分紅蘋果",
+        misconception: "平分是指每一份都要分得「一樣多」",
+        visualType: "distribute_apples",
+        totalItems: 18,
+        groups: 3,
+        itemEmoji: "🍎",
+        groupLabel: "竹籃",
+        question: "果園採收了 18 顆紅蘋果，平分裝在 3 個竹籃裡，每個竹籃裝有幾顆蘋果？算式應如何表示？",
+        options: [
+          { text: "18 ÷ 3 = 6 顆", correct: true, note: "正確！全部 18 顆平分成 3 份，每份 6 顆。" },
+          { text: "18 - 3 = 15 顆", correct: false, note: "這是減法，不是把蘋果平分成 3 個竹籃喔！" },
+          { text: "18 × 3 = 54 顆", correct: false, note: "平分是越分越少，不是算 3 倍喔！" },
+          { text: "18 ÷ 6 = 3 顆", correct: false, note: "題目是要分在 3 個竹籃裡，除數應該是 3 喔！" }
+        ],
+        hint1: "全部有 18 顆蘋果，要平分給 3 個籃子。",
+        hint2: "想一想：三幾十八？3 × 6 = 18，所以 18 ÷ 3 = 6。",
+        explanation: "把全部的數量（18顆）平均分成 3 份，這種數學問題叫做「平分」（等分除）。算式記作：18 ÷ 3 = 6，答：每個竹籃裝有 6 顆蘋果。"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "平分的意義（等分除）",
+        tag: "Q2 認識真平分",
+        misconception: "只要分完就是平分？錯！每份數量必須完全相等！",
+        visualType: "equal_share_compare",
+        question: "小精靈採了 12 顆草莓要分給 3 隻松鼠，下列哪一種分法才算真正的「平分」？",
+        options: [
+          { text: "第一隻拿 4 顆、第二隻拿 4 顆、第三隻拿 4 顆", correct: true, note: "沒錯！每隻松鼠拿到的數量完全一樣多，才叫平分！" },
+          { text: "第一隻拿 3 顆、第二隻拿 4 顆、第三隻拿 5 顆", correct: false, note: "雖然加起來是 12 顆，但拿到的數量不相同，不算平分喔！" },
+          { text: "第一隻拿 2 顆、第二隻拿 2 顆、第三隻拿 8 顆", correct: false, note: "大家拿的數量不一樣，這不是平分。" },
+          { text: "隨便拿，只要 12 顆草莓全部分完就可以", correct: false, note: "平分的核心要求是「每人分得一樣多」！" }
+        ],
+        hint1: "「平」代表公平、平等，數量必須相同。",
+        hint2: "12 顆平分成 3 份，12 ÷ 3 = 4，每份都必須是 4 顆。",
+        explanation: "在數學上，「平分」的意思是每一份分到的數量都要完全相等！12 顆平分成 3 份，每份都一定是 4 顆（12 ÷ 3 = 4）。"
+      },
+      {
+        id: 3,
+        stage: 1,
+        stageName: "平分的意義（等分除）",
+        tag: "Q3 算式數字的意義",
+        misconception: "分不清被除數、除數和商的單位名稱",
+        visualType: "formula_meaning",
+        dividend: 24,
+        divisor: 4,
+        quotient: 6,
+        contextText: "24 朵向日葵平分插在 4 個花瓶裡",
+        question: "題目：「24 朵向日葵平分插在 4 個花瓶裡，每個花瓶有幾朵？」寫成算式是「24 ÷ 4 = 6」，請問算式中的「6」代表什麼意思？",
+        options: [
+          { text: "每個花瓶有 6 朵向日葵", correct: true, note: "答對了！商「6」代表平分後每一份（每個花瓶）的花朵數量。" },
+          { text: "總共有 6 個花瓶", correct: false, note: "花瓶總數是 4 個（除數），不是 6 個喔！" },
+          { text: "總共有 6 朵向日葵", correct: false, note: "花朵總數是 24 朵（被除數）喔！" },
+          { text: "剩下 6 朵向日葵沒有插", correct: false, note: "這裡剛好平分完，沒有剩下喔！" }
+        ],
+        hint1: "看清楚問題問的是「每個花瓶有幾朵向日葵？」",
+        hint2: "24 是總花數，4 是花瓶數，算出來的 6 就是每個花瓶的花朵數。",
+        explanation: "在等分除算式 24 ÷ 4 = 6 中：\n・24 是被除數（向日葵總數量，單位：朵）\n・4 是除數（平分的花瓶個數，單位：個）\n・6 是商（每個花瓶分得的數量，單位：朵）。"
+      },
+      {
+        id: 4,
+        stage: 1,
+        stageName: "平分的意義（等分除）",
+        tag: "Q4 歡樂分糖果",
+        misconception: "乘法口訣背錯導致商計算錯誤",
+        visualType: "distribute_candies",
+        totalItems: 35,
+        groups: 5,
+        itemEmoji: "🍬",
+        groupLabel: "小朋友",
+        question: "老師把 35 顆水果糖，平分獎勵給 5 位表現優異的小朋友，每位小朋友可以分得幾顆水果糖？",
+        options: [
+          { text: "7 顆", correct: true, note: "太棒了！5 × 7 = 35，35 ÷ 5 = 7 顆！" },
+          { text: "6 顆", correct: false, note: "5 × 6 = 30，還會剩下 5 顆沒分完喔！" },
+          { text: "8 顆", correct: false, note: "5 × 8 = 40，糖果只有 35 顆，不夠分喔！" },
+          { text: "5 顆", correct: false, note: "5 × 5 = 25，還剩下 10 顆，還可以繼續平分！" }
+        ],
+        hint1: "想一想 5 的乘法表：五幾三十五？",
+        hint2: "五七三十五（5 × 7 = 35）。",
+        explanation: "平分問題用除法：35 ÷ 5 = 7。利用九九乘法表「五七三十五」，可以快速求出商是 7，每人分得 7 顆水果糖。"
+      },
+
+      // ================= 階段 2：包含除的意義（分裝除 Q5 ~ Q8） =================
+      {
+        id: 5,
+        stage: 2,
+        stageName: "包含除的意義（分裝除）",
+        tag: "Q5 檸檬裝袋",
+        misconception: "分裝也是除法！每幾個一包求包數",
+        visualType: "pack_lemons",
+        totalItems: 28,
+        perGroup: 4,
+        itemEmoji: "🍋",
+        question: "果農採收了 28 顆檸檬，每 4 顆裝成一袋，全部的檸檬一共可以裝成幾袋？",
+        options: [
+          { text: "7 袋", correct: true, note: "正確！28 顆每 4 顆一袋，四七二十八，可裝 7 袋！" },
+          { text: "6 袋", correct: false, note: "4 × 6 = 24，還剩 4 顆檸檬還可以再裝一袋喔！" },
+          { text: "8 袋", correct: false, note: "4 × 8 = 32，檸檬不夠 32 顆喔！" },
+          { text: "24 袋", correct: false, note: "不能用 28 減 4 喔，是要每 4 顆裝成一袋！" }
+        ],
+        hint1: "這是「分裝」問題，每 4 顆拿出來裝一袋。",
+        hint2: "想一想 4 的乘法表：四幾二十八？4 × 7 = 28。",
+        explanation: "「每 4 顆裝一袋，可以裝成幾袋」是包含除（分裝）問題，用除法算式：28 ÷ 4 = 7。答：可以裝成 7 袋。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "包含除的意義（分裝除）",
+        tag: "Q6 題型大比對",
+        misconception: "分不清「平分」和「包含除」的情境敘述差異",
+        visualType: "problem_type_compare",
+        question: "下列哪一個數學生活情境，是屬於「每幾個裝一份，看可以分成幾份」的包含除問題？",
+        options: [
+          { text: "有 32 塊餅乾，每 8 塊裝成一盒，共可以裝成幾盒？", correct: true, note: "賓果！給定每盒 8 塊，要求總盒數，這就是標準的包含除！" },
+          { text: "有 32 塊餅乾，平分給 4 個人，每人分到幾塊？", correct: false, note: "這是平分給固定人數求每人數量，是「等分除」喔！" },
+          { text: "弟弟有 32 塊餅乾，妹妹比弟弟少 8 塊，妹妹有幾塊？", correct: false, note: "這是減法問題（32 - 8），不是除法喔！" },
+          { text: "一盒有 32 塊餅乾，買了 8 盒共有幾塊？", correct: false, note: "這是乘法問題（32 × 8），不是除法喔！" }
+        ],
+        hint1: "找找看題目有沒有出現「每幾個裝一盒/一袋」這樣的關鍵字。",
+        hint2: "包含除是把總量按照固定大小「一份一份抓出來」。",
+        explanation: "「有 32 塊餅乾，每 8 塊裝成一盒，可以裝幾盒？」是已知每份大小求份數，屬於包含除。\n而「平分給 4 個人」則是等分除。"
+      },
+      {
+        id: 7,
+        stage: 2,
+        stageName: "包含除的意義（分裝除）",
+        tag: "Q7 剪緞帶手作",
+        misconception: "連續量（長度）的分裝也是除法",
+        visualType: "cut_ribbon",
+        totalLength: 45,
+        pieceLength: 9,
+        question: "美勞課有一條長 45 公分的彩色緞帶，每 9 公分剪成一段做成蝴蝶結，整條緞帶剛好可以剪成幾段？",
+        options: [
+          { text: "5 段", correct: true, note: "答對了！45 ÷ 9 = 5 段，九五四十五！" },
+          { text: "4 段", correct: false, note: "9 × 4 = 36，還剩下 9 公分還可以再剪一段喔！" },
+          { text: "6 段", correct: false, note: "9 × 6 = 54，長度只有 45 公分不夠喔！" },
+          { text: "36 段", correct: false, note: "不要把 45 和 9 相減喔！" }
+        ],
+        hint1: "45 公分裡面包含了幾個 9 公分？",
+        hint2: "背 9 的乘法表：九幾四十五？9 × 5 = 45。",
+        explanation: "連續長度的分段也是包含除：45 公分每 9 公分剪一段，算式：45 ÷ 9 = 5。答：可以剪成 5 段。"
+      },
+      {
+        id: 8,
+        stage: 2,
+        stageName: "包含除的意義（分裝除）",
+        tag: "Q8 零用錢買貼紙",
+        misconception: "錢幣總額買單價物品的除法應用",
+        visualType: "coins_buying",
+        totalMoney: 48,
+        itemPrice: 6,
+        question: "一張立體貼紙賣 6 元，小明存了 48 元全部拿去買這種貼紙，請問他最多可以買幾張貼紙？",
+        options: [
+          { text: "8 張", correct: true, note: "太厲害了！48 ÷ 6 = 8 張，六八四十八！" },
+          { text: "7 張", correct: false, note: "6 × 7 = 42，小明還有 6 元還可以再買一張喔！" },
+          { text: "9 張", correct: false, note: "6 × 9 = 54，小明只有 48 元不夠買 9 張喔！" },
+          { text: "42 張", correct: false, note: "不能用 48 - 6 喔！" }
+        ],
+        hint1: "算式是總錢數除以一張的價錢：48 ÷ 6。",
+        hint2: "背 6 的乘法表：六幾四十八？6 × 8 = 48。",
+        explanation: "48 元裡面有幾個 6 元，就可以買幾張貼紙：48 ÷ 6 = 8。答：最多可以買 8 張貼紙。"
+      },
+
+      // ================= 階段 3：乘除互逆與九九乘法求商 Q9 ~ Q12 =================
+      {
+        id: 9,
+        stage: 3,
+        stageName: "乘除互逆與九九乘法求商",
+        tag: "Q9 該背誰的乘法表？",
+        misconception: "算除法時不知道該背被除數還是除數的乘法表",
+        visualType: "multiplication_table_choice",
+        dividend: 56,
+        divisor: 7,
+        question: "計算除法算式「56 ÷ 7 = （ ）」時，我們應該背哪一個數的九九乘法表來找出括號裡的商？",
+        options: [
+          { text: "背 7 的乘法表（七幾五十六）", correct: true, note: "完全正確！除數是 7，所以背 7 的乘法表：七八五十六，商就是 8！" },
+          { text: "背 5 的乘法表（五幾五十六）", correct: false, note: "5 的乘法表乘出來尾數只有 0 或 5，背 5 是找不到 56 的！" },
+          { text: "背 6 的乘法表", correct: false, note: "除數是 7 不是 6 喔！" },
+          { text: "隨便背哪一個都可以", correct: false, note: "要背除數的乘法表才能快速找出答案喔！" }
+        ],
+        hint1: "除法算式是：被除數 ÷ 除數 ＝ 商。",
+        hint2: "想乘法時：除數 × 商 ＝ 被除數，所以要背「除數」的乘法表！",
+        explanation: "在算式 56 ÷ 7 = （ ）中，除數是 7。由「7 × （ ）＝ 56」，我們只要背 7 的乘法表：「七八五十六」，就能立刻知道商是 8。"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "乘除互逆與九九乘法求商",
+        tag: "Q10 乘除互逆配對",
+        misconception: "乘除互逆的算式關係混淆",
+        visualType: "inverse_relations",
+        a: 8,
+        b: 9,
+        product: 72,
+        question: "已知乘法算式「8 × 9 = 72」，下列哪一個除法算式是由這個乘法算式直接互逆變換得來的？",
+        options: [
+          { text: "72 ÷ 8 = 9", correct: true, note: "太棒了！積（72）除以其中一個因數（8），就會等於另一個因數（9）！" },
+          { text: "72 ÷ 6 = 12", correct: false, note: "雖然算式成立，但這不是從 8 × 9 = 72 變換來的喔！" },
+          { text: "72 - 9 = 63", correct: false, note: "這是減法算式，不是除法算式喔！" },
+          { text: "8 ÷ 9 = 72", correct: false, note: "小數不能除以大數得到 72 喔，被除數應該是 72！" }
+        ],
+        hint1: "乘法：甲 × 乙 ＝ 丙；那麼除法就是：丙 ÷ 甲 ＝ 乙，或是 丙 ÷ 乙 ＝ 甲。",
+        hint2: "72 ÷ 8 = 9 或 72 ÷ 9 = 8 都成立。",
+        explanation: "乘法和除法互為逆運算。因為 8 × 9 = 72，所以 72 ÷ 8 = 9，同時 72 ÷ 9 也等於 8。"
+      },
+      {
+        id: 11,
+        stage: 3,
+        stageName: "乘除互逆與九九乘法求商",
+        tag: "Q11 神秘被除數",
+        misconception: "括號在前面時不知道用乘法算回去",
+        visualType: "reverse_fill_blank",
+        blankPos: "dividend",
+        divisor: 6,
+        quotient: 7,
+        question: "數學魔法門上有一個神祕題目：「（ ） ÷ 6 = 7」，請問括號裡的被除數是多少？",
+        options: [
+          { text: "42", correct: true, note: "太厲害了！利用乘除互逆：6 × 7 = 42，被除數就是 42！" },
+          { text: "13", correct: false, note: "不要把 6 和 7 相加喔！" },
+          { text: "1", correct: false, note: "不要把 7 減 6 喔！" },
+          { text: "36", correct: false, note: "6 × 6 是 36，但題目商是 7 喔！" }
+        ],
+        hint1: "把除法反過來想：除數 × 商 ＝ 被除數。",
+        hint2: "計算 6 × 7 是多少？六七四十二。",
+        explanation: "當求被除數時，使用乘除互逆：被除數 ＝ 除數 × 商。因此 （ ）＝ 6 × 7 ＝ 42。"
+      },
+      {
+        id: 12,
+        stage: 3,
+        stageName: "乘除互逆與九九乘法求商",
+        tag: "Q12 奇異果裝盒",
+        misconception: "被除數二位數的整除熟練度",
+        visualType: "kiwi_boxes",
+        totalItems: 63,
+        perBox: 9,
+        question: "果農採收了 63 顆奇異果，每 9 顆裝成一盒，剛好全部裝完，請問總共裝了幾盒？",
+        options: [
+          { text: "7 盒", correct: true, note: "答對了！63 ÷ 9 = 7 盒，九七六十三！" },
+          { text: "8 盒", correct: false, note: "9 × 8 = 72，奇異果沒有那麼多喔！" },
+          { text: "6 盒", correct: false, note: "9 × 6 = 54，還剩下 9 顆可以再裝一盒喔！" },
+          { text: "9 盒", correct: false, note: "9 × 9 = 81，太大了！" }
+        ],
+        hint1: "算式記作：63 ÷ 9 = （ ）。",
+        hint2: "背 9 的乘法表：九幾六十三？",
+        explanation: "63 顆奇異果，每 9 顆裝一盒，算式：63 ÷ 9 = 7。利用乘法口訣「九七六十三」，答案是 7 盒。"
+      },
+
+      // ================= 階段 4：有餘數的除法與餘數大秘密 Q13 ~ Q16 =================
+      {
+        id: 13,
+        stage: 4,
+        stageName: "有餘數的除法與餘數鐵則",
+        tag: "Q13 餘數不能比除數大",
+        misconception: "餘數可以等於或大於除數嗎？絕對不行！",
+        visualType: "remainder_rule_scale",
+        divisor: 6,
+        maxRemainder: 5,
+        question: "在一個有餘數的除法算式中，如果「除數是 6」，那麼算出來的餘數【最大】可能是多少？",
+        options: [
+          { text: "5", correct: true, note: "太聰明了！餘數一定要比除數小，小於 6 的最大整數就是 5！" },
+          { text: "6", correct: false, note: "不行喔！如果餘數是 6，代表還能再分 1 個 6，所以餘數不能等於除數！" },
+          { text: "7", correct: false, note: "餘數比除數大絕對是算錯了喔！" },
+          { text: "0", correct: false, note: "0 是整除（沒有餘數），題目問的是最大可能！" }
+        ],
+        hint1: "除法第一大鐵則：餘數一定要比除數【小】！",
+        hint2: "比 6 小的整數有：0, 1, 2, 3, 4, 5，其中最大的是 5。",
+        explanation: "除法重要鐵則：餘數必須小於除數（餘數 ＜ 除數）。如果除數是 6，剩下的餘數只能是 0, 1, 2, 3, 4, 5。因此餘數最大只能是 5。"
+      },
+      {
+        id: 14,
+        stage: 4,
+        stageName: "有餘數的除法與餘數鐵則",
+        tag: "Q14 抓出除法小壞蛋",
+        misconception: "商估太小導致餘數大於除數的經典錯誤",
+        visualType: "detect_error_calc",
+        wrongCalc: "23 ÷ 4 = 4 ... 7",
+        correctCalc: "23 ÷ 4 = 5 ... 3",
+        question: "小皮算除法「23 ÷ 4 ＝ 4 ⋯ 7」，老師一看就說他算錯了，請問小皮最主要的錯誤是什麼？",
+        options: [
+          { text: "餘數 7 比除數 4 還大，還可以再分 1 個 4", correct: true, note: "太敏銳了！商 4 太小了，應該改為 5（四五二十），餘數是 3！" },
+          { text: "23 不能被 4 除", correct: false, note: "有餘數的除法是可以除的喔！" },
+          { text: "四七二十八，商應該是 7", correct: false, note: "23 比 28 小，不夠分到 7 喔！" },
+          { text: "他應該用加法算", correct: false, note: "分裝問題本來就是用除法！" }
+        ],
+        hint1: "看看餘數（7）和除數（4），誰比較大？",
+        hint2: "7 裡面還有一個 4（7 - 4 = 3），所以商還可以再加 1。",
+        explanation: "小皮的算式中，餘數 7 比除數 4 還大，違反了「餘數必須小於除數」的原則！這代表商 4 太小了，應該是 23 ÷ 4 = 5 ... 3。"
+      },
+      {
+        id: 15,
+        stage: 4,
+        stageName: "有餘數的除法與餘數鐵則",
+        tag: "Q15 氣球分分看",
+        misconception: "寫出商和餘數的橫式寫法與意義",
+        visualType: "balloons_remain",
+        totalItems: 26,
+        people: 4,
+        quotient: 6,
+        remainder: 2,
+        question: "有 26 顆五彩氣球，平分給 4 位小朋友，每位小朋友可以分到幾顆？還剩下幾顆氣球？",
+        options: [
+          { text: "每人分到 6 顆，剩下 2 顆", correct: true, note: "答對了！4 × 6 = 24，26 - 24 = 2，算式記作 26 ÷ 4 = 6 ... 2。" },
+          { text: "每人分到 5 顆，剩下 6 顆", correct: false, note: "剩下的 6 顆比 4 還大，每人還可以再分 1 顆喔！" },
+          { text: "每人分到 6 顆，剩下 0 顆", correct: false, note: "4 × 6 = 24，但總共有 26 顆，還有 2 顆沒算到喔！" },
+          { text: "每人分到 7 顆，剩下 2 顆", correct: false, note: "4 × 7 = 28，氣球只有 26 顆不夠分到 7 顆喔！" }
+        ],
+        hint1: "背 4 的乘法表：四六二十四（4 × 6 = 24），四七二十八（超過 26 了）。",
+        hint2: "商是 6，分掉 24 顆，剩下 26 - 24 = 2 顆。",
+        explanation: "26 ÷ 4 = 6 ... 2。\n4 × 6 = 24，分掉 24 顆氣球；26 - 24 = 2，剩下 2 顆氣球不能再平分，這就是餘數。"
+      },
+      {
+        id: 16,
+        stage: 4,
+        stageName: "有餘數的除法與餘數鐵則",
+        tag: "Q16 誰不可能是餘數？",
+        misconception: "餘數範圍包含 0 到 (除數 - 1)",
+        visualType: "possible_remainders",
+        divisor: 8,
+        question: "當一個整數除以「8」時，算出來的餘數【絕對不可能】是下列哪一個數字？",
+        options: [
+          { text: "8", correct: true, note: "沒錯！餘數如果等於 8，代表還可以再分出 1 個 8，餘數必須小於 8！" },
+          { text: "7", correct: false, note: "7 小於 8，是有可能的餘數喔！" },
+          { text: "3", correct: false, note: "3 小於 8，是有可能的餘數喔！" },
+          { text: "0", correct: false, note: "0 代表整除，是有可能的喔！" }
+        ],
+        hint1: "除以 8 的算式，餘數只能是 0, 1, 2, 3, 4, 5, 6, 7。",
+        hint2: "只要大於等於 8 的數字，都不可能是餘數。",
+        explanation: "除數是 8 時，可能留下的餘數只有 0、1、2、3、4、5、6、7 這 8 種情況。餘數絕對不可能等於或大於 8。"
+      },
+
+      // ================= 階段 5：直式除法步驟與生活素養進退位 Q17 ~ Q20 =================
+      {
+        id: 17,
+        stage: 5,
+        stageName: "直式除法與生活素養進退位",
+        tag: "Q17 直式各部位名稱",
+        misconception: "除法直式符號廠部與被除數、除數、商的位置混淆",
+        visualType: "vertical_division_parts",
+        dividend: 35,
+        divisor: 5,
+        quotient: 7,
+        question: "在直式除法「廠部（⟌）」符號中，寫在裡面的是被除數、左邊外面的是除數，請問寫在【最上方橫線上面】的數字叫作什麼？",
+        options: [
+          { text: "商", correct: true, note: "完全正確！最上方的數字就是算出來的答案「商」！" },
+          { text: "餘數", correct: false, note: "餘數是寫在直式最底部的剩餘數喔！" },
+          { text: "被除數", correct: false, note: "被除數是住在廠部符號裡面的數字喔！" },
+          { text: "除數", correct: false, note: "除數是站在左外側的數字喔！" }
+        ],
+        hint1: "除法的答案叫做什麼？想想看平分得到的結果。",
+        hint2: "最上面是「商」，最下面減出來的是「餘數」。",
+        explanation: "直式除法各部位名稱：\n・左外側：除數\n・廠部符號內：被除數\n・頂部橫線上：商\n・最底端減完剩下的：餘數。"
+      },
+      {
+        id: 18,
+        stage: 5,
+        stageName: "直式除法與生活素養進退位",
+        tag: "Q18 直式過程相減的意義",
+        misconception: "直式中間相減的那個數字代表什麼意思？",
+        visualType: "vertical_step_meaning",
+        dividend: 38,
+        divisor: 5,
+        quotient: 7,
+        subProduct: 35,
+        remainder: 3,
+        question: "在計算「38 ÷ 5 = 7 ⋯ 3」的直式過程中，寫在被除數 38 下方的「35」，代表什麼意思？",
+        options: [
+          { text: "分給 7 個人，一共分掉了 5 × 7 = 35 顆", correct: true, note: "太優秀了！35 代表已經成功分出去的總數量，相減才能算出剩下多少！" },
+          { text: "全部原有的數量", correct: false, note: "全部原有的數量是 38 喔！" },
+          { text: "最後剩下的數量", correct: false, note: "最後剩下的是底部的餘數 3 喔！" },
+          { text: "題目隨便給的一個數字", correct: false, note: "35 是除數 5 與商 7 相乘的積（5 × 7 = 35）！" }
+        ],
+        hint1: "35 是怎麼算出來的？是除數 5 乘上商 7。",
+        hint2: "每份 5 顆，分了 7 份，所以一共分掉了 35 顆。",
+        explanation: "直式除法中的中間數字（35）是除數與商的乘積（5 × 7 = 35），代表「已經分發出去的數量」。用總數 38 減去分掉的 35，得到剩下未分完的餘數 3。"
+      },
+      {
+        id: 19,
+        stage: 5,
+        stageName: "直式除法與生活素養進退位",
+        tag: "Q19 素養進位題：坐計程車",
+        misconception: "有餘數時，全部人都要坐車必須將商加 1（無條件進位）",
+        visualType: "taxi_seating",
+        totalPeople: 31,
+        capacity: 4,
+        quotient: 7,
+        remainder: 3,
+        neededCars: 8,
+        question: "三年級有 31 位同學要去森林公園探險，每輛計程車最多只能坐 4 位學生，請問【最少】需要幾輛計程車才夠載完所有同學？",
+        options: [
+          { text: "8 輛", correct: true, note: "太神了！31 ÷ 4 = 7 輛 ... 剩下 3 人，這 3 人也需要 1 輛車，7 + 1 = 8 輛！" },
+          { text: "7 輛", correct: false, note: "如果只租 7 輛（4 × 7 = 28），會有 3 位同學沒車坐留在原地喔！" },
+          { text: "9 輛", correct: false, note: "8 輛就夠載 32 人了，不需要租到 9 輛喔！" },
+          { text: "3 輛", correct: false, note: "3 是剩下的學生人數，不是車輛數喔！" }
+        ],
+        hint1: "先算 31 ÷ 4 ＝ 7 ⋯ 3。",
+        hint2: "剩下的 3 個人能不能被丟下？他們也需要再坐一輛車！",
+        explanation: "生活素養進位題：\n31 ÷ 4 = 7 ⋯ 3。\n7 輛車只能載 28 人，剩下的 3 位同學也必須搭車，所以需要再加 1 輛車：7 + 1 = 8。答：最少需要 8 輛計程車。"
+      },
+      {
+        id: 20,
+        stage: 5,
+        stageName: "直式除法與生活素養進退位",
+        tag: "Q20 素養捨去題：買柳橙汁",
+        misconception: "買東西時剩下的錢不夠買一份，必須捨去餘數只取商",
+        visualType: "juice_buying",
+        totalMoney: 50,
+        pricePerCup: 8,
+        quotient: 6,
+        remainder: 2,
+        question: "小芬帶了 50 元到果園冷飲吧，每杯新鮮柳橙汁賣 8 元，請問她【最多】可以買幾杯柳橙汁？",
+        options: [
+          { text: "6 杯", correct: true, note: "完全正確！50 ÷ 8 = 6 ... 剩下 2 元，2 元不夠再買一杯，所以最多買 6 杯！" },
+          { text: "7 杯", correct: false, note: "8 × 7 = 56 元，小芬只有 50 元，錢不夠買 7 杯喔！" },
+          { text: "2 杯", correct: false, note: "2 元是剩下的零錢，不是買到的杯數喔！" },
+          { text: "8 杯", correct: false, note: "8 杯要 64 元，錢遠遠不夠喔！" }
+        ],
+        hint1: "先算算看 50 ÷ 8 的商和餘數是多少。",
+        hint2: "50 ÷ 8 = 6 ⋯ 2。剩下的 2 元能再買一杯 8 元的柳橙汁嗎？不能！",
+        explanation: "生活素養捨去題：\n50 ÷ 8 = 6 ⋯ 2。\n買了 6 杯花掉 48 元，剩下的 2 元不夠買下一杯（2 ＜ 8），因此只能捨去餘數。答：最多可以買 6 杯柳橙汁。"
+      }
+    ];
+
+    /* -------------------------------------------------------------------------
+       遊戲狀態管理
+       ------------------------------------------------------------------------- */
+    let currentQIndex = 0;
+    let userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+    let totalScore = 0;
+    let autoNextEnabled = false;
+    let isOverviewMode = false;
+    let activeAnimInterval = null;
+
+    /* -------------------------------------------------------------------------
+       產生題目專屬動態 SVG / 互動展演圖形 (buildQuestionVisualHTML)
+       ------------------------------------------------------------------------- */
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      // 1. 平分紅蘋果 (Q1)
+      if (q.visualType === 'distribute_apples') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center justify-center gap-1.5 flex-wrap max-w-sm p-2 bg-rose-50/70 rounded-xl border border-rose-200 mb-3 shadow-inner">
+              <span class="text-xs font-black text-rose-800 w-full text-center">🍎 待分發的紅蘋果（共 18 顆）</span>
+              ${Array.from({length: 18}).map((_, i) => `<span class="text-xl transform hover:scale-125 transition inline-block">🍎</span>`).join('')}
+            </div>
+            <div class="flex items-center justify-center gap-3 sm:gap-6 w-full">
+              ${[1, 2, 3].map(b => `
+                <div class="flex flex-col items-center bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-2.5 w-24 sm:w-28 shadow-sm">
+                  <div class="text-xs font-black text-amber-900 mb-1">🧺 竹籃 ${b}</div>
+                  <div class="grid grid-cols-3 gap-1 min-h-[48px] items-center justify-center bg-white/80 rounded-xl p-1.5 w-full border border-amber-200">
+                    <span class="text-base text-center">🍎</span>
+                    <span class="text-base text-center">🍎</span>
+                    <span class="text-base text-center">🍎</span>
+                    <span class="text-base text-center">🍎</span>
+                    <span class="text-base text-center">🍎</span>
+                    <span class="text-base text-center">🍎</span>
+                  </div>
+                  <span class="text-[11px] font-black text-cyan-800 mt-1">各分得 6 顆</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-2 text-xs font-black text-cyan-900 bg-cyan-100 px-3 py-1 rounded-full border border-cyan-300">
+              算式：18 ÷ 3 ＝ 6（顆）
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. 認識真平分 (Q2)
+      if (q.visualType === 'equal_share_compare') {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full p-2 select-none">
+            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 flex flex-col items-center">
+              <span class="text-xs font-black text-emerald-800 flex items-center gap-1">
+                <span>✅</span> 真正的「平分」（每份一樣多）
+              </span>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="text-center p-2 bg-white rounded-xl border border-emerald-200 text-xs font-bold">🐿️ A<br><span class="text-sm">🍓🍓🍓🍓</span><br><b class="text-emerald-700">4 顆</b></div>
+                <div class="text-center p-2 bg-white rounded-xl border border-emerald-200 text-xs font-bold">🐿️ B<br><span class="text-sm">🍓🍓🍓🍓</span><br><b class="text-emerald-700">4 顆</b></div>
+                <div class="text-center p-2 bg-white rounded-xl border border-emerald-200 text-xs font-bold">🐿️ C<br><span class="text-sm">🍓🍓🍓🍓</span><br><b class="text-emerald-700">4 顆</b></div>
+              </div>
+            </div>
+            <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 flex flex-col items-center">
+              <span class="text-xs font-black text-rose-800 flex items-center gap-1">
+                <span>❌</span> 不是平分（每份數量不相等）
+              </span>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="text-center p-2 bg-white rounded-xl border border-rose-200 text-xs font-bold">🐿️ A<br><span class="text-sm">🍓🍓🍓</span><br><b class="text-rose-700">3 顆</b></div>
+                <div class="text-center p-2 bg-white rounded-xl border border-rose-200 text-xs font-bold">🐿️ B<br><span class="text-sm">🍓🍓🍓🍓</span><br><b class="text-rose-700">4 顆</b></div>
+                <div class="text-center p-2 bg-white rounded-xl border border-rose-200 text-xs font-bold">🐿️ C<br><span class="text-sm">🍓🍓🍓🍓🍓</span><br><b class="text-rose-700">5 顆</b></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. 算式數字意義 (Q3)
+      if (q.visualType === 'formula_meaning') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center gap-3 bg-white p-4 rounded-2xl border-2 border-cyan-300 shadow-sm flex-wrap justify-center">
+              <div class="flex flex-col items-center">
+                <span class="text-2xl font-black text-cyan-600">24</span>
+                <span class="text-[10px] bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full font-black mt-1">被除數</span>
+                <span class="text-[10px] text-slate-500 font-bold mt-0.5">總花朵數（24朵）</span>
+              </div>
+              <span class="text-2xl font-black text-slate-400">÷</span>
+              <div class="flex flex-col items-center">
+                <span class="text-2xl font-black text-purple-600">4</span>
+                <span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-black mt-1">除數</span>
+                <span class="text-[10px] text-slate-500 font-bold mt-0.5">花瓶個數（4個）</span>
+              </div>
+              <span class="text-2xl font-black text-slate-400">＝</span>
+              <div class="flex flex-col items-center bg-amber-50 p-2 rounded-xl border-2 border-amber-400 animate-pulse">
+                <span class="text-2xl font-black text-amber-600">6</span>
+                <span class="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-black mt-1">商（答案）</span>
+                <span class="text-[10px] text-amber-800 font-black mt-0.5">每個花瓶有 6 朵！</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 平分水果糖 (Q4)
+      if (q.visualType === 'distribute_candies') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center justify-center gap-1.5 flex-wrap max-w-md p-2 bg-amber-50 rounded-xl border border-amber-200 mb-2">
+              <span class="text-xs font-black text-amber-900 w-full text-center">🍬 35 顆水果糖 平分給 5 個人</span>
+              <div class="flex items-center gap-2 text-xs font-black text-slate-700">
+                <span>五七三十五：5 × 7 ＝ 35</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-5 gap-1.5 sm:gap-2 w-full max-w-lg">
+              ${[1, 2, 3, 4, 5].map(p => `
+                <div class="bg-cyan-50 border border-cyan-300 rounded-xl p-2 text-center flex flex-col items-center shadow-xs">
+                  <span class="text-lg">🧒</span>
+                  <span class="text-[10px] font-bold text-slate-600">學生 ${p}</span>
+                  <span class="text-xs font-black text-cyan-800 mt-1 bg-white px-1.5 py-0.5 rounded-md border border-cyan-200">7 顆</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. 包含除分裝檸檬 (Q5)
+      if (q.visualType === 'pack_lemons') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="text-xs font-black text-cyan-900 mb-2 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-300">
+              🍋 28 顆檸檬，每 4 顆裝成 1 袋（包含除）
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 w-full max-w-xl">
+              ${[1, 2, 3, 4, 5, 6, 7].map(b => `
+                <div class="bg-yellow-50 border-2 border-dashed border-amber-400 rounded-2xl p-1.5 flex flex-col items-center shadow-xs hover:bg-yellow-100 transition">
+                  <span class="text-[10px] font-black text-amber-800">第 ${b} 袋</span>
+                  <div class="text-sm my-0.5">🍋🍋<br>🍋🍋</div>
+                  <span class="text-[10px] font-bold text-slate-500">4 顆</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-2 text-xs font-black text-slate-700">
+              總共裝了：28 ÷ 4 ＝ <span class="text-amber-600 text-sm font-black">7 袋</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 6. 題型比對 (Q6)
+      if (q.visualType === 'problem_type_compare') {
+        return `
+          <div class="flex flex-col sm:flex-row items-stretch justify-center gap-3 w-full p-2 select-none">
+            <div class="flex-1 bg-cyan-50 border-2 border-cyan-300 rounded-2xl p-3 flex flex-col items-center text-center">
+              <span class="bg-cyan-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full mb-1">包含除（分裝除）</span>
+              <p class="text-xs font-black text-cyan-950 mt-1">「每幾個裝一份，可裝幾份？」</p>
+              <div class="text-xs text-slate-600 mt-2 bg-white p-2 rounded-xl border border-cyan-200 w-full font-bold">
+                例：32 塊餅乾，每 8 塊裝一盒，共可裝 32 ÷ 8 ＝ 4 盒。
+              </div>
+            </div>
+            <div class="flex-1 bg-purple-50 border-2 border-purple-300 rounded-2xl p-3 flex flex-col items-center text-center">
+              <span class="bg-purple-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full mb-1">等分除（平分除）</span>
+              <p class="text-xs font-black text-purple-950 mt-1">「平分給幾個人，每人得幾個？」</p>
+              <div class="text-xs text-slate-600 mt-2 bg-white p-2 rounded-xl border border-purple-200 w-full font-bold">
+                例：32 塊餅乾，平分給 4 個人，每人分得 32 ÷ 4 ＝ 8 塊。
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 7. 剪緞帶 (Q7)
+      if (q.visualType === 'cut_ribbon') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="text-xs font-black text-purple-900 mb-1">整條長 45 公分彩色緞帶</div>
+            <div class="w-full max-w-md h-8 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 rounded-xl border-2 border-purple-300 flex overflow-hidden shadow-inner my-1">
+              ${[1, 2, 3, 4, 5].map(i => `
+                <div class="flex-1 border-r-2 border-dashed border-white flex items-center justify-center text-[10px] font-black text-white bg-black/10">
+                  9 cm
+                </div>
+              `).join('')}
+            </div>
+            <div class="flex justify-between w-full max-w-md text-[10px] font-black text-slate-500 px-1">
+              <span>0 cm</span>
+              <span>9 cm</span>
+              <span>18 cm</span>
+              <span>27 cm</span>
+              <span>36 cm</span>
+              <span>45 cm</span>
+            </div>
+            <div class="mt-2 text-xs font-black text-purple-800 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+              45 ÷ 9 ＝ 5（段）
+            </div>
+          </div>
+        `;
+      }
+
+      // 8. 買貼紙 (Q8)
+      if (q.visualType === 'coins_buying') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center gap-2 bg-amber-50 p-2.5 rounded-2xl border border-amber-300 mb-2">
+              <span class="text-xl">💰</span>
+              <span class="text-xs font-black text-amber-900">小明的錢包：48 元（每張貼紙 6 元）</span>
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-8 gap-1.5 w-full max-w-lg">
+              ${[1, 2, 3, 4, 5, 6, 7, 8].map(s => `
+                <div class="bg-white border-2 border-cyan-300 rounded-xl p-1.5 text-center flex flex-col items-center shadow-xs">
+                  <span class="text-base">⭐</span>
+                  <span class="text-[10px] font-black text-cyan-800">第 ${s} 張</span>
+                  <span class="text-[9px] text-slate-400">6元</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // 9. 該背誰的乘法表 (Q9)
+      if (q.visualType === 'multiplication_table_choice') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-cyan-50 border-2 border-cyan-300 rounded-2xl p-4 max-w-md w-full text-center">
+              <div class="text-lg font-black text-cyan-950 mb-2">
+                56 ÷ <span class="text-rose-600 bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-300">7</span> ＝ （ ？ ）
+              </div>
+              <div class="p-2.5 bg-white rounded-xl border border-cyan-200 text-xs font-bold text-slate-700 leading-relaxed">
+                👉 因為 <span class="text-rose-600 font-black">7</span> × （ 商 ） ＝ 56<br>
+                所以要背 <span class="text-rose-600 font-black">7 的乘法表</span>：<br>
+                「七七四十九、<b class="text-emerald-600 text-sm">七八五十六</b>」！<br>
+                商立刻得出就是 <b class="text-emerald-600">8</b>！
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 10. 乘除互逆 (Q10)
+      if (q.visualType === 'inverse_relations') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center gap-3 bg-indigo-50 p-3.5 rounded-2xl border-2 border-indigo-200 max-w-md w-full justify-center">
+              <div class="text-center font-black">
+                <div class="text-xs text-indigo-700">乘法算式</div>
+                <div class="text-base text-indigo-950 mt-0.5">8 × 9 ＝ 72</div>
+              </div>
+              <div class="text-2xl text-indigo-400 font-black">⇄</div>
+              <div class="text-center font-black">
+                <div class="text-xs text-emerald-700">互逆除法</div>
+                <div class="text-base text-emerald-900 mt-0.5">72 ÷ 8 ＝ 9</div>
+                <div class="text-[11px] text-slate-500">(或 72 ÷ 9 ＝ 8)</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 11. 神秘被除數 (Q11)
+      if (q.visualType === 'reverse_fill_blank') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-center max-w-sm w-full">
+              <div class="text-xl font-black text-amber-950 mb-2">
+                （ <span class="text-rose-600 border-b-2 border-rose-500 px-3">？</span> ） ÷ 6 ＝ 7
+              </div>
+              <div class="text-xs font-bold text-slate-700 bg-white p-2.5 rounded-xl border border-amber-200">
+                🔄 逆向思考反推：<br>
+                被除數 ＝ 除數 × 商<br>
+                被除數 ＝ 6 × 7 ＝ <b class="text-amber-700 text-sm">42</b>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 12. 奇異果裝盒 (Q12)
+      if (q.visualType === 'kiwi_boxes') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="text-xs font-black text-emerald-900 mb-2 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+              🥝 63 顆奇異果，每 9 顆裝 1 盒（剛好分完）
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 w-full max-w-xl">
+              ${[1, 2, 3, 4, 5, 6, 7].map(b => `
+                <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-1.5 text-center flex flex-col items-center shadow-xs">
+                  <span class="text-[10px] font-black text-emerald-800">盒 ${b}</span>
+                  <span class="text-xs my-0.5">🥝🥝🥝</span>
+                  <span class="text-[10px] font-bold text-slate-500">9 顆</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-2 text-xs font-black text-slate-700">九七六十三：63 ÷ 9 ＝ 7（盒）</div>
+          </div>
+        `;
+      }
+
+      // 13. 餘數鐵則天平 (Q13)
+      if (q.visualType === 'remainder_rule_scale') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 max-w-md w-full text-center">
+              <span class="bg-rose-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-xs">
+                ⚠️ 除法第一鐵則
+              </span>
+              <div class="text-base font-black text-rose-950 my-2">
+                餘數 ＜ 除數（除數是 6）
+              </div>
+              <div class="grid grid-cols-6 gap-1 bg-white p-2 rounded-xl border border-rose-200 mt-2">
+                <div class="p-1 rounded bg-slate-50 text-[11px] font-bold">0</div>
+                <div class="p-1 rounded bg-slate-50 text-[11px] font-bold">1</div>
+                <div class="p-1 rounded bg-slate-50 text-[11px] font-bold">2</div>
+                <div class="p-1 rounded bg-slate-50 text-[11px] font-bold">3</div>
+                <div class="p-1 rounded bg-slate-50 text-[11px] font-bold">4</div>
+                <div class="p-1 rounded bg-amber-100 text-[11px] font-black text-amber-900 border border-amber-300">5(最大)</div>
+              </div>
+              <div class="text-[11px] font-bold text-slate-500 mt-2">※ 餘數絕對不可等於 6 或大於 6</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 14. 抓出除法小壞蛋 (Q14)
+      if (q.visualType === 'detect_error_calc') {
+        return `
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full p-2 select-none">
+            <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 text-center flex-1 max-w-xs">
+              <div class="text-xs font-black text-rose-700 mb-1">❌ 小皮算錯了：</div>
+              <div class="text-base font-black text-rose-950 font-mono">23 ÷ 4 ＝ 4 ⋯ <span class="bg-rose-200 px-1 rounded text-rose-800">7</span></div>
+              <div class="text-[11px] text-rose-800 font-bold mt-1">餘數 7 ＞ 除數 4（錯！）<br>7 還能再分出 1 個 4</div>
+            </div>
+            <div class="text-2xl text-slate-400">➜</div>
+            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 text-center flex-1 max-w-xs">
+              <div class="text-xs font-black text-emerald-700 mb-1">✅ 正確解答：</div>
+              <div class="text-base font-black text-emerald-950 font-mono">23 ÷ 4 ＝ <span class="bg-emerald-200 px-1 rounded text-emerald-900">5</span> ⋯ 3</div>
+              <div class="text-[11px] text-emerald-800 font-bold mt-1">商由 4 變成 5<br>餘數 3 ＜ 4（正確！）</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 15. 氣球分分看 (Q15)
+      if (q.visualType === 'balloons_remain') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="text-xs font-black text-cyan-900 mb-2">🎈 26 顆氣球平分給 4 位小朋友</div>
+            <div class="grid grid-cols-4 gap-2 w-full max-w-md">
+              ${[1, 2, 3, 4].map(k => `
+                <div class="bg-white border-2 border-cyan-300 rounded-2xl p-2 text-center flex flex-col items-center shadow-xs">
+                  <span class="text-sm">👧</span>
+                  <span class="text-[10px] font-bold text-slate-500">第 ${k} 位</span>
+                  <span class="text-xs font-black text-cyan-800 mt-1 bg-cyan-50 px-2 py-0.5 rounded-lg border border-cyan-200">6 顆</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-2.5 flex items-center gap-2 bg-rose-50 border border-rose-300 px-3 py-1.5 rounded-full">
+              <span class="text-sm">🎈🎈</span>
+              <span class="text-xs font-black text-rose-800">剩下 2 顆不能再分（餘數 2）</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // 16. 誰不可能是餘數 (Q16)
+      if (q.visualType === 'possible_remainders') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-cyan-50 border-2 border-cyan-300 rounded-2xl p-4 max-w-md w-full text-center">
+              <div class="text-xs font-black text-cyan-900 mb-1">被除數 ÷ <span class="text-cyan-700 text-sm font-black">8</span> ＝ 商 ⋯ 餘數</div>
+              <div class="text-xs font-bold text-slate-700 mt-1">餘數必須小於 8，可能出現的餘數為：</div>
+              <div class="flex items-center justify-center gap-1.5 flex-wrap my-2">
+                ${[0, 1, 2, 3, 4, 5, 6, 7].map(n => `<span class="px-2 py-1 bg-emerald-100 text-emerald-900 rounded-lg text-xs font-black border border-emerald-300">${n}</span>`).join('')}
+              </div>
+              <div class="text-xs font-black text-rose-600 bg-rose-50 p-1.5 rounded-xl border border-rose-200">
+                ❌ 只要是 8 或大於 8（如 9、10...），絕對不可當作餘數！
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 17. 直式各部位名稱 (Q17)
+      if (q.visualType === 'vertical_division_parts') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-white border-2 border-cyan-300 rounded-3xl p-5 shadow-sm max-w-xs w-full font-mono text-center relative">
+              <div class="text-xs font-black text-cyan-900 mb-3 font-sans">直式除法四大部位</div>
+              
+              <!-- 上方的商 -->
+              <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="text-xs font-black text-amber-700 font-sans bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 animate-bounce">👉 這是【商】</span>
+                <span class="text-2xl font-black text-amber-600">7</span>
+              </div>
+
+              <!-- 廠部符號與被除數、除數 -->
+              <div class="flex items-center justify-center text-xl font-black">
+                <span class="text-purple-600 mr-2 text-sm font-sans flex items-center">
+                  <span class="bg-purple-100 px-1.5 py-0.5 rounded border border-purple-300 mr-1 text-[11px]">除數</span> 5
+                </span>
+                <div class="border-t-2 border-l-2 border-slate-700 rounded-tl-md pl-3 pt-0.5 pr-2">
+                  <span class="text-cyan-800">35</span>
+                  <span class="text-[10px] font-sans text-cyan-700 ml-1">（被除數）</span>
+                </div>
+              </div>
+
+              <!-- 底下的 35 與 0 -->
+              <div class="flex flex-col items-end pr-8 mt-1 border-b border-slate-400">
+                <span class="text-slate-500 text-base">35</span>
+              </div>
+              <div class="flex items-center justify-center gap-2 mt-1">
+                <span class="text-xs font-black text-emerald-700 font-sans bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">👉 這是【餘數】</span>
+                <span class="text-base font-black text-emerald-700">0</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 18. 直式過程相減意義 (Q18)
+      if (q.visualType === 'vertical_step_meaning') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border-2 border-cyan-200 max-w-md w-full justify-center">
+              <div class="font-mono text-center text-lg bg-white p-3 rounded-xl border border-slate-300 shadow-xs">
+                <div class="text-amber-600 font-black">   7</div>
+                <div class="border-t border-slate-700 pt-0.5">5 ) 38</div>
+                <div class="text-rose-600 font-black border-b border-slate-700 bg-rose-50 px-1">  35</div>
+                <div class="text-emerald-600 font-black">   3</div>
+              </div>
+              <div class="text-xs font-bold text-slate-700 space-y-1.5 flex-1">
+                <div>• <b class="text-cyan-800">38</b>：原有 38 顆</div>
+                <div>• <b class="text-rose-600">35</b>：分掉了 5 × 7 ＝ 35 顆</div>
+                <div>• <b class="text-emerald-600">3</b>：剩下 38 - 35 ＝ 3 顆</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 19. 計程車素養進位 (Q19)
+      if (q.visualType === 'taxi_seating') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 w-full max-w-lg text-center">
+              <div class="text-xs font-black text-amber-950 mb-2">
+                🚖 31 位學生坐計程車，每車限坐 4 人
+              </div>
+              <div class="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+                ${[1, 2, 3, 4, 5, 6, 7].map(c => `
+                  <div class="bg-white border border-amber-400 rounded-xl p-1 text-[10px] font-bold text-slate-700">
+                    第 ${c} 車<br><span class="text-amber-700 font-black">坐 4 人</span>
+                  </div>
+                `).join('')}
+                <div class="bg-rose-100 border-2 border-rose-400 rounded-xl p-1 text-[10px] font-black text-rose-900 animate-pulse">
+                  第 8 車<br><span>坐 3 人</span>
+                </div>
+              </div>
+              <div class="text-xs font-black text-slate-800 mt-2 bg-white p-1.5 rounded-xl border border-amber-200">
+                31 ÷ 4 ＝ 7 輛 ⋯ 剩下 3 人 ➜ <b class="text-rose-600">7 ＋ 1 ＝ 8 輛！</b>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 20. 柳橙汁素養捨去 (Q20)
+      if (q.visualType === 'juice_buying') {
+        return `
+          <div class="flex flex-col items-center justify-center p-2 w-full select-none">
+            <div class="bg-orange-50 border-2 border-orange-300 rounded-2xl p-3 w-full max-w-md text-center">
+              <div class="text-xs font-black text-orange-950 mb-1">
+                🍹 小芬有 50 元，每杯新鮮柳橙汁 8 元
+              </div>
+              <div class="flex items-center justify-center gap-1.5 my-2">
+                ${[1, 2, 3, 4, 5, 6].map(j => `
+                  <div class="bg-white border border-orange-300 rounded-xl p-1.5 text-center shadow-xs">
+                    <span class="text-base">🧃</span>
+                    <span class="text-[9px] font-black text-orange-800 block">第 ${j} 杯</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="text-xs font-bold text-slate-700 bg-white p-2 rounded-xl border border-orange-200">
+                50 ÷ 8 ＝ 6 杯 ⋯ 剩下 2 元<br>
+                <span class="text-[11px] text-slate-500 font-bold">剩下的 2 元不夠再買一杯（2 ＜ 8），所以只能買 6 杯！</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="text-xs text-slate-400 font-bold">除法運算情境展示</div>`;
+    }
+
+    /* -------------------------------------------------------------------------
+       畫面渲染：頂部題號導覽、當前題目與選項
+       ------------------------------------------------------------------------- */
+    function renderTopUnitNav() {
+      const container = document.getElementById('unitQuestionNav');
+      if (!container) return;
+      const activeQ = QUESTIONS_DB[currentQIndex];
+
+      // 5 大區塊分組
+      const stages = [
+        { id: 1, name: "1. 平分的意義", range: [0, 3] },
+        { id: 2, name: "2. 包含除分裝", range: [4, 7] },
+        { id: 3, name: "3. 乘除互逆", range: [8, 11] },
+        { id: 4, name: "4. 餘數鐵則", range: [12, 15] },
+        { id: 5, name: "5. 直式與素養", range: [16, 19] }
+      ];
+
+      let html = '';
+      stages.forEach(st => {
+        const isCurrentStage = (currentQIndex >= st.range[0] && currentQIndex <= st.range[1]);
+        html += `
+          <div class="bg-white/90 border ${isCurrentStage ? 'border-cyan-400 ring-2 ring-cyan-200' : 'border-slate-200'} rounded-xl p-1.5 flex flex-col justify-between">
+            <span class="text-[10px] font-black ${isCurrentStage ? 'text-cyan-800 font-black' : 'text-slate-500'} mb-1 truncate">${st.name}</span>
+            <div class="grid grid-cols-4 gap-1">
+              ${Array.from({length: st.range[1] - st.range[0] + 1}).map((_, i) => {
+                const qIdx = st.range[0] + i;
+                const ans = userAnswers[qIdx];
+                let btnClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                if (ans !== null) {
+                  btnClass = ans.correct ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-rose-500 text-white border-rose-600';
+                }
+                if (qIdx === currentQIndex) {
+                  btnClass += ' ring-2 ring-cyan-500 ring-offset-1 font-black scale-105';
+                }
+                return `
+                  <button onclick="jumpToQuestion(${qIdx})" class="bouncy-btn text-[11px] font-bold py-1 rounded-md border text-center transition ${btnClass}">
+                    ${qIdx + 1}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderCurrentQuestion() {
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('questionTag').textContent = q.tag;
+      document.getElementById('stageNameTag').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('stageBadge').textContent = `第 ${q.stage} 區：${q.stageName}`;
+      document.getElementById('misconceptionText').textContent = q.misconception;
+      document.getElementById('qNumberPrefix').textContent = `第 ${q.id} 題.`;
+      document.getElementById('questionText').textContent = q.question;
+
+      // 渲染視覺展演舞台
+      const stage = document.getElementById('interactiveStage');
+      stage.innerHTML = buildQuestionVisualHTML(q, true);
+
+      // 隱藏提示卡與作答反饋
+      document.getElementById('hintDisplayArea').classList.add('hidden');
+      document.getElementById('hintDisplayArea').textContent = '';
+      const fbBox = document.getElementById('feedbackBox');
+      fbBox.classList.add('hidden');
+
+      // 渲染選項按鈕
+      const grid = document.getElementById('optionsGrid');
+      let optionsHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const currentAns = userAnswers[currentQIndex];
+
+      q.options.forEach((opt, idx) => {
+        let optBtnClass = 'bg-white hover:bg-cyan-50/80 border-slate-200 text-slate-800';
+        let checkIcon = letters[idx];
+
+        if (currentAns !== null) {
+          if (opt.correct) {
+            optBtnClass = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-black';
+            checkIcon = '✓';
+          } else if (currentAns.selectedIndex === idx) {
+            optBtnClass = 'bg-rose-50 border-rose-400 text-rose-950 font-bold';
+            checkIcon = '✗';
+          }
+        }
+
+        optionsHTML += `
+          <button id="opt-btn-${idx}" onclick="selectOption(${idx})" class="bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between shadow-xs ${optBtnClass}">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-cyan-100 text-cyan-900 font-black text-xs flex items-center justify-center shrink-0 border border-cyan-200">
+                ${letters[idx]}
+              </span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800 leading-snug">${opt.text}</span>
+            </div>
+            <span id="opt-check-${idx}" class="text-sm font-black px-1.5 text-cyan-600">${checkIcon}</span>
+          </button>
+        `;
+      });
+      grid.innerHTML = optionsHTML;
+
+      // 如果已經作答過，重新顯示反饋資訊
+      if (currentAns !== null) {
+        showFeedback(currentAns.correct, currentAns.selected);
+      }
+
+      // 更新進度條
+      const progressPct = ((currentQIndex + 1) / QUESTIONS_DB.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPct}%`;
+      document.getElementById('progressPercentText').textContent = `進度：第 ${currentQIndex + 1} / ${QUESTIONS_DB.length} 題`;
+
+      // 更新正確率與頂部分段題號
+      updateStats();
+      renderTopUnitNav();
+    }
+
+    /* -------------------------------------------------------------------------
+       作答判斷 (selectOption)
+       ------------------------------------------------------------------------- */
+    function selectOption(optIndex) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const selected = q.options[optIndex];
+      const isFirstAttempt = (userAnswers[currentQIndex] === null);
+
+      if (isFirstAttempt) {
+        if (selected.correct) {
+          totalScore += 5;
+        }
+      }
+
+      userAnswers[currentQIndex] = {
+        selectedIndex: optIndex,
+        selected: selected,
+        correct: selected.correct
+      };
+
+      showFeedback(selected.correct, selected);
+      updateStats();
+      renderTopUnitNav();
+
+      if (selected.correct) {
+        playSound('correct');
+        confetti({
+          particleCount: 25,
+          spread: 45,
+          origin: { y: 0.7 }
+        });
+
+        // 刷新按鈕外觀
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 font-black flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✓';
+        }
+
+        if (autoNextEnabled) {
+          setTimeout(() => {
+            nextQuestion();
+          }, 1200);
+        }
+      } else {
+        playSound('wrong');
+        const btn = document.getElementById(`opt-btn-${optIndex}`);
+        if (btn) {
+          btn.className = 'bouncy-btn text-left p-3.5 sm:p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 text-rose-950 font-bold flex items-center justify-between shadow-xs';
+          document.getElementById(`opt-check-${optIndex}`).textContent = '✗';
+        }
+      }
+
+      // 檢查是否全體完成
+      checkCompletion();
+    }
+
+    function showFeedback(isCorrect, selected) {
+      const q = QUESTIONS_DB[currentQIndex];
+      const fbBox = document.getElementById('feedbackBox');
+      const fbIcon = document.getElementById('feedbackIcon');
+      const fbTitle = document.getElementById('feedbackTitle');
+      const fbDetail = document.getElementById('feedbackDetail');
+
+      fbBox.classList.remove('hidden');
+      if (isCorrect) {
+        fbBox.className = 'rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 block transition-all duration-300';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '太棒了！回答完全正確！';
+        fbDetail.textContent = selected.note || q.explanation;
+      } else {
+        fbBox.className = 'rounded-2xl p-4 bg-amber-50 border-2 border-amber-300 text-amber-950 block transition-all duration-300';
+        fbIcon.textContent = '💡';
+        fbTitle.textContent = '差一點點！仔細想想看喔：';
+        fbDetail.textContent = selected.note || q.hint1 || '再思考一下除法平分與餘數的關係喔！';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scoreText').textContent = `${totalScore} 分`;
+      const answeredCount = userAnswers.filter(a => a !== null).length;
+      if (answeredCount > 0) {
+        const correctCount = userAnswers.filter(a => a && a.correct).length;
+        const acc = Math.round((correctCount / answeredCount) * 100);
+        document.getElementById('accuracyText').textContent = `正確率：${acc}%`;
+      }
+    }
+
+    function checkCompletion() {
+      const allDone = userAnswers.every(a => a !== null);
+      if (allDone) {
+        setTimeout(() => {
+          showCompletionModal();
+        }, 800);
+      }
+    }
+
+    function showCompletionModal() {
+      playSound('victory');
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      const correctCount = userAnswers.filter(a => a && a.correct).length;
+      const acc = Math.round((correctCount / QUESTIONS_DB.length) * 100);
+      
+      let stars = '⭐⭐⭐';
+      if (totalScore < 70) stars = '⭐☆☆';
+      else if (totalScore < 90) stars = '⭐⭐☆';
+
+      document.getElementById('endStarsDisplay').textContent = stars;
+      document.getElementById('endScoreDisplay').textContent = `最終得分：${totalScore} 分`;
+      document.getElementById('endAccDisplay').textContent = `正確率：${acc}%（${correctCount}/${QUESTIONS_DB.length}）`;
+
+      document.getElementById('completionModal').classList.remove('hidden');
+    }
+
+    function restartQuiz() {
+      document.getElementById('completionModal').classList.add('hidden');
+      currentQIndex = 0;
+      userAnswers = new Array(QUESTIONS_DB.length).fill(null);
+      totalScore = 0;
+      updateStats();
+      renderCurrentQuestion();
+    }
+
+    /* -------------------------------------------------------------------------
+       跳題與切換
+       ------------------------------------------------------------------------- */
+    function jumpToQuestion(idx) {
+      playSound('click');
+      currentQIndex = idx;
+      if (isOverviewMode) {
+        toggleAllQuestionsView();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        playSound('click');
+        currentQIndex--;
+        renderCurrentQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < QUESTIONS_DB.length - 1) {
+        playSound('click');
+        currentQIndex++;
+        renderCurrentQuestion();
+      } else {
+        checkCompletion();
+      }
+    }
+
+    function toggleAutoNext() {
+      autoNextEnabled = !autoNextEnabled;
+      const btn = document.getElementById('autoNextBtn');
+      if (autoNextEnabled) {
+        btn.textContent = '⏭️ 自動下一題：開';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-cyan-600 text-white border border-cyan-500';
+      } else {
+        btn.textContent = '⏭️ 自動下一題：關';
+        btn.className = 'bouncy-btn px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200';
+      }
+      playSound('click');
+    }
+
+    /* -------------------------------------------------------------------------
+       提示與詳解 Modal
+       ------------------------------------------------------------------------- */
+    function revealHint(num) {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      const area = document.getElementById('hintDisplayArea');
+      area.classList.remove('hidden');
+      if (num === 1) {
+        area.innerHTML = `<span class="text-cyan-800 font-black">💡 提示 1：</span>${q.hint1}`;
+      } else {
+        area.innerHTML = `<span class="text-amber-800 font-black">🔍 提示 2：</span>${q.hint2}`;
+      }
+    }
+
+    function showCurrentExplanation() {
+      playSound('click');
+      const q = QUESTIONS_DB[currentQIndex];
+      document.getElementById('modalExpTitle').textContent = `第 ${q.id} 題詳解：${q.tag}`;
+      document.getElementById('modalExpBody').innerHTML = `
+        <div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200 mb-3">
+          <div class="font-black text-cyan-900 text-xs mb-1">題目：${q.question}</div>
+          <div class="text-xs text-cyan-800 font-bold">正確解答：${q.options.find(o => o.correct)?.text}</div>
+        </div>
+        <div class="font-bold text-slate-700 leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+          ${q.explanation}
+        </div>
+      `;
+      document.getElementById('explanationModal').classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('explanationModal').classList.add('hidden');
+    }
+
+    function toggleFormulaModal() {
+      playSound('click');
+      const modal = document.getElementById('formulaModal');
+      modal.classList.toggle('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       全題目一覽模式
+       ------------------------------------------------------------------------- */
+    function toggleAllQuestionsView() {
+      playSound('click');
+      isOverviewMode = !isOverviewMode;
+      const singleView = document.getElementById('singleQuestionView');
+      const allView = document.getElementById('allQuestionsView');
+      const singleNav = document.getElementById('singleNavControls');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        singleView.classList.add('hidden');
+        singleNav.classList.add('hidden');
+        allView.classList.remove('hidden');
+        btnText.textContent = '返回單題闖關模式';
+        renderAllQuestionsList();
+      } else {
+        singleView.classList.remove('hidden');
+        singleNav.classList.remove('hidden');
+        allView.classList.add('hidden');
+        btnText.textContent = '一次瀏覽全部題目 (含圖)';
+        renderCurrentQuestion();
+      }
+      renderTopUnitNav();
+    }
+
+    function renderAllQuestionsList() {
+      const container = document.getElementById('allQuestionsContainer');
+      if (!container) return;
+
+      let html = '';
+      QUESTIONS_DB.forEach(q => {
+        const visualHTML = buildQuestionVisualHTML(q, false);
+        html += `
+          <div class="orchard-card rounded-3xl p-5 border-2 border-cyan-200 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-cyan-100 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-cyan-600 text-white text-xs px-2.5 py-0.5 rounded-lg font-black">第 ${q.id} 題</span>
+                <span class="text-xs font-black text-cyan-950">${q.tag}</span>
+                <span class="bg-cyan-100 text-cyan-800 text-[11px] px-2 py-0.5 rounded-full font-bold">第 ${q.stage} 區・${q.stageName}</span>
+              </div>
+              <button onclick="jumpToQuestion(${q.id - 1})" class="bouncy-btn text-xs font-black text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-3 py-1 rounded-xl border border-cyan-200">
+                🚀 跳到這題練習
+              </button>
+            </div>
+
+            <h3 class="font-black text-base text-slate-800 leading-snug">${q.question}</h3>
+
+            <div class="w-full bg-slate-50/80 rounded-2xl border border-dashed border-cyan-200 p-3 flex flex-col items-center justify-center">
+              ${visualHTML}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              ${q.options.map((opt, i) => `
+                <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between ${opt.correct ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black' : 'bg-white border-slate-200 text-slate-600'}">
+                  <span>${['A','B','C','D'][i]}. ${opt.text}</span>
+                  ${opt.correct ? '<span class="text-emerald-600 font-black">✓ 正確解答</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-cyan-50/80 rounded-xl border border-cyan-200 text-xs text-cyan-950 leading-relaxed font-bold whitespace-pre-line">
+              💡 詳解：${q.explanation}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* -------------------------------------------------------------------------
+       回 3D 冒險群島地圖
+       ------------------------------------------------------------------------- */
+    function returnToMainMap(isCompleted = false) {
+      playSound('click');
+      try {
+        // 若在 iframe 內嵌中
+        if (window.parent && window.parent !== window) {
+          // 嘗試觸發 parent 的完成或關閉按鈕
+          if (isCompleted) {
+            const parentCompleteBtn = window.parent.document.getElementById('btn-complete-and-back');
+            if (parentCompleteBtn) {
+              parentCompleteBtn.click();
+              return;
+            }
+          }
+          const parentCloseBtn = window.parent.document.getElementById('btn-close-game');
+          if (parentCloseBtn) {
+            parentCloseBtn.click();
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Parent interaction restricted, falling back to direct navigation', e);
+      }
+      // 若獨立開啟或 cross-origin，直接回到地圖頁
+      window.location.href = './math_island_adventure.html';
+    }
+
+    /* -------------------------------------------------------------------------
+       頁面載入初始化
+       ------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentQuestion();
+    });
+  </script>
+</body>
+</html>

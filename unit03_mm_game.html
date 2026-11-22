@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>量尺神探與刻度精靈：視覺直尺與數線互動網 (三上數學第3單元)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #fffbeb;
+      color: #1e293b;
+      margin: 0;
+    }
+    .font-comic { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .ruler-container {
+      touch-action: pan-y;
+      cursor: grab;
+    }
+    .ruler-container:active {
+      cursor: grabbing;
+    }
+    .magnifier-lens {
+      pointer-events: none;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body class="bg-amber-50 text-slate-800 flex flex-col justify-between min-h-screen overflow-x-hidden p-0 m-0">
+
+  <!-- 頂部導覽與分單元題號列 -->
+  <header class="bg-white border-b-2 border-amber-200 sticky top-0 z-40 px-3 py-2 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 標題 -->
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-lg shadow">
+          📏
+        </div>
+        <div>
+          <h1 class="text-sm md:text-base font-black text-amber-950 flex items-center gap-1.5 leading-tight">
+            三上第 3 單元：毫米與數線（視覺教具版）
+            <span id="stageBadge" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full border border-amber-300 font-bold hidden sm:inline">
+              單元 1：認識毫米與直尺
+            </span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- 右側功能按鈕 -->
+      <div class="flex items-center flex-wrap gap-1.5">
+        <button id="viewModeToggleBtn" onclick="toggleAllQuestionsView()" class="px-3 py-1 text-xs font-black rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition flex items-center gap-1">
+          <span>📚</span>
+          <span id="viewModeBtnText">一次瀏覽全部題目 (含圖)</span>
+        </button>
+
+        <button onclick="showCurrentExplanation()" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 transition flex items-center gap-1">
+          <span>👁️</span>
+          <span>看解析</span>
+        </button>
+
+        <button id="autoNextBtn" onclick="toggleAutoNext()" class="px-2 py-1 text-xs font-bold rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 transition">
+          ⏭️ 自動下一題：關
+        </button>
+
+        <div class="flex items-center bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl">
+          <span class="text-amber-500 text-xs mr-1">⭐</span>
+          <span id="scoreText" class="font-comic font-black text-amber-900 text-xs">0</span>
+        </div>
+
+        <button id="muteBtn" onclick="toggleMute()" class="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 text-xs transition">
+          🔊
+        </button>
+
+        <button onclick="toggleFormulaModal()" class="px-2 py-1 text-xs font-bold rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">
+          📋 重點卡
+        </button>
+      </div>
+    </div>
+
+    <!-- 五大單元與全題號自由點選列 -->
+    <div class="max-w-6xl mx-auto mt-2 pt-2 border-t border-amber-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5" id="unitQuestionNav"></div>
+    </div>
+
+    <!-- 進度與上下題切換 -->
+    <div class="max-w-6xl mx-auto mt-1.5 flex items-center gap-2">
+      <button onclick="prevQuestion()" class="px-2.5 py-0.5 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0">
+        ◀ 上一題
+      </button>
+      <div class="flex-1">
+        <div class="flex justify-between items-center text-[11px] text-slate-500 mb-0.5 px-0.5">
+          <span id="progressText">第 1 / 17 題（點上方題號或單元可自由跳題）</span>
+          <span id="stageProgressName" class="font-bold text-amber-700">單元 1：認識毫米與直尺</span>
+        </div>
+        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
+          <div id="progressBar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-full transition-all duration-300 rounded-full" style="width: 6%;"></div>
+        </div>
+      </div>
+      <button onclick="nextQuestion()" class="px-2.5 py-0.5 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shrink-0">
+        下一題 ▶
+      </button>
+    </div>
+  </header>
+
+  <!-- 模式 A：一次瀏覽全部題目（含直尺與數線視覺圖） -->
+  <section id="allQuestionsOverview" class="hidden max-w-6xl w-full mx-auto p-3 md:p-4 space-y-4">
+    <div class="bg-white rounded-2xl border-2 border-amber-300 p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="text-base font-black text-amber-950">
+          📚 全題庫視覺總覽（共 5 大單元、17 題，每題皆附視覺直尺／數線圖）
+        </h2>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button onclick="filterOverviewStage(0)" id="filterStage0" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-white">全部 (17)</button>
+        <button onclick="filterOverviewStage(1)" id="filterStage1" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">1.認識毫米(2)</button>
+        <button onclick="filterOverviewStage(2)" id="filterStage2" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">2.斷尺量感(4)</button>
+        <button onclick="filterOverviewStage(3)" id="filterStage3" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">3.直式換算(4)</button>
+        <button onclick="filterOverviewStage(4)" id="filterStage4" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">4.視覺數線(3)</button>
+        <button onclick="filterOverviewStage(5)" id="filterStage5" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">5.生活活用(4)</button>
+      </div>
+    </div>
+    <div id="overviewListContainer" class="space-y-4"></div>
+  </section>
+
+  <!-- 模式 B：單題視覺互動舞台 -->
+  <main id="singleQuestionMain" class="flex-1 max-w-5xl w-full mx-auto p-3 md:p-4 flex flex-col justify-start gap-3">
+
+    <!-- 1. 視覺教具區（直尺 / 斷尺 / 數線 / 生活實測圖） -->
+    <section id="interactiveStage" class="bg-white rounded-2xl border-2 border-amber-300 p-3 md:p-4 shadow-sm relative overflow-hidden flex flex-col items-center justify-center min-h-[225px]">
+      <div class="w-full flex items-center justify-between text-xs font-bold text-amber-900 mb-2 border-b border-amber-100 pb-1.5">
+        <span id="stageInstruction" class="flex items-center gap-1">
+          🖐️ <span>視覺教具操作區</span>
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button id="resetRulerBtn" onclick="resetRulerPosition()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded font-bold transition hidden">
+            🔄 對齊 0 刻度
+          </button>
+          <button id="freeMoveRulerBtn" onclick="offsetRulerPosition()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded font-bold transition hidden">
+            ↔️ 移開直尺重練
+          </button>
+          <button id="toggleLensBtn" onclick="toggleMagnifier()" class="text-xs bg-sky-100 hover:bg-sky-200 text-sky-900 px-2.5 py-0.5 rounded font-bold transition flex items-center gap-1">
+            🔍 <span id="lensBtnText">開啟放大鏡</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 視覺 SVG 掛載點 -->
+      <div id="stageCanvas" class="w-full py-2 flex flex-col items-center justify-center relative min-h-[155px]"></div>
+
+      <!-- 浮動放大鏡 -->
+      <div id="magnifierLens" class="magnifier-lens hidden absolute w-32 h-32 rounded-full border-4 border-amber-400 bg-white overflow-hidden z-20 pointer-events-none">
+        <div id="magnifierContent" class="absolute w-[800px] h-[300px] origin-top-left"></div>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="w-0.5 h-full bg-red-500/50"></div>
+          <div class="h-0.5 w-full bg-red-500/50 absolute"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 精簡題幹與選項區 -->
+    <section class="bg-white rounded-2xl border-2 border-amber-200 p-3 md:p-4 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div class="flex items-center gap-1.5">
+          <span id="questionTag" class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-amber-500 text-white">Q1</span>
+          <span id="misconceptionTag" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">重點</span>
+        </div>
+        <div id="questionText" class="text-slate-900 text-base md:text-lg font-black leading-snug flex-1 ml-1">
+          載入中...
+        </div>
+      </div>
+
+      <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3"></div>
+    </section>
+
+    <!-- 3. 提示與解析抽屜 -->
+    <section id="scaffoldDrawer" class="hidden bg-slate-50 rounded-2xl border-2 border-slate-200 p-3 md:p-4 shadow-sm">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div id="scaffoldIcon" class="w-7 h-7 rounded-lg bg-amber-400 text-white flex items-center justify-center font-black text-sm">💡</div>
+          <div>
+            <h3 id="scaffoldTitle" class="font-black text-sm text-slate-800">提示</h3>
+            <p id="scaffoldSubtitle" class="text-xs text-slate-500"></p>
+          </div>
+        </div>
+        <button onclick="closeScaffold()" class="text-slate-400 hover:text-slate-600 text-sm font-bold px-2">✕</button>
+      </div>
+      <div id="scaffoldBody" class="mt-2 text-xs md:text-sm text-slate-700 leading-relaxed bg-white p-3 rounded-xl border border-slate-200"></div>
+      <div id="scaffoldActions" class="mt-2.5 flex justify-end gap-2"></div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-amber-100 py-2 px-3 text-center text-xs text-slate-400">
+    三上數學第 3 單元「毫米與數線」視覺互動教具 • 點擊上方題號即可自由挑題
+  </footer>
+
+  <!-- 重點心法卡 Modal -->
+  <div id="formulaModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border-4 border-amber-300">
+      <div class="flex justify-between items-center pb-2 border-b border-amber-200">
+        <h2 class="text-base font-black text-amber-900">📋 長度換算與數線重點卡</h2>
+        <button onclick="toggleFormulaModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-black text-xs">✕</button>
+      </div>
+      <div class="space-y-2.5 mt-3 text-xs md:text-sm text-slate-700">
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 font-bold space-y-1">
+          <div>📏 1 公分 (cm) ＝ 10 毫米 (mm)</div>
+          <div>📏 1 公尺 (m) ＝ 100 公分 ＝ 1000 毫米</div>
+        </div>
+        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-200 space-y-1">
+          <div>✍️ <strong>直式加減：</strong>滿 10 毫米進 1 公分；借 1 公分換 10 毫米。</div>
+          <div>🔍 <strong>斷尺測量：</strong>終點刻度 － 起點刻度 ＝ 實際長度。</div>
+          <div>🐸 <strong>數線跳格：</strong>向右是「＋」，向左是「－」，起點不算格數！</div>
+        </div>
+      </div>
+      <button onclick="toggleFormulaModal()" class="mt-4 w-full py-2 bg-amber-500 text-white font-black rounded-xl text-xs">關閉</button>
+    </div>
+  </div>
+
+  <script>
+    /* 彩帶效果 */
+    function fireCelebration() {
+      const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+      for (let i = 0; i < 25; i++) {
+        const dot = document.createElement('div');
+        dot.style.cssText = `position:fixed;left:${20 + Math.random() * 60}vw;top:-10px;width:9px;height:9px;background:${colors[i % colors.length]};border-radius:50%;z-index:9999;pointer-events:none;transition:all 1s ease-out;`;
+        document.body.appendChild(dot);
+        setTimeout(() => {
+          dot.style.transform = `translate(${(Math.random() - 0.5) * 160}px, ${60 + Math.random() * 30}vh)`;
+          dot.style.opacity = '0';
+        }, 20);
+        setTimeout(() => dot.remove(), 1100);
+      }
+    }
+
+    /* 5 大單元設定 */
+    const STAGE_META = [
+      { stage: 1, title: "單元1：認識毫米與直尺", range: [1, 2] },
+      { stage: 2, title: "單元2：斷尺與量感", range: [3, 4, 5, 6] },
+      { stage: 3, title: "單元3：單位與直式加減", range: [7, 8, 9, 10] },
+      { stage: 4, title: "單元4：視覺數線挑戰", range: [11, 12, 13] },
+      { stage: 5, title: "單元5：生活情境活用題", range: [14, 15, 16, 17] }
+    ];
+
+    /* 精簡題幹＋100% 視覺工具題庫 (共 17 題) */
+    const QUESTIONS_DB = [
+      // ================= 單元 1：認識毫米與直尺 (刪掉原 2, 3, 4 題，保留 2 題實測與比較) =================
+      {
+        id: 1,
+        stage: 1,
+        stageName: "認識毫米與直尺",
+        visualType: "draggable_single",
+        tag: "Q1 直尺實測",
+        misconception: "對齊 0 刻度與 5mm 中線判讀",
+        targetLengthCm: 4.7,
+        itemLabel: "精靈羽毛",
+        itemEmoji: "🪶",
+        itemColor: "from-amber-500 to-orange-400",
+        question: "拖曳直尺對齊左端紅線，這片「精靈羽毛」長多少？",
+        options: [
+          { text: "4 公分 7 毫米 (47 毫米)", correct: true },
+          { text: "4 公分 2 毫米", correct: false, note: "中間較長的是 5 毫米線，再多 2 格是 7 毫米喔！" },
+          { text: "5 公分 2 毫米", correct: false, note: "還沒超過 5 公分喔！" },
+          { text: "47 公分", correct: false, note: "單位是毫米 (47 mm)，不是 47 公分！" }
+        ],
+        hint1: "先看超過幾公分（4 公分），再數後面有幾小格（7 小格）。",
+        hint2: "5 毫米中長線再往右 2 小格，就是 4 公分 7 毫米。",
+        explanation: "對齊 0 刻度後，右端停在 4 公分又 7 小格，即 4 公分 7 毫米（47 毫米）。"
+      },
+      {
+        id: 2,
+        stage: 1,
+        stageName: "認識毫米與直尺",
+        visualType: "draggable_compare",
+        tag: "Q2 雙物實測比較",
+        misconception: "不同單位化聚與差距實測",
+        lenACm: 6.3,
+        labelA: "金鑰匙 (6公分3毫米)",
+        lenBCm: 5.8,
+        labelB: "銀鑰匙 (58毫米)",
+        question: "看上方直尺對照圖：金鑰匙和銀鑰匙，哪一把比較長？長多少？",
+        options: [
+          { text: "金鑰匙比較長，長 5 毫米", correct: true },
+          { text: "銀鑰匙比較長（因為 58 比 6 大）", correct: false, note: "單位不同！金鑰匙 6 公分 3 毫米＝63 毫米，比 58 毫米長！" },
+          { text: "金鑰匙比較長，長 15 毫米", correct: false, note: "63 － 58 ＝ 5 毫米，不是 15 毫米喔！" },
+          { text: "兩把一樣長", correct: false, note: "從直尺上可看到金鑰匙多出 5 小格（5 毫米）。" }
+        ],
+        hint1: "先把金鑰匙換成毫米：6 公分 3 毫米 ＝ 63 毫米。",
+        hint2: "63 毫米 － 58 毫米 ＝ 5 毫米（在尺上相差 5 小格）。",
+        explanation: "6 公分 3 毫米 ＝ 63 毫米。63mm － 58mm ＝ 5mm，金鑰匙長 5 毫米。"
+      },
+
+      // ================= 單元 2：斷尺與量感 (4 題，全配斷尺與實物圖) =================
+      {
+        id: 3,
+        stage: 2,
+        stageName: "斷尺與量感",
+        visualType: "broken_ruler",
+        tag: "Q3 斷尺測量",
+        misconception: "非從0開始，需用終點減起點",
+        brokenStartCm: 6.0,
+        itemEndCm: 11.4,
+        itemLabel: "寶箱鑰匙",
+        itemEmoji: "🗝️",
+        question: "看斷尺圖：鑰匙從「刻度 6 公分」量到「11 公分 4 毫米」，實際多長？",
+        options: [
+          { text: "5 公分 4 毫米 (54 毫米)", correct: true },
+          { text: "11 公分 4 毫米 (直接看尾端)", correct: false, note: "起點在 6 公分，不是 0！必須減去前面的 6 公分！" },
+          { text: "6 公分 4 毫米", correct: false, note: "11 公分 4 毫米 － 6 公分 ＝ 5 公分 4 毫米。" },
+          { text: "17 公分 4 毫米", correct: false, note: "算長度要用減法，不能相加喔！" }
+        ],
+        hint1: "斷尺公式：右端終點刻度 － 左端起點刻度。",
+        hint2: "11 公分 4 毫米 － 6 公分 ＝ 5 公分 4 毫米。",
+        explanation: "11cm 4mm － 6cm ＝ 5cm 4mm（54 毫米）。"
+      },
+      {
+        id: 4,
+        stage: 2,
+        stageName: "斷尺與量感",
+        visualType: "broken_ruler",
+        tag: "Q4 斷尺退位",
+        misconception: "斷尺借位減法 (借1cm當10mm)",
+        brokenStartCm: 3.5,
+        itemEndCm: 8.2,
+        itemLabel: "彩色粉筆",
+        itemEmoji: "🖍️",
+        question: "看斷尺圖：粉筆從「3 公分 5 毫米」量到「8 公分 2 毫米」，粉筆長多少？",
+        options: [
+          { text: "4 公分 7 毫米 (47 毫米)", correct: true },
+          { text: "5 公分 7 毫米 (忘記退位)", correct: false, note: "8 公分借走 1 公分剩 7 公分，7 － 3 ＝ 4 公分！" },
+          { text: "5 公分 3 毫米 (倒著減)", correct: false, note: "2 毫米不夠減 5 毫米，要借位成 12 － 5 ＝ 7 毫米！" },
+          { text: "8 公分 2 毫米", correct: false, note: "起點在 3 公分 5 毫米，一定要相減！" }
+        ],
+        hint1: "算式：8 公分 2 毫米 － 3 公分 5 毫米。",
+        hint2: "借 1 公分當 10 毫米：(10+2)－5＝7 毫米，(8-1)－3＝4 公分。",
+        explanation: "8cm 2mm － 3cm 5mm ＝ 7cm 12mm － 3cm 5mm ＝ 4cm 7mm。"
+      },
+      {
+        id: 5,
+        stage: 2,
+        stageName: "斷尺與量感",
+        visualType: "broken_ruler",
+        tag: "Q5 斷尺比長短",
+        misconception: "斷尺實長與目標長度比較",
+        brokenStartCm: 15.0,
+        itemEndCm: 21.3,
+        itemLabel: "木條 (需 65 毫米)",
+        itemEmoji: "🪵",
+        question: "木條從刻度「15 公分」量到「21 公分 3 毫米」。做勞作需要「65 毫米」，夠長嗎？",
+        options: [
+          { text: "不夠長，還差 2 毫米 (實際長 63 毫米)", correct: true },
+          { text: "夠長，超過很多", correct: false, note: "要扣掉起點 15 公分！實際只有 6 公分 3 毫米（63 毫米）。" },
+          { text: "不夠長，還差 12 毫米", correct: false, note: "65 毫米 － 63 毫米 ＝ 2 毫米。" },
+          { text: "剛好 65 毫米", correct: false, note: "21cm 3mm － 15cm ＝ 6cm 3mm ＝ 63mm，差 2mm。" }
+        ],
+        hint1: "木條長：21 公分 3 毫米 － 15 公分 ＝ 6 公分 3 毫米（63 毫米）。",
+        hint2: "需要 65 毫米，65 － 63 ＝ 還差 2 毫米。",
+        explanation: "實際長 21cm 3mm － 15cm ＝ 6cm 3mm ＝ 63mm，比 65mm 少 2mm。"
+      },
+      {
+        id: 6,
+        stage: 2,
+        stageName: "斷尺與量感",
+        visualType: "draggable_single",
+        tag: "Q6 生活物品量感",
+        misconception: "毫米與公分的生活量感",
+        targetLengthCm: 0.6,
+        itemLabel: "數學課本側面厚度",
+        itemEmoji: "📗",
+        itemColor: "from-emerald-500 to-teal-500",
+        question: "看直尺實測圖：一本「國小數學課本的厚度」剛好佔 6 小格，是多少？",
+        options: [
+          { text: "6 毫米 (6 mm)", correct: true },
+          { text: "6 公分 (6 cm)", correct: false, note: "6 公分像字典一樣厚！6 小格是 6 毫米。" },
+          { text: "60 毫米", correct: false, note: "60 毫米 ＝ 6 公分，太厚了！" },
+          { text: "6 公尺", correct: false, note: "6 公尺有兩層樓高喔！" }
+        ],
+        hint1: "直尺上不到 1 公分，只有 6 個最小格。",
+        hint2: "1 小格 ＝ 1 毫米，6 小格 ＝ 6 毫米。",
+        explanation: "課本側面厚度佔直尺 6 小格，即 6 毫米（6 mm）。"
+      },
+
+      // ================= 單元 3：單位與直式加減 (4 題，配視覺直式板＋尺規對照) =================
+      {
+        id: 7,
+        stage: 3,
+        stageName: "單位與直式加減",
+        visualType: "draggable_compare",
+        tag: "Q7 跨單位比大小",
+        misconception: "先化聚為同單位再比大小",
+        lenACm: 8.4,
+        labelA: "甲魔石 (8公分4毫米)",
+        lenBCm: 8.2,
+        labelB: "乙魔石 (82毫米)",
+        question: "看尺規對照圖：甲石「8 公分 4 毫米」與乙石「82 毫米」，哪一塊比較長？",
+        options: [
+          { text: "甲石比較長 (84 毫米 ＞ 82 毫米)", correct: true },
+          { text: "乙石比較長 (因為 82 ＞ 8)", correct: false, note: "不能只看數字！8 公分 4 毫米 ＝ 84 毫米，比 82 毫米長！" },
+          { text: "兩塊一樣長", correct: false, note: "甲石多出 2 毫米喔！" },
+          { text: "乙石長 82 公分所以最長", correct: false, note: "乙石是 82「毫米」，不是公分！" }
+        ],
+        hint1: "8 公分 4 毫米 ＝ 84 毫米。",
+        hint2: "84 毫米 ＞ 82 毫米，甲石長 2 毫米。",
+        explanation: "化為同單位：甲石 84 毫米 ＞ 乙石 82 毫米。"
+      },
+      {
+        id: 8,
+        stage: 3,
+        stageName: "單位與直式加減",
+        visualType: "vertical_calc",
+        calcMode: "error_unit",
+        tag: "Q8 直式單位除錯",
+        misconception: "不同單位不可直接相加",
+        question: "看上方算式板：「7 公分 ＋ 45 毫米」正確答案是多少？",
+        options: [
+          { text: "11 公分 5 毫米 (或 115 毫米)", correct: true },
+          { text: "52 公分 (直接 7＋45)", correct: false, note: "公分和毫米單位不同，不能直接把 7 和 45 加在一起！" },
+          { text: "52 毫米", correct: false, note: "7 公分 ＝ 70 毫米，70 ＋ 45 ＝ 115 毫米！" },
+          { text: "745 毫米", correct: false, note: "70 毫米 ＋ 45 毫米 ＝ 115 毫米。" }
+        ],
+        hint1: "先把 45 毫米換成「4 公分 5 毫米」（或把 7 公分換成 70 毫米）。",
+        hint2: "7 公分 ＋ 4 公分 5 毫米 ＝ 11 公分 5 毫米（115 毫米）。",
+        explanation: "7 公分 ＝ 70 毫米，70mm ＋ 45mm ＝ 115mm ＝ 11 公分 5 毫米。"
+      },
+      {
+        id: 9,
+        stage: 3,
+        stageName: "單位與直式加減",
+        visualType: "vertical_calc",
+        calcMode: "add_carry",
+        tag: "Q9 直式進位 (滿十進一)",
+        misconception: "毫米滿 10 進 1 公分",
+        question: "看上方直式板：「14 公分 8 毫米 ＋ 9 公分 7 毫米」合起來是多少？",
+        options: [
+          { text: "24 公分 5 毫米", correct: true },
+          { text: "23 公分 15 毫米 (未進位)", correct: false, note: "15 毫米滿 10 毫米要進 1 公分，寫成 24 公分 5 毫米！" },
+          { text: "23 公分 5 毫米 (忘記加進位1)", correct: false, note: "14 ＋ 9 ＝ 23，還要加上毫米進上來的 1 公分 ＝ 24 公分！" },
+          { text: "245 公分", correct: false, note: "是 245「毫米」（24 公分 5 毫米），不是 245 公分！" }
+        ],
+        hint1: "毫米相加：8 ＋ 7 ＝ 15 毫米 ＝ 1 公分 5 毫米（寫 5 進 1）。",
+        hint2: "公分相加：14 ＋ 9 ＋ 1(進位) ＝ 24 公分。",
+        explanation: "8mm＋7mm＝15mm（進 1cm 留 5mm），14cm＋9cm＋1cm＝24cm，共 24 公分 5 毫米。"
+      },
+      {
+        id: 10,
+        stage: 3,
+        stageName: "單位與直式加減",
+        visualType: "vertical_calc",
+        calcMode: "sub_borrow",
+        tag: "Q10 直式退位 (借一當十)",
+        misconception: "退 1 公分換 10 毫米 (非 100)",
+        question: "看上方直式板：「15 公分 2 毫米 － 8 公分 6 毫米」是多少？",
+        options: [
+          { text: "6 公分 6 毫米", correct: true },
+          { text: "6 公分 96 毫米 (誤借100)", correct: false, note: "1 公分 ＝ 10 毫米！退 1 公分是換 10 毫米，不是 100 毫米！" },
+          { text: "7 公分 6 毫米 (公分忘記退位)", correct: false, note: "15 公分被借走 1 公分剩 14 公分，14 － 8 ＝ 6 公分！" },
+          { text: "7 公分 4 毫米 (倒著減)", correct: false, note: "2 不夠減 6 要借位：12 － 6 ＝ 6 毫米，不可拿 6 減 2！" }
+        ],
+        hint1: "2 毫米不夠減 6 毫米，向 15 公分借 1 公分（換成 10 毫米）。",
+        hint2: "毫米：(10＋2) － 6 ＝ 6 毫米；公分：14 － 8 ＝ 6 公分。",
+        explanation: "借 1 公分當 10 毫米：12mm－6mm＝6mm；14cm－8cm＝6cm，得 6 公分 6 毫米。"
+      },
+
+      // ================= 單元 4：視覺數線挑戰 (精簡只留 3 題，全配視覺數線圖) =================
+      {
+        id: 11,
+        stage: 4,
+        stageName: "視覺數線挑戰",
+        visualType: "number_line_frog",
+        startNum: 9,
+        jumpStep: 4,
+        tag: "Q11 數線向右跳格",
+        misconception: "起點不算格數，跳一步才算1格",
+        question: "看上方數線圖：青蛙從刻度「9」向右跳「4 格」，最後停在哪個刻度？",
+        options: [
+          { text: "刻度 13 (9 ＋ 4 ＝ 13)", correct: true },
+          { text: "刻度 12 (把起點9也算成第1格)", correct: false, note: "站在 9 還沒跳不算格數！跳到 10 才是第 1 格喔！" },
+          { text: "刻度 5 (9 － 4 ＝ 5)", correct: false, note: "向右跳是加法增加，不是減法！" },
+          { text: "刻度 14", correct: false, note: "9 ＋ 4 ＝ 13，跟著上方橘色跳躍弧線數數看！" }
+        ],
+        hint1: "看數線上的橘色弧線：從 9 跳到 10 是第 1 格。",
+        hint2: "9 ＋ 4 ＝ 13，停在刻度 13。",
+        explanation: "數線向右跳格用加法：9 ＋ 4 ＝ 13（切記起點 9 不能算成第 1 格）。"
+      },
+      {
+        id: 12,
+        stage: 4,
+        stageName: "視覺數線挑戰",
+        visualType: "number_line_bee",
+        startNum: 18,
+        step1: -6,
+        step2: 9,
+        tag: "Q12 數線雙向移動",
+        misconception: "向左為減、向右為加",
+        question: "看上方數線圖：蜜蜂從「18」先向左飛 6 格，再向右飛 9 格，最後停在哪裡？",
+        options: [
+          { text: "刻度 21 (18 － 6 ＋ 9 ＝ 21)", correct: true },
+          { text: "刻度 33 (18 ＋ 6 ＋ 9)", correct: false, note: "向左飛數字變小要用「減法」：18 － 6 ＝ 12！" },
+          { text: "刻度 15 (18 ＋ 6 － 9)", correct: false, note: "方向反了！向左是減 6（到 12），向右是加 9（到 21）。" },
+          { text: "刻度 12", correct: false, note: "飛到 12 之後，還要再向右飛 9 格（12＋9＝21）喔！" }
+        ],
+        hint1: "第一段（紅線向左）：18 － 6 ＝ 12。",
+        hint2: "第二段（綠線向右）：12 ＋ 9 ＝ 21。",
+        explanation: "向左為減、向右為加：18 － 6 ＝ 12，12 ＋ 9 ＝ 21。"
+      },
+      {
+        id: 13,
+        stage: 4,
+        stageName: "視覺數線挑戰",
+        visualType: "number_line_scale",
+        tag: "Q13 數線間隔推算",
+        misconception: "先算每1格代表多少，再推算位置",
+        question: "看上方數線圖：「40」到「70」之間平分成 5 格。請問「？紅點」（往右 2 格）是多少？",
+        options: [
+          { text: "52 (每格代表 6，40 ＋ 12 ＝ 52)", correct: true },
+          { text: "50 (誤以為每格代表 5)", correct: false, note: "如果每格是 5，5 格只有 25（40+25=65），到不了 70 喔！" },
+          { text: "42 (誤以為每格代表 1)", correct: false, note: "40 到 70 相差 30，平分 5 格，每 1 格是 30 ÷ 5 ＝ 6！" },
+          { text: "46 (只加了 1 格)", correct: false, note: "紅點在往右第 2 格，要加 2 個 6（40 ＋ 6 ＋ 6 ＝ 52）！" }
+        ],
+        hint1: "70 － 40 ＝ 30，5 格共 30，所以每 1 格代表 30 ÷ 5 ＝ 6。",
+        hint2: "從 40 往右 2 格：40 ＋ 6 ＋ 6 ＝ 52。",
+        explanation: "(70 － 40) ÷ 5 ＝ 6（每格為 6）。40 往右 2 格 ＝ 40 ＋ 12 ＝ 52。"
+      },
+
+      // ================= 單元 5：生活情境活用題 (新增關卡 4 題，全配生活視覺圖＋尺規) =================
+      {
+        id: 14,
+        stage: 5,
+        stageName: "生活情境活用題",
+        visualType: "life_pencilbox",
+        tag: "Q14 鉛筆盒收納活用",
+        misconception: "生活容器內部空間與剩餘長度",
+        question: "看上方實測圖：鉛筆盒內長「16 公分」，放進長「13 公分 6 毫米」的鉛筆，還剩幾公分幾毫米？",
+        options: [
+          { text: "2 公分 4 毫米 (24 毫米)", correct: true },
+          { text: "3 公分 4 毫米 (忘記退位)", correct: false, note: "16 公分借 1 公分換 10 毫米後剩 15 公分，15 － 13 ＝ 2 公分！" },
+          { text: "3 公分 6 毫米", correct: false, note: "10 毫米 － 6 毫米 ＝ 4 毫米，不是 6 毫米喔！" },
+          { text: "29 公分 6 毫米", correct: false, note: "算剩下多少空間要用「減法」喔！" }
+        ],
+        hint1: "算式：16 公分 － 13 公分 6 毫米。",
+        hint2: "16 公分換成「15 公分 10 毫米」，減去 13 公分 6 毫米 ＝ 2 公分 4 毫米。",
+        explanation: "16cm － 13cm 6mm ＝ 15cm 10mm － 13cm 6mm ＝ 2 公分 4 毫米（24 毫米）。"
+      },
+      {
+        id: 15,
+        stage: 5,
+        stageName: "生活情境活用題",
+        visualType: "life_plant",
+        tag: "Q15 豆苗成長紀錄",
+        misconception: "成長量＝後來高度－原本高度",
+        question: "看上方量尺圖：小豆苗原本高「3 公分 8 毫米」，一週後長到「6 公分 5 毫米」，長高了幾毫米？",
+        options: [
+          { text: "27 毫米 (2 公分 7 毫米)", correct: true },
+          { text: "37 毫米 (退位忘記減1)", correct: false, note: "6 公分退 1 公分剩 5 公分，5 － 3 ＝ 2 公分（20 毫米）！" },
+          { text: "33 毫米 (毫米倒著減 8－5)", correct: false, note: "5 毫米不夠減 8 毫米，借位後 15 － 8 ＝ 7 毫米！" },
+          { text: "65 毫米", correct: false, note: "65 毫米是後來的總高度，題目問「長高了多少」要扣掉原本高度！" }
+        ],
+        hint1: "6 公分 5 毫米 ＝ 65 毫米；3 公分 8 毫米 ＝ 38 毫米。",
+        hint2: "65 毫米 － 38 毫米 ＝ 27 毫米（2 公分 7 毫米）。",
+        explanation: "65mm － 38mm ＝ 27mm（或 6cm 5mm － 3cm 8mm ＝ 2cm 7mm ＝ 27mm）。"
+      },
+      {
+        id: 16,
+        stage: 5,
+        stageName: "生活情境活用題",
+        visualType: "life_paper_overlap",
+        tag: "Q16 紙條黏貼重疊",
+        misconception: "重疊黏合處會少掉1次重疊長度",
+        question: "看上方紙條圖：兩張長「8 公分」的紙條黏在一起，中間重疊「1 公分 5 毫米」，黏好後全長多少？",
+        options: [
+          { text: "14 公分 5 毫米 (145 毫米)", correct: true },
+          { text: "16 公分 (忘記扣掉重疊處)", correct: false, note: "中間重疊黏在一起的部分會縮短，要減掉 1 公分 5 毫米！" },
+          { text: "15 公分 5 毫米 (退位失誤)", correct: false, note: "16 公分 － 1 公分 5 毫米 ＝ 14 公分 5 毫米！" },
+          { text: "17 公分 5 毫米 (誤把重疊加上去)", correct: false, note: "重疊會讓總長度變短，要用減法，不是加法！" }
+        ],
+        hint1: "兩張紙條原本共長：8 公分 ＋ 8 公分 ＝ 16 公分。",
+        hint2: "扣掉重疊部分：16 公分 － 1 公分 5 毫米 ＝ 14 公分 5 毫米。",
+        explanation: "兩張共 8cm＋8cm＝16cm，扣除重疊 1cm 5mm，16cm － 1cm 5mm ＝ 14 公分 5 毫米。"
+      },
+      {
+        id: 17,
+        stage: 5,
+        stageName: "生活情境活用題",
+        visualType: "life_coins",
+        tag: "Q17 硬幣疊疊樂換算",
+        misconception: "毫米倍數累加並換成公分",
+        question: "看上方量尺圖：1 枚硬幣厚「2 毫米」，把「15 枚」硬幣疊起來，總高度是幾公分？",
+        options: [
+          { text: "3 公分 (30 毫米)", correct: true },
+          { text: "30 公分", correct: false, note: "2 × 15 ＝ 30「毫米」，換成公分是 3 公分，不是 30 公分！" },
+          { text: "17 毫米", correct: false, note: "15 枚每枚 2 毫米，是 2 × 15 ＝ 30 毫米，不是 2 ＋ 15！" },
+          { text: "1 公分 5 毫米", correct: false, note: "每枚厚 2 毫米，15 枚是 30 毫米 ＝ 3 公分。" }
+        ],
+        hint1: "先算總共幾毫米：2 毫米 × 15 ＝ 30 毫米。",
+        hint2: "10 毫米 ＝ 1 公分，所以 30 毫米 ＝ 3 公分。",
+        explanation: "2 毫米 × 15 ＝ 30 毫米。因為 10 毫米 ＝ 1 公分，30 毫米 ＝ 3 公分。"
+      }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let isMuted = false;
+    let isLensActive = false;
+    let isAutoNext = false;
+    let isOverviewMode = false;
+    let currentOverviewFilter = 0;
+    let completedQuestionIds = new Set();
+    let wrongAttemptsForCurrentQ = 0;
+    let rulerDragX = 0;
+    let isDraggingRuler = false;
+    let dragStartX = 0;
+
+    let audioCtx = null;
+    function playSound(type) {
+      if (isMuted) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        if (type === 'click') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.start(now); osc.stop(now + 0.07);
+        } else if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523, now);
+          osc.frequency.setValueAtTime(659, now + 0.08);
+          osc.frequency.setValueAtTime(784, now + 0.16);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+          osc.start(now); osc.stop(now + 0.38);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(125, now + 0.22);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now); osc.stop(now + 0.25);
+        }
+      } catch (e) {}
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+    }
+
+    /* 渲染頂部 5 大單元與題號列 */
+    function renderTopUnitNav() {
+      const navContainer = document.getElementById('unitQuestionNav');
+      if (!navContainer) return;
+      const activeQ = QUESTIONS_DB[currentQIndex];
+      const activeQId = activeQ ? activeQ.id : 1;
+
+      navContainer.innerHTML = STAGE_META.map(meta => {
+        const isCurrentStage = activeQ && activeQ.stage === meta.stage && !isOverviewMode;
+        const stageBorder = isCurrentStage ? 'border-amber-400 bg-amber-50/90 shadow-sm' : 'border-slate-200 bg-slate-50/70';
+        const firstIdx = meta.range[0] - 1;
+
+        const qButtons = meta.range.map(qId => {
+          const qObj = QUESTIONS_DB[qId - 1];
+          const isCurrent = (activeQId === qId) && !isOverviewMode;
+          const isDone = completedQuestionIds.has(qId);
+          let btnClass = 'bg-white text-slate-700 border-slate-300 hover:bg-amber-100 hover:border-amber-400';
+          if (isCurrent) {
+            btnClass = 'bg-amber-500 text-white border-amber-600 shadow ring-2 ring-amber-300';
+          } else if (isDone) {
+            btnClass = 'bg-emerald-100 text-emerald-800 border-emerald-400';
+          }
+          return `
+            <button onclick="jumpToQuestion(${qId - 1})" title="${qObj ? qObj.tag : 'Q' + qId}"
+              class="px-2 py-0.5 rounded-md border text-xs font-black transition flex items-center gap-0.5 ${btnClass}">
+              <span>Q${qId}</span>
+              ${isDone && !isCurrent ? '<span class="text-[10px]">✓</span>' : ''}
+            </button>
+          `;
+        }).join('');
+
+        return `
+          <div class="rounded-xl border ${stageBorder} px-2.5 py-1.5 flex flex-col justify-between gap-1">
+            <button onclick="jumpToQuestion(${firstIdx})" class="text-left text-xs font-black text-slate-800 hover:text-amber-700 transition truncate">
+              📂 ${meta.title}
+            </button>
+            <div class="flex items-center gap-1 flex-wrap">
+              ${qButtons}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function jumpToQuestion(qIndex) {
+      playSound('click');
+      if (isOverviewMode) toggleAllQuestionsView(false);
+      currentQIndex = qIndex;
+      loadQuestion(currentQIndex);
+    }
+
+    function prevQuestion() {
+      playSound('click');
+      currentQIndex = currentQIndex > 0 ? currentQIndex - 1 : QUESTIONS_DB.length - 1;
+      if (isOverviewMode) toggleAllQuestionsView(false);
+      loadQuestion(currentQIndex);
+    }
+
+    function nextQuestion() {
+      playSound('click');
+      currentQIndex = currentQIndex < QUESTIONS_DB.length - 1 ? currentQIndex + 1 : 0;
+      if (isOverviewMode) toggleAllQuestionsView(false);
+      loadQuestion(currentQIndex);
+    }
+
+    function toggleAutoNext() {
+      playSound('click');
+      isAutoNext = !isAutoNext;
+      const btn = document.getElementById('autoNextBtn');
+      btn.innerText = isAutoNext ? '⏭️ 自動下一題：開' : '⏭️ 自動下一題：關';
+      btn.className = isAutoNext
+        ? 'px-2 py-1 text-xs font-bold rounded-lg bg-amber-100 border border-amber-400 text-amber-900 transition'
+        : 'px-2 py-1 text-xs font-bold rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 transition';
+    }
+
+    function toggleFormulaModal() {
+      playSound('click');
+      document.getElementById('formulaModal').classList.toggle('hidden');
+    }
+
+    /* ================= SVG 視覺教具產生器 (單題與總覽共用) ================= */
+    function generateRulerSVG(startCm, endCm, widthPx = 560, isBroken = false) {
+      const totalCm = endCm - startCm;
+      const mmWidth = widthPx / (totalCm * 10);
+      let ticks = '';
+
+      for (let mm = 0; mm <= Math.round(totalCm * 10); mm++) {
+        const x = mm * mmWidth;
+        const currentCmVal = startCm + (mm / 10);
+        let tickHeight = 9;
+        let strokeColor = "#64748b";
+        let strokeWidth = 1.2;
+
+        if (mm % 10 === 0) {
+          tickHeight = 25;
+          strokeColor = "#0f172a";
+          strokeWidth = 2.2;
+          ticks += `<text x="${x}" y="41" font-size="13" font-weight="bold" text-anchor="middle" fill="#0f172a">${Math.round(currentCmVal)}</text>`;
+        } else if (mm % 5 === 0) {
+          tickHeight = 17;
+          strokeColor = "#dc2626";
+          strokeWidth = 1.7;
+        }
+        ticks += `<line x1="${x}" y1="0" x2="${x}" y2="${tickHeight}" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>`;
+      }
+
+      let brokenEdge = isBroken
+        ? `<path d="M0,0 L9,14 L-4,28 L8,42 L0,54" fill="none" stroke="#e11d48" stroke-width="3.5"/>`
+        : `<rect x="-12" y="0" width="12" height="54" rx="3" fill="#fde68a" stroke="#f59e0b" stroke-width="2"/>`;
+
+      return `
+        <svg width="${widthPx + 30}" height="58" viewBox="-16 0 ${widthPx + 32} 58" class="overflow-visible select-none">
+          <rect x="0" y="0" width="${widthPx}" height="54" rx="5" fill="#fffbeb" stroke="#f59e0b" stroke-width="2.5" />
+          <rect x="0" y="0" width="${widthPx}" height="11" fill="#fef3c7" />
+          ${brokenEdge}
+          <g>${ticks}</g>
+          <text x="${widthPx - 18}" y="47" font-size="10" font-weight="bold" fill="#b45309">cm</text>
+        </svg>
+      `;
+    }
+
+    function buildQuestionVisualHTML(q, isInteractive = true) {
+      const pxPerCm = 52;
+
+      // 1. 單物直尺實測
+      if (q.visualType === 'draggable_single') {
+        const targetPx = q.targetLengthCm * pxPerCm;
+        const startX = 48;
+        const maxCm = q.targetLengthCm <= 2 ? 5 : 8;
+        const rulerW = maxCm * pxPerCm;
+        return `
+          <div class="w-full flex flex-col items-center select-none py-1 overflow-x-auto">
+            <div class="relative" style="width:${rulerW + 70}px;">
+              <!-- 待測物 -->
+              <div class="relative h-11 flex items-center mb-1">
+                <div style="left:${startX}px; width:${Math.max(targetPx, 24)}px;" class="absolute h-8 bg-gradient-to-r ${q.itemColor || 'from-amber-500 to-orange-400'} rounded-md shadow flex items-center justify-between px-2 text-white font-black text-xs border border-amber-700">
+                  <span class="truncate">${q.itemEmoji || '📏'} ${q.itemLabel}</span>
+                </div>
+                <!-- 左端對齊線與右端讀數線 -->
+                <div style="left:${startX}px;" class="absolute top-1 bottom-0 w-0.5 border-l-2 border-red-500 z-10">
+                  <span class="absolute -top-4 -left-4 bg-red-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded">對齊0</span>
+                </div>
+                <div style="left:${startX + targetPx}px;" class="absolute top-1 bottom-0 w-0.5 border-l-2 border-dashed border-red-500 z-10">
+                  <span class="absolute -top-4 -left-3 bg-amber-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded">？</span>
+                </div>
+              </div>
+              <!-- 直尺 -->
+              <div id="${isInteractive ? 'rulerDraggableWrapper' : ''}" class="relative h-16 ${isInteractive ? 'ruler-container' : ''} flex items-center">
+                <div id="${isInteractive ? 'rulerElement' : ''}" class="absolute" style="left:${startX}px; transform:translateX(0px);">
+                  ${generateRulerSVG(0, maxCm, rulerW, false)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. 雙物上下對照直尺圖
+      if (q.visualType === 'draggable_compare') {
+        const px = 48;
+        const maxCm = 10;
+        const rulerW = maxCm * px;
+        const startX = 36;
+        const widthA = q.lenACm * px;
+        const widthB = q.lenBCm * px;
+        return `
+          <div class="w-full flex flex-col items-center select-none py-1 overflow-x-auto">
+            <div class="relative" style="width:${rulerW + 60}px;">
+              <div class="relative h-16 flex flex-col justify-center gap-1.5 mb-1">
+                <div style="margin-left:${startX}px; width:${widthA}px;" class="h-6 bg-amber-500 rounded text-white font-black text-xs flex items-center justify-between px-2 shadow-sm border border-amber-700">
+                  <span>🔑 ${q.labelA}</span>
+                  <span>63mm</span>
+                </div>
+                <div style="margin-left:${startX}px; width:${widthB}px;" class="h-6 bg-slate-500 rounded text-white font-black text-xs flex items-center justify-between px-2 shadow-sm border border-slate-700">
+                  <span>🗝️ ${q.labelB}</span>
+                  <span>58mm</span>
+                </div>
+                <div style="left:${startX}px;" class="absolute top-0 bottom-0 w-0.5 border-l-2 border-red-500"></div>
+                <div style="left:${startX + widthA}px;" class="absolute top-0 bottom-0 w-0.5 border-l-2 border-dashed border-amber-600"></div>
+                <div style="left:${startX + widthB}px;" class="absolute top-0 bottom-0 w-0.5 border-l-2 border-dashed border-slate-600"></div>
+              </div>
+              <div id="${isInteractive ? 'rulerDraggableWrapper' : ''}" class="relative h-16 ${isInteractive ? 'ruler-container' : ''} flex items-center">
+                <div id="${isInteractive ? 'rulerElement' : ''}" class="absolute" style="left:${startX}px; transform:translateX(0px);">
+                  ${generateRulerSVG(0, maxCm, rulerW, false)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. 斷尺測量圖
+      if (q.visualType === 'broken_ruler') {
+        const px = 54;
+        const rulerStartCm = Math.floor(q.brokenStartCm) - 1;
+        const rulerEndCm = Math.ceil(q.itemEndCm) + 1;
+        const totalCm = rulerEndCm - rulerStartCm;
+        const rulerW = totalCm * px;
+        const itemStartPx = (q.brokenStartCm - rulerStartCm) * px;
+        const itemWidthPx = (q.itemEndCm - q.brokenStartCm) * px;
+
+        return `
+          <div class="w-full flex flex-col items-center select-none py-1 overflow-x-auto">
+            <div class="relative" style="width:${rulerW + 40}px;">
+              <div class="relative h-12 flex items-center mb-1">
+                <div style="left:${itemStartPx}px; width:${itemWidthPx}px;" class="absolute h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-md shadow flex items-center justify-between px-2.5 text-white font-black text-xs border border-emerald-800">
+                  <span>${q.itemEmoji || '🗝️'} ${q.itemLabel}</span>
+                  <span class="bg-black/25 px-1.5 py-0.5 rounded">？cm ？mm</span>
+                </div>
+                <div style="left:${itemStartPx}px;" class="absolute top-0 bottom-0 w-0.5 border-l-2 border-rose-600 z-10">
+                  <span class="absolute -top-3.5 -left-6 bg-rose-600 text-white text-[10px] font-black px-1.5 rounded">起點 ${q.brokenStartCm}cm</span>
+                </div>
+                <div style="left:${itemStartPx + itemWidthPx}px;" class="absolute top-0 bottom-0 w-0.5 border-l-2 border-rose-600 z-10">
+                  <span class="absolute -top-3.5 -left-6 bg-rose-600 text-white text-[10px] font-black px-1.5 rounded">終點 ${q.itemEndCm}cm</span>
+                </div>
+              </div>
+              <div class="relative h-16 flex items-center pt-1">
+                ${generateRulerSVG(rulerStartCm, rulerEndCm, rulerW, true)}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. 直式與尺規對照板
+      if (q.visualType === 'vertical_calc') {
+        if (q.calcMode === 'error_unit') {
+          return `
+            <div class="flex flex-wrap items-center justify-center gap-4 py-1">
+              <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 text-center w-48 shadow-sm">
+                <div class="text-xs font-black text-rose-700 mb-1">❌ 錯誤直式（單位不同）</div>
+                <div class="font-mono font-black text-base text-slate-800">
+                  &nbsp;&nbsp;7 <span class="text-xs text-rose-600">(公分)</span><br>
+                  ＋45 <span class="text-xs text-indigo-600">(毫米)</span><br>
+                  <hr class="border-slate-700 my-1">
+                  &nbsp;52 <span class="text-xs text-rose-600">？</span>
+                </div>
+              </div>
+              <div class="text-xl font-black text-amber-600">➔</div>
+              <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-3 text-center w-56 shadow-sm">
+                <div class="text-xs font-black text-emerald-800 mb-1">✅ 先換同單位再算</div>
+                <div class="text-xs font-bold text-slate-700 space-y-1">
+                  <div class="bg-white px-2 py-1 rounded border border-emerald-200">7 公分 ＝ <strong>70 毫米</strong></div>
+                  <div class="bg-white px-2 py-1 rounded border border-emerald-200">45 毫米 ＝ <strong>4 公分 5 毫米</strong></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        if (q.calcMode === 'add_carry') {
+          return `
+            <div class="bg-indigo-50 border-2 border-indigo-300 rounded-2xl px-6 py-3 shadow-sm inline-block">
+              <div class="grid grid-cols-3 gap-3 text-center font-mono font-black text-base text-slate-800">
+                <div></div>
+                <div class="bg-indigo-200 text-indigo-900 text-xs px-2 py-0.5 rounded">公分(cm)</div>
+                <div class="bg-amber-200 text-amber-900 text-xs px-2 py-0.5 rounded">毫米(mm)</div>
+                <div class="text-slate-400"></div>
+                <div>14</div>
+                <div>8</div>
+                <div class="text-indigo-700">＋</div>
+                <div>9</div>
+                <div>7</div>
+              </div>
+              <div class="border-t-2 border-slate-800 my-1.5"></div>
+              <div class="grid grid-cols-3 gap-3 text-center font-mono font-black text-base text-rose-600">
+                <div class="text-xs text-emerald-700 self-center">滿10進1➔</div>
+                <div>？</div>
+                <div>？</div>
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl px-6 py-3 shadow-sm inline-block">
+            <div class="grid grid-cols-3 gap-3 text-center font-mono font-black text-base text-slate-800">
+              <div></div>
+              <div class="bg-indigo-200 text-indigo-900 text-xs px-2 py-0.5 rounded">公分(cm)</div>
+              <div class="bg-amber-200 text-amber-900 text-xs px-2 py-0.5 rounded">毫米(mm)</div>
+              <div class="text-xs text-rose-600 font-bold">借1cm換10mm</div>
+              <div>15 <span class="text-xs text-rose-600">(剩14)</span></div>
+              <div>2 <span class="text-xs text-rose-600">(+10)</span></div>
+              <div class="text-rose-700">－</div>
+              <div>8</div>
+              <div>6</div>
+            </div>
+            <div class="border-t-2 border-slate-800 my-1.5"></div>
+            <div class="grid grid-cols-3 gap-3 text-center font-mono font-black text-base text-rose-600">
+              <div></div>
+              <div>？</div>
+              <div>？</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. 視覺數線圖 1：青蛙向右跳格
+      if (q.visualType === 'number_line_frog') {
+        const minV = 6, maxV = 16, w = 520;
+        const step = w / (maxV - minV);
+        let ticks = '', arcs = '';
+        for (let v = minV; v <= maxV; v++) {
+          const x = (v - minV) * step;
+          const isStart = v === q.startNum;
+          ticks += `
+            <line x1="${x}" y1="44" x2="${x}" y2="${isStart ? 62 : 56}" stroke="${isStart ? '#dc2626' : '#1e293b'}" stroke-width="${isStart ? 3 : 2}"/>
+            <text x="${x}" y="76" font-size="14" font-weight="900" text-anchor="middle" fill="${isStart ? '#dc2626' : '#1e293b'}">${v}</text>
+          `;
+        }
+        for (let s = 1; s <= q.jumpStep; s++) {
+          const x1 = (q.startNum + s - 1 - minV) * step;
+          const x2 = (q.startNum + s - minV) * step;
+          const xm = (x1 + x2) / 2;
+          arcs += `
+            <path d="M ${x1} 42 Q ${xm} 10 ${x2} 42" fill="none" stroke="#ea580c" stroke-width="3" stroke-dasharray="4 2"/>
+            <polygon points="${x2},42 ${x2-5},34 ${x2+3},35" fill="#ea580c"/>
+            <text x="${xm}" y="22" font-size="11" font-weight="bold" fill="#c2410c" text-anchor="middle">+1格</text>
+          `;
+        }
+        const frogX = (q.startNum - minV) * step;
+        const endX = (q.startNum + q.jumpStep - minV) * step;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <svg width="${w + 50}" height="92" viewBox="-20 0 ${w + 50} 92" class="overflow-visible">
+              <line x1="0" y1="50" x2="${w + 15}" y2="50" stroke="#1e293b" stroke-width="3.5"/>
+              <polygon points="${w+15},44 ${w+28},50 ${w+15},56" fill="#1e293b"/>
+              ${ticks}
+              ${arcs}
+              <text x="${frogX}" y="38" font-size="22" text-anchor="middle">🐸</text>
+              <circle cx="${endX}" cy="50" r="7" fill="#ef4444" />
+              <text x="${endX}" y="36" font-size="13" font-weight="900" fill="#dc2626" text-anchor="middle">？</text>
+            </svg>
+          </div>
+        `;
+      }
+
+      // 6. 視覺數線圖 2：蜜蜂雙向移動
+      if (q.visualType === 'number_line_bee') {
+        const minV = 10, maxV = 23, w = 520;
+        const step = w / (maxV - minV);
+        let ticks = '';
+        for (let v = minV; v <= maxV; v++) {
+          const x = (v - minV) * step;
+          ticks += `
+            <line x1="${x}" y1="52" x2="${x}" y2="64" stroke="#1e293b" stroke-width="2"/>
+            <text x="${x}" y="80" font-size="13" font-weight="900" text-anchor="middle" fill="#1e293b">${v}</text>
+          `;
+        }
+        const xStart = (18 - minV) * step;
+        const xMid = (12 - minV) * step;
+        const xEnd = (21 - minV) * step;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <svg width="${w + 50}" height="96" viewBox="-20 0 ${w + 50} 96" class="overflow-visible">
+              <line x1="0" y1="58" x2="${w + 15}" y2="58" stroke="#1e293b" stroke-width="3.5"/>
+              <polygon points="${w+15},52 ${w+28},58 ${w+15},64" fill="#1e293b"/>
+              ${ticks}
+              <!-- 第一步：18 向左 6 格到 12 -->
+              <path d="M ${xStart} 50 Q ${(xStart+xMid)/2} 22 ${xMid} 50" fill="none" stroke="#e11d48" stroke-width="3"/>
+              <polygon points="${xMid},50 ${xMid+6},42 ${xMid+8},49" fill="#e11d48"/>
+              <text x="${(xStart+xMid)/2}" y="32" font-size="11" font-weight="900" fill="#be123c" text-anchor="middle">① 向左 6 格 (-6)</text>
+              <!-- 第二步：12 向右 9 格到 21 -->
+              <path d="M ${xMid} 48 Q ${(xMid+xEnd)/2} 2 ${xEnd} 48" fill="none" stroke="#059669" stroke-width="3" stroke-dasharray="5 2"/>
+              <polygon points="${xEnd},48 ${xEnd-8},42 ${xEnd-5},49" fill="#059669"/>
+              <text x="${(xMid+xEnd)/2}" y="15" font-size="11" font-weight="900" fill="#047857" text-anchor="middle">② 再向右 9 格 (+9)</text>
+              <text x="${xStart}" y="48" font-size="18" text-anchor="middle">🐝</text>
+              <circle cx="${xEnd}" cy="58" r="7" fill="#059669"/>
+              <text x="${xEnd}" y="44" font-size="14" font-weight="900" fill="#047857" text-anchor="middle">？</text>
+            </svg>
+          </div>
+        `;
+      }
+
+      // 7. 視覺數線圖 3：非1單位等距數線 (40~70 平分 5 格)
+      if (q.visualType === 'number_line_scale') {
+        const w = 480;
+        const step = w / 5;
+        let ticks = '';
+        for (let i = 0; i <= 5; i++) {
+          const x = i * step;
+          let label = '';
+          let color = '#1e293b';
+          if (i === 0) label = '40 (A點)';
+          else if (i === 2) { label = '？(走2格)'; color = '#dc2626'; }
+          else if (i === 5) label = '70 (B點)';
+          ticks += `
+            <line x1="${x}" y1="36" x2="${x}" y2="56" stroke="${color}" stroke-width="3"/>
+            <text x="${x}" y="76" font-size="14" font-weight="900" text-anchor="middle" fill="${color}">${label}</text>
+            ${i < 5 ? `<text x="${x + step/2}" y="32" font-size="11" font-weight="bold" fill="#64748b" text-anchor="middle">1格</text>` : ''}
+          `;
+        }
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <svg width="${w + 80}" height="90" viewBox="-40 0 ${w + 80} 90" class="overflow-visible">
+              <line x1="-15" y1="46" x2="${w + 25}" y2="46" stroke="#1e293b" stroke-width="4"/>
+              <polygon points="${w+25},40 ${w+38},46 ${w+25},52" fill="#1e293b"/>
+              ${ticks}
+              <circle cx="${2 * step}" cy="46" r="8" fill="#ef4444"/>
+            </svg>
+          </div>
+        `;
+      }
+
+      // 8. 生活情境活用圖 1：鉛筆盒收納 (16cm vs 13cm 6mm)
+      if (q.visualType === 'life_pencilbox') {
+        const px = 32;
+        const boxW = 16 * px;
+        const penW = 13.6 * px;
+        const remW = 2.4 * px;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <div class="relative" style="width:${boxW + 40}px;">
+              <!-- 鉛筆盒外框 -->
+              <div style="width:${boxW}px;" class="h-14 bg-sky-100 border-4 border-sky-600 rounded-xl flex items-center relative px-0 overflow-hidden shadow-inner">
+                <!-- 鉛筆 -->
+                <div style="width:${penW}px;" class="h-7 bg-gradient-to-r from-amber-400 to-yellow-500 border-y-2 border-l-2 border-amber-700 flex items-center justify-center text-xs font-black text-amber-950">
+                  ✏️ 鉛筆長 13 公分 6 毫米
+                </div>
+                <!-- 剩餘空間 -->
+                <div style="width:${remW}px;" class="h-9 border-2 border-dashed border-rose-500 bg-rose-50/80 flex items-center justify-center text-xs font-black text-rose-700">
+                  還剩？
+                </div>
+              </div>
+              <div style="width:${boxW}px;" class="flex justify-between text-xs font-black text-sky-900 mt-1 px-1">
+                <span>◀ 0 cm</span>
+                <span>📦 鉛筆盒內部總長：16 公分 (160 毫米) ▶</span>
+              </div>
+              <div class="mt-1">
+                ${generateRulerSVG(0, 16, boxW, false)}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 9. 生活情境活用圖 2：小豆苗長高 (3cm 8mm -> 6cm 5mm)
+      if (q.visualType === 'life_plant') {
+        const px = 56;
+        const rulerW = 8 * px;
+        const oldW = 3.8 * px;
+        const newW = 6.5 * px;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <div class="relative" style="width:${rulerW + 40}px;">
+              <div class="space-y-1.5 mb-2">
+                <div class="flex items-center">
+                  <div style="width:${oldW}px;" class="h-6 bg-lime-400 border border-lime-700 rounded-r-full flex items-center px-2 text-xs font-black text-lime-950">
+                    🌱 原本：3cm 8mm (38mm)
+                  </div>
+                </div>
+                <div class="flex items-center">
+                  <div style="width:${newW}px;" class="h-7 bg-emerald-500 border border-emerald-800 rounded-r-full flex items-center justify-between px-2 text-xs font-black text-white">
+                    <span>🌿 一週後：6cm 5mm (65mm)</span>
+                  </div>
+                </div>
+                <div style="margin-left:${oldW}px; width:${newW - oldW}px;" class="h-5 bg-rose-100 border-2 border-dashed border-rose-500 rounded flex items-center justify-center text-xs font-black text-rose-700">
+                  ◀ 長高了 ？ 毫米 ▶
+                </div>
+              </div>
+              ${generateRulerSVG(0, 8, rulerW, false)}
+            </div>
+          </div>
+        `;
+      }
+
+      // 10. 生活情境活用圖 3：紙條重疊黏貼
+      if (q.visualType === 'life_paper_overlap') {
+        const px = 34;
+        const p1W = 8 * px;
+        const overlapW = 1.5 * px;
+        const totalW = 14.5 * px;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <div class="relative" style="width:${16 * px + 30}px;">
+              <div class="relative h-16 mb-1">
+                <!-- 左紙條 8cm -->
+                <div style="left:0px; width:${p1W}px;" class="absolute top-1 h-7 bg-amber-300/90 border-2 border-amber-600 rounded flex items-center justify-center text-xs font-black text-amber-950">
+                  紙條 A (8 公分)
+                </div>
+                <!-- 右紙條 8cm (從 6.5cm 處開始重疊) -->
+                <div style="left:${p1W - overlapW}px; width:${p1W}px;" class="absolute top-5 h-7 bg-sky-300/85 border-2 border-sky-600 rounded flex items-center justify-center text-xs font-black text-sky-950">
+                  紙條 B (8 公分)
+                </div>
+                <!-- 重疊標記 -->
+                <div style="left:${p1W - overlapW}px; width:${overlapW}px;" class="absolute top-0 bottom-0 border-x-2 border-dashed border-rose-600 bg-rose-500/20 flex items-end justify-center">
+                  <span class="bg-rose-600 text-white text-[10px] font-black px-1 rounded -mb-2">重疊 1cm 5mm</span>
+                </div>
+              </div>
+              <div class="mt-2">
+                ${generateRulerSVG(0, 16, 16 * px, false)}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 11. 生活情境活用圖 4：硬幣疊疊樂 (1枚 2mm，15枚 = 30mm = 3cm)
+      if (q.visualType === 'life_coins') {
+        const px = 85;
+        const rulerW = 5 * px;
+        return `
+          <div class="w-full flex flex-col items-center py-1 overflow-x-auto">
+            <div class="relative" style="width:${rulerW + 40}px;">
+              <div class="flex items-center mb-2">
+                <div style="width:${3 * px}px;" class="h-10 bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 border-2 border-amber-700 rounded-lg flex items-center justify-around px-1 shadow">
+                  <span class="text-xs font-black text-amber-950">🪙 1枚厚 2毫米 × 15枚疊起來 ＝ ？（看下方尺刻度）</span>
+                </div>
+                <div class="ml-2 text-xs font-black text-rose-600">◀ 停在 3 公分 (30 毫米)</div>
+              </div>
+              ${generateRulerSVG(0, 5, rulerW, false)}
+            </div>
+          </div>
+        `;
+      }
+
+      return '';
+    }
+
+    /* 載入單題 */
+    function loadQuestion(index) {
+      wrongAttemptsForCurrentQ = 0;
+      closeScaffold();
+      const q = QUESTIONS_DB[index];
+      if (!q) return;
+
+      document.getElementById('progressText').innerText = `目前題目：第 ${index + 1} / ${QUESTIONS_DB.length} 題（點上方題號可自由跳題）`;
+      document.getElementById('progressBar').style.width = `${((index + 1) / QUESTIONS_DB.length) * 100}%`;
+      document.getElementById('stageBadge').innerText = `單元 ${q.stage}：${q.stageName}`;
+      document.getElementById('stageProgressName').innerText = `單元 ${q.stage}：${q.stageName}`;
+      document.getElementById('questionTag').innerText = q.tag;
+      document.getElementById('misconceptionTag').innerText = `🎯 ${q.misconception}`;
+      document.getElementById('questionText').innerText = q.question;
+
+      renderStageVisual(q);
+      renderOptions(q);
+      renderTopUnitNav();
+    }
+
+    function renderStageVisual(q) {
+      const stageCanvas = document.getElementById('stageCanvas');
+      const resetBtn = document.getElementById('resetRulerBtn');
+      const freeMoveBtn = document.getElementById('freeMoveRulerBtn');
+      const stageInstruction = document.getElementById('stageInstruction');
+      rulerDragX = 0;
+
+      stageCanvas.innerHTML = buildQuestionVisualHTML(q, true);
+
+      if (q.visualType.startsWith('draggable_')) {
+        resetBtn.classList.remove('hidden');
+        freeMoveBtn.classList.remove('hidden');
+        stageInstruction.innerHTML = `🖐️ <span class="text-amber-900 font-bold">可按住直尺左右拖曳測量（已幫您預先對齊 0 刻度，亦可點「移開直尺重練」）</span>`;
+        setupRulerDragEvents();
+      } else if (q.visualType === 'broken_ruler') {
+        resetBtn.classList.add('hidden');
+        freeMoveBtn.classList.add('hidden');
+        stageInstruction.innerHTML = `⚠️ <span class="text-rose-700 font-black">斷尺視覺圖：看清楚「起點刻度」與「終點刻度」再相減！</span>`;
+      } else if (q.visualType.startsWith('number_line')) {
+        resetBtn.classList.add('hidden');
+        freeMoveBtn.classList.add('hidden');
+        stageInstruction.innerHTML = `🔢 <span class="text-indigo-900 font-black">視覺數線圖：觀察箭頭方向與格數變化！</span>`;
+      } else {
+        resetBtn.classList.add('hidden');
+        freeMoveBtn.classList.add('hidden');
+        stageInstruction.innerHTML = `📐 <span class="text-emerald-900 font-black">生活實測與直式視覺圖：對照下方直尺刻度作答！</span>`;
+      }
+    }
+
+    function setupRulerDragEvents() {
+      const wrapper = document.getElementById('rulerDraggableWrapper');
+      const ruler = document.getElementById('rulerElement');
+      if (!wrapper || !ruler) return;
+
+      function onStart(clientX) {
+        isDraggingRuler = true;
+        dragStartX = clientX - rulerDragX;
+      }
+      function onMove(clientX) {
+        if (!isDraggingRuler) return;
+        rulerDragX = clientX - dragStartX;
+        if (rulerDragX > 180) rulerDragX = 180;
+        if (rulerDragX < -180) rulerDragX = -180;
+        ruler.style.transform = `translateX(${rulerDragX}px)`;
+      }
+      function onEnd() { isDraggingRuler = false; }
+
+      wrapper.onmousedown = (e) => onStart(e.clientX);
+      window.onmousemove = (e) => onMove(e.clientX);
+      window.onmouseup = onEnd;
+      wrapper.ontouchstart = (e) => { if (e.touches.length === 1) onStart(e.touches[0].clientX); };
+      window.ontouchmove = (e) => { if (isDraggingRuler && e.touches.length === 1) onMove(e.touches[0].clientX); };
+      window.ontouchend = onEnd;
+    }
+
+    function resetRulerPosition() {
+      rulerDragX = 0;
+      const ruler = document.getElementById('rulerElement');
+      if (ruler) {
+        ruler.style.transform = 'translateX(0px)';
+        playSound('click');
+      }
+    }
+
+    function offsetRulerPosition() {
+      rulerDragX = -42;
+      const ruler = document.getElementById('rulerElement');
+      if (ruler) {
+        ruler.style.transform = 'translateX(-42px)';
+        playSound('click');
+      }
+    }
+
+    function toggleMagnifier() {
+      isLensActive = !isLensActive;
+      const lens = document.getElementById('magnifierLens');
+      const btnText = document.getElementById('lensBtnText');
+      if (isLensActive) {
+        lens.classList.remove('hidden');
+        btnText.innerText = "關閉放大鏡";
+        setupMagnifierFollow();
+      } else {
+        lens.classList.add('hidden');
+        btnText.innerText = "開啟放大鏡";
+      }
+    }
+
+    function setupMagnifierFollow() {
+      const stage = document.getElementById('interactiveStage');
+      const lens = document.getElementById('magnifierLens');
+      const content = document.getElementById('magnifierContent');
+      stage.onmousemove = (e) => {
+        if (!isLensActive) return;
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        lens.style.left = `${x - 64}px`;
+        lens.style.top = `${y - 64}px`;
+        content.innerHTML = document.getElementById('stageCanvas').innerHTML;
+        content.style.transform = `scale(2.0) translate(${-x / 2.0 + 32}px, ${-y / 2.0 + 32}px)`;
+      };
+    }
+
+    function renderOptions(q) {
+      const grid = document.getElementById('optionsGrid');
+      grid.innerHTML = '';
+      const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+
+      shuffled.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-400 font-bold text-sm text-slate-800 transition shadow-sm flex items-center gap-2.5";
+        btn.innerHTML = `
+          <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center text-xs font-black text-amber-700 shrink-0">
+            ${String.fromCharCode(65 + idx)}
+          </span>
+          <span class="flex-1">${opt.text}</span>
+        `;
+        btn.onclick = () => handleAnswer(opt, btn, q);
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(selectedOpt, btnElement, q) {
+      const allBtns = document.getElementById('optionsGrid').querySelectorAll('button');
+      if (selectedOpt.correct) {
+        playSound('correct');
+        btnElement.classList.remove('bg-slate-50', 'border-slate-200');
+        btnElement.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+        score += 10;
+        document.getElementById('scoreText').innerText = score;
+        completedQuestionIds.add(q.id);
+        renderTopUnitNav();
+        fireCelebration();
+        allBtns.forEach(b => b.disabled = true);
+
+        if (isAutoNext) {
+          setTimeout(() => nextQuestion(), 1000);
+        } else {
+          const drawer = document.getElementById('scaffoldDrawer');
+          drawer.classList.remove('hidden');
+          document.getElementById('scaffoldTitle').innerText = "🎉 答對了！";
+          document.getElementById('scaffoldSubtitle').innerText = q.misconception;
+          document.getElementById('scaffoldBody').innerHTML = `<p class="font-bold text-emerald-900">✅ ${q.explanation}</p>`;
+          document.getElementById('scaffoldActions').innerHTML = `
+            <button onclick="loadQuestion(currentQIndex)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs">🔄 重練本題</button>
+            <button onclick="nextQuestion()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow">下一題 ▶</button>
+          `;
+        }
+      } else {
+        playSound('wrong');
+        btnElement.classList.remove('bg-slate-50', 'border-slate-200');
+        btnElement.classList.add('bg-rose-100', 'border-rose-400', 'text-rose-950');
+        wrongAttemptsForCurrentQ++;
+        const drawer = document.getElementById('scaffoldDrawer');
+        drawer.classList.remove('hidden');
+        document.getElementById('scaffoldTitle').innerText = wrongAttemptsForCurrentQ === 1 ? "💡 提示 1：再看一次視覺圖" : "🔍 提示 2：關鍵計算步驟";
+        document.getElementById('scaffoldSubtitle').innerText = selectedOpt.note || q.misconception;
+        document.getElementById('scaffoldBody').innerHTML = `
+          <p class="font-bold text-amber-900">${wrongAttemptsForCurrentQ === 1 ? q.hint1 : q.hint2}</p>
+          ${selectedOpt.note ? `<p class="mt-1.5 text-rose-700 font-bold bg-rose-50 p-2 rounded-lg border border-rose-200">⚠️ ${selectedOpt.note}</p>` : ''}
+        `;
+        document.getElementById('scaffoldActions').innerHTML = `
+          <button onclick="closeScaffold()" class="px-3 py-1 bg-amber-500 text-white font-bold rounded-lg text-xs">再選一次</button>
+        `;
+      }
+    }
+
+    function showCurrentExplanation() {
+      playSound('click');
+      if (isOverviewMode) toggleAllQuestionsView(false);
+      const q = QUESTIONS_DB[currentQIndex];
+      if (!q) return;
+      const drawer = document.getElementById('scaffoldDrawer');
+      drawer.classList.remove('hidden');
+      const correctOpt = q.options.find(o => o.correct);
+      document.getElementById('scaffoldTitle').innerText = `📖 ${q.tag} 完整解析`;
+      document.getElementById('scaffoldSubtitle').innerText = q.misconception;
+      document.getElementById('scaffoldBody').innerHTML = `
+        <div class="space-y-1">
+          <div class="font-black text-emerald-800">✅ 正解：${correctOpt ? correctOpt.text : ''}</div>
+          <div>📘 解析：${q.explanation}</div>
+        </div>
+      `;
+      document.getElementById('scaffoldActions').innerHTML = `
+        <button onclick="closeScaffold()" class="px-3 py-1 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">關閉</button>
+      `;
+    }
+
+    function closeScaffold() {
+      document.getElementById('scaffoldDrawer').classList.add('hidden');
+    }
+
+    /* 一次瀏覽全部題目（含每題的視覺直尺與數線圖！） */
+    function toggleAllQuestionsView(forceState) {
+      playSound('click');
+      isOverviewMode = typeof forceState === 'boolean' ? forceState : !isOverviewMode;
+      const overviewSec = document.getElementById('allQuestionsOverview');
+      const singleMain = document.getElementById('singleQuestionMain');
+      const btnText = document.getElementById('viewModeBtnText');
+
+      if (isOverviewMode) {
+        overviewSec.classList.remove('hidden');
+        singleMain.classList.add('hidden');
+        btnText.innerText = '返回單題互動舞台';
+        renderOverviewList(currentOverviewFilter);
+      } else {
+        overviewSec.classList.add('hidden');
+        singleMain.classList.remove('hidden');
+        btnText.innerText = '一次瀏覽全部題目 (含圖)';
+      }
+      renderTopUnitNav();
+    }
+
+    function filterOverviewStage(stageNum) {
+      playSound('click');
+      currentOverviewFilter = stageNum;
+      for (let s = 0; s <= 5; s++) {
+        const b = document.getElementById(`filterStage${s}`);
+        if (!b) continue;
+        b.className = s === stageNum
+          ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-white shadow-sm'
+          : 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100';
+      }
+      renderOverviewList(stageNum);
+    }
+
+    function renderOverviewList(stageFilter = 0) {
+      const container = document.getElementById('overviewListContainer');
+      if (!container) return;
+      const stagesToRender = stageFilter === 0 ? STAGE_META : STAGE_META.filter(m => m.stage === stageFilter);
+
+      container.innerHTML = stagesToRender.map(meta => {
+        const questions = QUESTIONS_DB.filter(q => q.stage === meta.stage);
+        const cardsHTML = questions.map(q => {
+          const visualHTML = buildQuestionVisualHTML(q, false);
+          const optsHTML = q.options.map(opt => `
+            <div class="p-2 rounded-lg border text-xs flex items-center gap-1.5 ${opt.correct ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-black' : 'bg-slate-50 border-slate-200 text-slate-700'}">
+              <span>${opt.correct ? '✅' : '⚪'}</span>
+              <span>${opt.text}</span>
+            </div>
+          `).join('');
+
+          return `
+            <div class="bg-white rounded-2xl border-2 border-slate-200 hover:border-amber-400 p-4 shadow-sm transition">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-lg bg-amber-500 text-white font-black text-xs">${q.tag}</span>
+                  <span class="text-slate-900 font-black text-sm md:text-base">${q.question}</span>
+                </div>
+                <button onclick="jumpToQuestion(${q.id - 1})" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-xs shadow-sm transition shrink-0">
+                  🎯 單獨放大此題互動
+                </button>
+              </div>
+              <!-- 題目內嵌視覺直尺/數線工具 -->
+              <div class="bg-amber-50/40 rounded-xl border border-amber-200 p-2.5 my-2 flex justify-center overflow-x-auto">
+                ${visualHTML}
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                ${optsHTML}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-3">
+            <div class="bg-amber-100 border-l-4 border-amber-500 px-3 py-2 rounded-r-xl flex items-center justify-between">
+              <h3 class="font-black text-amber-950 text-sm md:text-base">📂 ${meta.title}</h3>
+            </div>
+            <div class="space-y-3">${cardsHTML}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadQuestion(0);
+    });
+  </script>
+</body>
+</html>
